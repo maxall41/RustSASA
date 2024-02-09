@@ -1,14 +1,19 @@
+/// RustSASA is a Rust library for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm[1].
 use nalgebra::{Point3, Vector3};
 use rayon::prelude::*;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 use rstar::{RTree, RTreeObject, AABB, PointDistance};
+use pdbtbx::StrictnessLevel;
 
-// A simple structure to model an Atom
+/// This struct represents an individual Atom
 #[derive(Clone)]
 pub struct Atom {
-    position: Point3<f32>, // You can adjust types based on precision requirements
-    radius: f32,
-    id: usize
+    /// The 3D position of the atom
+    pub position: Point3<f32>,
+    /// The Van Der Walls radius of the atom
+    pub radius: f32,
+    /// A unique Id for the atom
+    pub id: usize
 }
 
 impl RTreeObject for Atom {
@@ -33,8 +38,27 @@ impl PointDistance for Atom {
     }
 }
 
-// The core ASA calculation function
-pub fn calculate_asa(atoms: &[Atom], in_probe_radius: Option<f32>, in_n_points: Option<usize>) -> Vec<f32> {
+/// Takes the probe radius and number of points to use along with a list of Atoms as inputs and returns a Vec with SASA values for each atom.
+/// ## Example using pdbtbx:
+/// ```
+/// use nalgebra::{Point3, Vector3};
+/// use pdbtbx::StrictnessLevel;
+/// use untitled::{Atom, calculate_sasa};
+/// let (mut pdb, _errors) = pdbtbx::open(
+///             "./example.cif",
+///             StrictnessLevel::Medium
+///         ).unwrap();
+/// let mut atoms = vec![];
+/// for atom in pdb.atoms() {
+///     atoms.push(Atom {
+///                 position: Point3::new(atom.pos().0 as f32, atom.pos().1 as f32, atom.pos().2 as f32),
+///                 radius: atom.element().unwrap().atomic_radius().van_der_waals.unwrap() as f32,
+///                 id: atom.serial_number()
+///     })
+///  }
+///  let sasa = calculate_sasa(&atoms, None, None);
+/// ```
+pub fn calculate_sasa(atoms: &[Atom], in_probe_radius: Option<f32>, in_n_points: Option<usize>) -> Vec<f32> {
     // Load defaults if not specified
     let mut probe_radius = 1.4;
     let mut n_points = 100;
@@ -69,7 +93,7 @@ pub fn calculate_asa(atoms: &[Atom], in_probe_radius: Option<f32>, in_n_points: 
     }).collect()
 }
 
-// Generates points on a sphere using the Golden Section Spiral algorithm
+/// Generates points on a sphere using the Golden Section Spiral algorithm
 fn generate_sphere_points(n_points: usize) -> Vec<Vector3<f32>> {
     let mut points = Vec::with_capacity(n_points);
     let golden_ratio = (1.0 + 5f32.sqrt()) / 2.0;
@@ -106,7 +130,6 @@ fn is_accessible_rstar(test_point: &Point3<f32>, atom: &Atom, atoms: &RTree<Atom
 #[cfg(test)]
 mod tests {
     use std::time::Instant;
-    use pdbtbx::StrictnessLevel;
     use super::*;
 
     #[test]
@@ -125,7 +148,7 @@ mod tests {
             })
         }
         let start = Instant::now();
-        let sasa = calculate_asa(&atoms, None, None);
+        let sasa = calculate_sasa(&atoms, None, None);
         let duration = start.elapsed();
         assert_eq!(sasa,fixed);
         println!("Time elapsed: {:?}", duration);
