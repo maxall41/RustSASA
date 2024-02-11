@@ -39,11 +39,13 @@ impl PointDistance for Atom {
 }
 
 /// Takes the probe radius and number of points to use along with a list of Atoms as inputs and returns a Vec with SASA values for each atom.
+/// Probe Radius Default: 1.4
+/// Point Count Default: 100
 /// ## Example using pdbtbx:
 /// ```
 /// use nalgebra::{Point3, Vector3};
 /// use pdbtbx::StrictnessLevel;
-/// use untitled::{Atom, calculate_sasa};
+/// use rust_sasa::{Atom, calculate_sasa};
 /// let (mut pdb, _errors) = pdbtbx::open(
 ///             "./example.cif",
 ///             StrictnessLevel::Medium
@@ -58,7 +60,11 @@ impl PointDistance for Atom {
 ///  }
 ///  let sasa = calculate_sasa(&atoms, None, None);
 /// ```
-pub fn calculate_sasa(atoms: &[Atom], in_probe_radius: Option<f32>, in_n_points: Option<usize>) -> Vec<f32> {
+pub fn calculate_sasa(
+    atoms: &[Atom],
+    in_probe_radius: Option<f32>,
+    in_n_points: Option<usize>
+) -> Vec<f32> {
     // Load defaults if not specified
     let mut probe_radius = 1.4;
     let mut n_points = 100;
