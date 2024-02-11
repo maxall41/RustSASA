@@ -1,4 +1,8 @@
 # RustSASA
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/maxall41/RustSASA/rust.yml)
+![Crates.io Downloads (recent)](https://img.shields.io/crates/dr/rust-sasa)
+![Crates.io License](https://img.shields.io/crates/l/rust-sasa)
+
 RustSASA is a Rust library for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm[1].
 ## RustSASA Implementation vs Biopython Implementation
 Benchmarks were performed on an M2 Apple Mac with 8GB of RAM and 8 Cores with the protein AF-A0A2K5XT84-F1 (AlphaFold).
