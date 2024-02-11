@@ -387,7 +387,7 @@ dependencies = [
 
 [[package]]
 name = "rust-sasa"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "nalgebra",
  "pdbtbx",

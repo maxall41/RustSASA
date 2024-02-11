@@ -1,4 +1,4 @@
-/// RustSASA is a Rust library for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm[1].
+//! RustSASA is a Rust library for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm[1].
 use nalgebra::{Point3, Vector3};
 use rayon::prelude::*;
 use std::sync::{Arc};
