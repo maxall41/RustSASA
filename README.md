@@ -10,6 +10,7 @@ Benchmarks were performed on an M2 Apple Mac with 8GB of RAM and 8 Cores with th
 Biopython: ~150ms
 
 RustSasa: ~50ms
-
+## Documentation:
+See https://docs.rs/rust-sasa/latest/rust_sasa/
 ## Citations:
 1: Shrake A, Rupley JA. Environment and exposure to solvent of protein atoms. Lysozyme and insulin. J Mol Biol. 1973 Sep 15;79(2):351-71. doi: 10.1016/0022-2836(73)90011-9. PMID: 4760134.
