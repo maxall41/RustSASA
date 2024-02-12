@@ -1,4 +1,5 @@
 # RustSASA
+Warning: This library is highly experimental and has not been extensively validated.
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/maxall41/RustSASA/rust.yml)
 ![Crates.io Downloads (recent)](https://img.shields.io/crates/dr/rust-sasa)
 ![Crates.io License](https://img.shields.io/crates/l/rust-sasa)
