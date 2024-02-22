@@ -16,6 +16,26 @@ Biopython: ~150ms
 
 RustSasa: ~50ms
 
+## Example Usage with `pdbtbx`:
+```rust
+use nalgebra::{Point3, Vector3};
+use pdbtbx::StrictnessLevel;
+use rust_sasa::{Atom, calculate_sasa};
+let (mut pdb, _errors) = pdbtbx::open(
+          "./example.cif",
+          StrictnessLevel::Medium
+).unwrap();
+let mut atoms = vec![];
+for atom in pdb.atoms() {
+  atoms.push(Atom {
+              position: Point3::new(atom.pos().0 as f32, atom.pos().1 as f32, atom.pos().2 as f32),
+              radius: atom.element().unwrap().atomic_radius().van_der_waals.unwrap() as f32,
+              id: atom.serial_number()
+  })
+}
+let sasa = calculate_sasa(&atoms, None, None);
+```
+
 ## Documentation:
 See https://docs.rs/rust-sasa/latest/rust_sasa/
 
