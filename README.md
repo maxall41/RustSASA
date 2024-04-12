@@ -12,11 +12,11 @@ RustSASA is a Rust library for computing the absolute solvent accessible surface
 ## RustSASA Implementation vs Biopython Implementation
 Benchmarks were performed on an M2 Apple Mac with 8GB of RAM and 8 Cores with the protein AF-A0A2K5XT84-F1 (AlphaFold).
 
-Biopython: ~150ms
+- Biopython: ~150ms
 
-Freesasa: ~90ms
+- Freesasa: ~90ms
 
-RustSasa: ~40ms
+- RustSASA: ~40ms
 
 ## Example Usage with `pdbtbx`:
 ```rust
