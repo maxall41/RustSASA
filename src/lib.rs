@@ -10,7 +10,7 @@ use rstar::{PointDistance, RTree, RTreeObject, AABB};
 use std::sync::Arc;
 use snafu::{OptionExt};
 use snafu::prelude::*;
-use crate::utils::{simd_sum};
+use crate::utils::{serialize_chain_id, simd_sum};
 
 /// This struct represents an individual Atom
 #[derive(Clone)]
@@ -63,17 +63,6 @@ pub enum SASACalcError {
 
     #[snafu(display("Failed to map atoms back to level element"))]
     AtomMapToLevelElementFailed,
-}
-
-fn serialize_chain_id(s: &str) -> isize {
-    let mut result = 0;
-    for c in s.chars() {
-        if c.is_ascii_alphabetic() {
-            let position = c.to_ascii_uppercase() as isize - 64;
-            result = result * 10 + position;
-        }
-    }
-    result
 }
 
 
