@@ -6,7 +6,7 @@
 RustSASA is a Rust library for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm[1].
 ## Features:
 - 🦀 Written in Pure Rust
-- ⚡️ 3X Faster than Biopython
+- ⚡️ 3X Faster than Biopython and ~120% faster than Freesasa
 - 🧪 Full test coverage
   
 ## RustSASA Implementation vs Biopython Implementation
@@ -14,26 +14,19 @@ Benchmarks were performed on an M2 Apple Mac with 8GB of RAM and 8 Cores with th
 
 Biopython: ~150ms
 
-RustSasa: ~50ms
+Freesasa: ~90ms
+
+RustSasa: ~40ms
 
 ## Example Usage with `pdbtbx`:
 ```rust
-use nalgebra::{Point3, Vector3};
 use pdbtbx::StrictnessLevel;
-use rust_sasa::{Atom, calculate_sasa};
+use rust_sasa::{Atom, calculate_sasa, calculate_sasa_internal, SASALevel};
 let (mut pdb, _errors) = pdbtbx::open(
-          "./example.cif",
-          StrictnessLevel::Medium
+             "./example.cif",
+             StrictnessLevel::Medium
 ).unwrap();
-let mut atoms = vec![];
-for atom in pdb.atoms() {
-  atoms.push(Atom {
-              position: Point3::new(atom.pos().0 as f32, atom.pos().1 as f32, atom.pos().2 as f32),
-              radius: atom.element().unwrap().atomic_radius().van_der_waals.unwrap() as f32,
-              id: atom.serial_number()
-  })
-}
-let sasa = calculate_sasa(&atoms, None, None);
+let result = calculate_sasa(&pdb,None,None,SASALevel::Residue);
 ```
 
 ## Documentation:
