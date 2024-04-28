@@ -23,17 +23,9 @@ from rust_sasa_python import calculate_sasa_at_residue_level
 residue_sasa_values = calculate_sasa_at_residue_level("path_to_pdb_file.pdb") # Also supports mmCIF files!
 ```
 See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS.md)
-  
-## Benchmarking
-Benchmarks were performed on an M2 Apple Mac with 8GB of RAM and 8 Cores with the protein AF-A0A2K5XT84-F1 (AlphaFold).
 
-- Biopython: ~150ms
+## Using in Rust 🦀
 
-- Freesasa: ~90ms
-
-- RustSASA: ~40ms
-
-## Example Usage in Rust with `pdbtbx`:
 ```rust
 use pdbtbx::StrictnessLevel;
 use rust_sasa::{Atom, calculate_sasa, calculate_sasa_internal, SASALevel};
@@ -43,9 +35,16 @@ let (mut pdb, _errors) = pdbtbx::open(
 ).unwrap();
 let result = calculate_sasa(&pdb,None,None,SASALevel::Residue);
 ```
+Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sasa/)
 
-## Documentation:
-See https://docs.rs/rust-sasa/latest/rust_sasa/
+## Benchmarking
+Benchmarks were performed on an M2 Apple Mac with 8GB of RAM and 8 Cores with the protein AF-A0A2K5XT84-F1 (AlphaFold).
+
+- Biopython: ~150ms
+
+- Freesasa: ~90ms
+
+- RustSASA: ~40ms
 
 ## Citations:
 1: Shrake A, Rupley JA. Environment and exposure to solvent of protein atoms. Lysozyme and insulin. J Mol Biol. 1973 Sep 15;79(2):351-71. doi: 10.1016/0022-2836(73)90011-9. PMID: 4760134.
