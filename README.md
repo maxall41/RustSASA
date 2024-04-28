@@ -24,7 +24,7 @@ residue_sasa_values = calculate_sasa_at_residue_level("path_to_pdb_file.pdb") # 
 ```
 See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS.md)
   
-## RustSASA Implementation vs Biopython Implementation
+## Benchmarking
 Benchmarks were performed on an M2 Apple Mac with 8GB of RAM and 8 Cores with the protein AF-A0A2K5XT84-F1 (AlphaFold).
 
 - Biopython: ~150ms
@@ -33,7 +33,7 @@ Benchmarks were performed on an M2 Apple Mac with 8GB of RAM and 8 Cores with th
 
 - RustSASA: ~40ms
 
-## Example Usage with `pdbtbx`:
+## Example Usage in Rust with `pdbtbx`:
 ```rust
 use pdbtbx::StrictnessLevel;
 use rust_sasa::{Atom, calculate_sasa, calculate_sasa_internal, SASALevel};
