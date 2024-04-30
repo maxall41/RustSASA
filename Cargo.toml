@@ -17,6 +17,7 @@ rstar = "0.12.0"
 nalgebra = "0.32.3"
 rayon = "1.5"
 snafu = "0.8.2"
+lazy_static = "1.4.0"
 
 [profile.release]
 lto = true
