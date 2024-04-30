@@ -1,7 +1,12 @@
 # CHANGELOG
 
-## Version 2.0.0
+## Version 0.2.0 & 0.2.1
 
 - RustSASA now includes convenience methods for working directly with pdbtbx
 - RustSASA now supports specifying return resolution (e.g: Protein, Chain, Residue, Atom)
-- Minor restructuring 
+- Minor restructuring
+
+## VERSION 0.2.2
+
+- RustSASA now computes the total polar & non-polar values when outputing a protein result
+- `is_polar` boolean now included in RustSASA Residue struct.

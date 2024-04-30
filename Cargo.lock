@@ -399,7 +399,7 @@ dependencies = [
 
 [[package]]
 name = "rust-sasa"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "lazy_static",
  "nalgebra",
