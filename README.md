@@ -9,6 +9,7 @@ RustSASA is a Rust library for computing the absolute solvent accessible surface
 - 🦀 Written in Pure Rust
 - ⚡️ 3X Faster than Biopython and ~120% faster than Freesasa
 - 🧪 Full test coverage
+- 🐍 Can be used in Python
 
 ## Using in Rust 🦀
 
