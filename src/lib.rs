@@ -335,25 +335,27 @@ pub fn calculate_sasa(
         }
         SASALevel::Residue => {
             let mut residue_sasa = vec![];
-            for residue in pdb.residues() {
-                let residue_atom_index = parent_to_atoms
-                    .get(&residue.serial_number())
-                    .context(AtomMapToLevelElementFailedSnafu)?;
-                let residue_atoms: Vec<_> = residue_atom_index
-                    .iter()
-                    .map(|&index| atom_sasa[index])
-                    .collect();
-                let sum = simd_sum(residue_atoms.as_slice());
-                let name = residue
-                    .name()
-                    .context(FailedToGetResidueNameSnafu)?
-                    .to_string();
-                residue_sasa.push(ResidueResult {
-                    serial_number: residue.serial_number(),
-                    value: sum,
-                    is_polar: POLAR_AMINO_ACIDS.contains(&name),
-                    name,
-                })
+            for chain in pdb.chains() {
+                for residue in chain.residues() {
+                    let residue_atom_index = parent_to_atoms
+                        .get(&residue.serial_number())
+                        .context(AtomMapToLevelElementFailedSnafu)?;
+                    let residue_atoms: Vec<_> = residue_atom_index
+                        .iter()
+                        .map(|&index| atom_sasa[index])
+                        .collect();
+                    let sum = simd_sum(residue_atoms.as_slice());
+                    let name = residue
+                        .name()
+                        .context(FailedToGetResidueNameSnafu)?
+                        .to_string();
+                    residue_sasa.push(ResidueResult {
+                        serial_number: residue.serial_number(),
+                        value: sum,
+                        is_polar: POLAR_AMINO_ACIDS.contains(&name),
+                        name: format!("{}-{}-{}", chain.id(), name, residue.serial_number()),
+                    })
+                }
             }
             Ok(SASAResult::Residue(residue_sasa))
         }
