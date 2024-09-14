@@ -37,15 +37,21 @@ pub enum SASALevel {
 
 #[derive(Debug, PartialEq)]
 pub struct ChainResult {
+    /// Chain name
     pub name: String,
+    /// Chain SASA value
     pub value: f32,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct ResidueResult {
+    /// Residue serial number
     pub serial_number: isize,
+    /// SASA value for residue
     pub value: f32,
+    //// The name of the residue. Format: {Chain ID}_{Name}_{Serial Number}
     pub name: String,
+    /// Wether the residue is polar
     pub is_polar: bool,
 }
 
@@ -353,7 +359,7 @@ pub fn calculate_sasa(
                         serial_number: residue.serial_number(),
                         value: sum,
                         is_polar: POLAR_AMINO_ACIDS.contains(&name),
-                        name: format!("{}-{}-{}", chain.id(), name, residue.serial_number()),
+                        name: format!("{}_{}_{}", chain.id(), name, residue.serial_number()),
                     })
                 }
             }
