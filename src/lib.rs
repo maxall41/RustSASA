@@ -49,10 +49,12 @@ pub struct ResidueResult {
     pub serial_number: isize,
     /// SASA value for residue
     pub value: f32,
-    //// The name of the residue. Format: {Chain ID}_{Name}_{Serial Number}
+    //// The name of the residue
     pub name: String,
     /// Wether the residue is polar
     pub is_polar: bool,
+    /// Chain ID
+    pub chain_id: String,
 }
 
 #[derive(Debug, PartialEq)]
@@ -359,7 +361,8 @@ pub fn calculate_sasa(
                         serial_number: residue.serial_number(),
                         value: sum,
                         is_polar: POLAR_AMINO_ACIDS.contains(&name),
-                        name: format!("{}_{}_{}", chain.id(), name, residue.serial_number()),
+                        chain_id: chain.id().to_string(),
+                        name,
                     })
                 }
             }
