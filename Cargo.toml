@@ -7,12 +7,12 @@ readme = "README.md"
 repository = "https://github.com/maxall41/RustSASA"
 license = "MIT"
 license-file = "LICENSE"
-keywords = ["Rust","Bioinformatics","SASA"]
+keywords = ["Rust", "Bioinformatics", "SASA"]
 documentation = "https://docs.rs/rust-sasa/latest/rust_sasa/"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pdbtbx = "0.11.0"
+pdbtbx = "0.12.0"
 rstar = "0.12.0"
 nalgebra = "0.33.0"
 rayon = "1.10.0"
