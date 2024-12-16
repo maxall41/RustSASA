@@ -164,7 +164,6 @@ fn is_accessible_rstar(
 /// use rust_sasa::{Atom, calculate_sasa_internal};
 /// let (mut pdb, _errors) = pdbtbx::open(
 ///             "./example.cif",
-///             StrictnessLevel::Medium
 ///         ).unwrap();
 /// let mut atoms = vec![];
 /// for atom in pdb.atoms() {
@@ -231,7 +230,6 @@ pub fn calculate_sasa_internal(
 /// use rust_sasa::{Atom, calculate_sasa, calculate_sasa_internal, SASALevel};
 /// let (mut pdb, _errors) = pdbtbx::open(
 ///             "./example.cif",
-///             StrictnessLevel::Medium
 /// ).unwrap();
 /// let result = calculate_sasa(&pdb,None,None,SASALevel::Residue);
 /// ```
