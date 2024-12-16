@@ -10,3 +10,7 @@
 
 - RustSASA now computes the total polar & non-polar values when outputing a protein result
 - `is_polar` boolean now included in RustSASA Residue struct.
+
+## VERSION 0.2.3
+
+- Updated to pdbtbx 0.12.0
