@@ -248,7 +248,7 @@ mod tests {
 
     #[test]
     fn internal_test() {
-        let (mut pdb, _errors) = pdbtbx::open("./example.cif", StrictnessLevel::Medium).unwrap();
+        let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
         let mut atoms = vec![];
         for atom in pdb.atoms() {
             atoms.push(Atom {
@@ -275,7 +275,7 @@ mod tests {
     }
     #[test]
     fn external_test() {
-        let (mut pdb, _errors) = pdbtbx::open("./example.cif", StrictnessLevel::Medium).unwrap();
+        let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
         let protein_sasa = calculate_sasa(&pdb, None, None, SASALevel::Protein).unwrap();
         let chain_sasa = calculate_sasa(&pdb, None, None, SASALevel::Chain).unwrap();
 
