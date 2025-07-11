@@ -2,6 +2,7 @@ pub mod consts;
 pub mod io;
 
 const LANES: usize = 16;
+#[allow(clippy::needless_range_loop)]
 pub fn simd_sum(values: &[f32]) -> f32 {
     let chunks = values.chunks_exact(LANES);
     let remainder = chunks.remainder();

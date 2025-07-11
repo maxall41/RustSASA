@@ -62,6 +62,8 @@ pub struct ResidueLevel;
 pub struct ChainLevel;
 pub struct ProteinLevel;
 
+pub type AtomsMappingResult = Result<(Vec<Atom>, HashMap<isize, Vec<usize>>), SASACalcError>;
+
 // Trait that defines the processing behavior for each level
 pub trait SASAProcessor {
     type Output;
@@ -73,9 +75,7 @@ pub trait SASAProcessor {
         parent_to_atoms: &HashMap<isize, Vec<usize>>,
     ) -> Result<Self::Output, SASACalcError>;
 
-    fn build_atoms_and_mapping(
-        pdb: &PDB,
-    ) -> Result<(Vec<Atom>, HashMap<isize, Vec<usize>>), SASACalcError>;
+    fn build_atoms_and_mapping(pdb: &PDB) -> AtomsMappingResult;
 }
 
 impl SASAProcessor for AtomLevel {
