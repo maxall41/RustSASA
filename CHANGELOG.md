@@ -2,8 +2,8 @@
 
 ## Version 0.3.0
 
-- 🔥 10X Faster
-- 🤖 New CLI!
+- 🔥 ~12X Faster
+- 🤖 Implemented Command-line interface (CLI)!
 - 🧪 Better tests
 - 🆙 Upgraded packages
 - 🦀 Upgraded to Rust Edition 2024
