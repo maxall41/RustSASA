@@ -162,7 +162,7 @@ jobs:
           mkdir UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf  UP000000625_83333_ECOLI_v4/*.cif
-          sudo apt-get install gzip -y
+          sudo apt install gzip -y
           gunzip UP000000625_83333_ECOLI_v4/*.gz
           LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw" cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
         env:
