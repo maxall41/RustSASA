@@ -42,7 +42,7 @@ See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS
 
 ## Using CLI
 
-```shell
+```console
 # Single file
 # Also supports .xml, .pdb, and .cif!
 rust-sasa path_to_pdb_file.pdb output.json
@@ -54,13 +54,13 @@ rust-sasa input_directory/ output_directory/ --format json
 
 # Rust
 
-```shell
+```console
 cargo add rust-sasa
 ```
 
 # Python
 
-```shell
+```console
 pip install rust-sasa-python
 ```
 
@@ -69,7 +69,7 @@ pip install rust-sasa-python
 ## Method 1: Use Cargo bin install
 
 ### 1. Install Cargo Bin Install
-```shell
+```console
 # With Brew
 brew install cargo-binstall
 # On Linux or MacOs
@@ -77,7 +77,7 @@ curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-
 ```
 
 ### 2. Install rust-sasa
-```shell
+```console
 cargo binstall rust-sasa
 ```
 
