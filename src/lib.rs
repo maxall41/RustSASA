@@ -193,7 +193,7 @@ fn generate_sphere_points(n_points: usize) -> Vec<Vector3<f32>> {
     let mut points = Vec::with_capacity(n_points);
 
     // Precompute constants
-    const GOLDEN_RATIO: f32 = 1.618033988749894;
+    const GOLDEN_RATIO: f32 = 1.618_034;
     const ANGLE_INCREMENT: f32 = 2.0 * std::f32::consts::PI * GOLDEN_RATIO;
     let inv_n_points = 1.0 / n_points as f32;
 
@@ -366,14 +366,13 @@ pub fn calculate_sasa_internal(
     };
 
     if parallel {
-        return (0..atoms.len())
+        (0..atoms.len())
             .into_par_iter()
             .map(calculate_atom_sasa_optimized)
-            .collect();
+            .collect()
     } else {
-        return (0..atoms.len())
-            .into_iter()
+        (0..atoms.len())
             .map(calculate_atom_sasa_optimized)
-            .collect();
+            .collect()
     }
 }
