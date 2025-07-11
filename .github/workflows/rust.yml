@@ -159,6 +159,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           wget https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000000625_83333_ECOLI_v4.tar
+          mkdir UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf  UP000000625_83333_ECOLI_v4/*.cif
           sudo apt-get install gzip -y
@@ -172,6 +173,7 @@ jobs:
         run: |
           $env:LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw"
           wget https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000000625_83333_ECOLI_v4.tar
+          mkdir UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf  UP000000625_83333_ECOLI_v4/*.cif
           # Decompress .gz files using 7-Zip, similar to gunzip on Linux
