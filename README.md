@@ -18,9 +18,11 @@ RustSASA is a **Rust library** for computing the absolute solvent accessible sur
 
 ```rust
 use pdbtbx::StrictnessLevel;
-use rust_sasa::{Atom, calculate_sasa, calculate_sasa_internal, SASALevel};
+use rust_sasa::options::{SASAOptions, ResidueLevel};
+
 let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
-let result = calculate_sasa(&pdb,None,None,SASALevel::Residue);
+let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
+
 ```
 Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sasa/)
 
