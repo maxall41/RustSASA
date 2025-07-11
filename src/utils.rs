@@ -1,4 +1,5 @@
-use snafu::Snafu;
+pub mod consts;
+pub mod io;
 
 const LANES: usize = 16;
 pub fn simd_sum(values: &[f32]) -> f32 {
