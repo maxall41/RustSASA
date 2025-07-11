@@ -105,8 +105,8 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 
 # Validation against Freesasa
 
-![Comparing Freesasa and RustSasa on E. coli proteome\label{fig:example}](imgs/sasa_chain_comparison_E_coli.pdf){ width=50% }
-![Comparing Freesasa and RustSasa on Freesasa comparison dataset\label{fig:example}](imgs/sasa_chain_comparison_freesasa_ds.pdf){ width=50% }
+![Comparing Freesasa and RustSasa on E. coli proteome](imgs/sasa_chain_comparison_E_coli.pdf)
+![Comparing Freesasa and RustSasa on Freesasa comparison dataset](imgs/sasa_chain_comparison_freesasa_ds.pdf)
 
 # Other
 
