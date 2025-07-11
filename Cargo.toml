@@ -10,7 +10,6 @@ license-file = "LICENSE"
 keywords = ["Rust", "Bioinformatics", "SASA"]
 documentation = "https://docs.rs/rust-sasa/latest/rust_sasa/"
 rust-version = "1.85.0"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 pdbtbx = { git = 'https://github.com/maxall41/pdbtbx.git', rev = 'b590f92465e3b5cf2c7a9ea2c684472b4bd7d34f' }
