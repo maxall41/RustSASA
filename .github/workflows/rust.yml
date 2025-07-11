@@ -150,7 +150,7 @@ jobs:
         run: cargo install cargo-pgo
 
       - name: Build initial binary for PGO
-        run: cargo pgo build --target ${{ matrix.target }}
+        run: cargo pgo build -- --target ${{ matrix.target }}
 
       - name: Create temp output directory
         run: mkdir temp_out
@@ -158,7 +158,7 @@ jobs:
       - name: Run PGO profiling (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw" cargo pgo run --target ${{ matrix.target }} -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw" cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
         env:
           LLVM_PROFILE_FILE: "rust-sasa-%p-%m.profraw"
 
@@ -166,11 +166,11 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           $env:LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw"
-          cargo pgo run --target ${{ matrix.target }} -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
         shell: powershell
 
       - name: Optimize with PGO
-        run: cargo pgo optimize --target ${{ matrix.target }}
+        run: cargo pgo optimize -- --target ${{ matrix.target }}
 
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
