@@ -1,7 +1,7 @@
 [package]
 name = "rust-sasa"
-version = "0.2.4"
-edition = "2021"
+version = "0.3.0"
+edition = "2024"
 description = "RustSASA is a Rust library for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm."
 readme = "README.md"
 repository = "https://github.com/maxall41/RustSASA"
@@ -9,16 +9,23 @@ license = "MIT"
 license-file = "LICENSE"
 keywords = ["Rust", "Bioinformatics", "SASA"]
 documentation = "https://docs.rs/rust-sasa/latest/rust_sasa/"
+rust-version = "1.85.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pdbtbx = "0.12.0"
-rstar = "0.12.0"
-nalgebra = "0.33.0"
+pdbtbx = { git = 'https://github.com/maxall41/pdbtbx.git', rev = 'b590f92465e3b5cf2c7a9ea2c684472b4bd7d34f' }
+nalgebra = "0.33.2"
 rayon = "1.10.0"
-snafu = "0.8.4"
-lazy_static = "1.5.0"
+snafu = "0.8.6"
+clap = { version = "4.5.40", features = ["derive"] }
+serde = "1.0.219"
+serde_json = "1.0.140"
+quick-xml = { version = "0.38.0", features = ["serialize"] }
+indicatif = "0.17.11"
+mimalloc = { version = "0.1.17", default-features = false }
+
+[dev-dependencies]
+approx = "0.5.1"
 
 [profile.release]
-lto = true
-codegen-units = 1
+debug = true

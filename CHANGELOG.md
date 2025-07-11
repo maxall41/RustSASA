@@ -1,7 +1,15 @@
 # CHANGELOG
 
-## Version 0.2.0 & 0.2.1
+## Version 0.3.0
 
+- 🔥 10X Faster
+- 🤖 New CLI!
+- 🧪 Better tests
+- 🆙 Upgraded packages
+- 🦀 Upgraded to Rust Edition 2024
+- ⛓️‍💥 BREAKING: New SASAOptions interface replaces calculate_sasa!
+
+## Version 0.2.0 & 0.2.1
 - RustSASA now includes convenience methods for working directly with pdbtbx
 - RustSASA now supports specifying return resolution (e.g: Protein, Chain, Residue, Atom)
 - Minor restructuring

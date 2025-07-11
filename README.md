@@ -7,19 +7,17 @@ RustSASA is a Rust library for computing the absolute solvent accessible surface
 
 ## Features:
 - 🦀 Written in Pure Rust
-- ⚡️ 3X Faster than Biopython and ~120% faster than Freesasa
+- ⚡️ Ludicrously fast. *<>X* Faster than Biopython and *<>%* faster than Freesasa
 - 🧪 Full test coverage
-- 🐍 Can be used in Python
+- 🐍 Python support
+- 🤖 Command line interface
 
 ## Using in Rust 🦀
 
 ```rust
 use pdbtbx::StrictnessLevel;
 use rust_sasa::{Atom, calculate_sasa, calculate_sasa_internal, SASALevel};
-let (mut pdb, _errors) = pdbtbx::open(
-             "./example.cif",
-             StrictnessLevel::Medium
-).unwrap();
+let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
 let result = calculate_sasa(&pdb,None,None,SASALevel::Residue);
 ```
 Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sasa/)
@@ -35,18 +33,33 @@ pip install rust-sasa-python
 Example:
 ```python
 from rust_sasa_python import calculate_sasa_at_residue_level
-residue_sasa_values = calculate_sasa_at_residue_level("path_to_pdb_file.pdb") # Also supports mmCIF files!
+# Also supports mmCIF files!
+residue_sasa_values = calculate_sasa_at_residue_level("path_to_pdb_file.pdb")
 ```
 See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS.md)
 
+## Using CLI
+
+```shell
+# Single file
+# Also supports .xml, .pdb, and .cif!
+rust-sasa path_to_pdb_file.pdb output.json
+# Entire directory
+rust-sasa input_directory/ output_directory/ --format json
+```
+
 ## Benchmarking
-Benchmarks were performed on an M2 Apple Mac with 8GB of RAM and 8 Cores with the protein AF-A0A2K5XT84-F1 (AlphaFold).
 
-- Biopython: ~150ms
 
-- Freesasa: ~90ms
+Methodology:
 
-- RustSASA: ~40ms
+We computed residue level SASA values for the entire AlphaFold E. coli proteome structure database using RustSASA, Freesasa, and Biopython. Benchmarks were run with Hyperfine with options: --warmup 3 --runs 3. All three methods ran across 8 cores on an Apple M3 Macbook.
+
+- RustSasa: 11.498 s ±  0.340 s
+
+- Freesasa: 54.914 s ±  0.455 s
+
+- Biopython:
 
 ## Citations:
 1: Shrake A, Rupley JA. Environment and exposure to solvent of protein atoms. Lysozyme and insulin. J Mol Biol. 1973 Sep 15;79(2):351-71. doi: 10.1016/0022-2836(73)90011-9. PMID: 4760134.
