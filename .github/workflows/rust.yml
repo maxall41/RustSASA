@@ -150,7 +150,7 @@ jobs:
         run: cargo install cargo-pgo
 
       - name: Build initial binary for PGO
-        run: cargo pgo build --target ${{ matrix.target }}
+        run: cargo pgo build -- --target ${{ matrix.target }}
 
       - name: Create temp output directory
         run: mkdir temp_out
