@@ -215,16 +215,16 @@ fn process_directory(
                 let input_path = path.to_str().unwrap().to_string();
                 let filename = path.file_stem().unwrap().to_str().unwrap();
                 let extension = format.file_extension();
-                let output_path = format!("{}/{}.{}", output_dir, filename, extension);
+                let output_path = format!("{output_dir}/{filename}.{extension}");
 
-                pb.set_message(format!("Processing {}", filename));
+                pb.set_message(format!("Processing {filename}"));
                 match process(input_path, output_path, output_depth.clone(), format, false) {
                     Ok(_) => pb.inc(1),
                     Err(e) => {
                         errors
                             .lock()
                             .unwrap()
-                            .push(format!("Error processing {}: {}", filename, e));
+                            .push(format!("Error processing {filename}: {e}"));
                         pb.inc(1);
                     }
                 }
@@ -234,7 +234,7 @@ fn process_directory(
             errors
                 .lock()
                 .unwrap()
-                .push(format!("Error reading directory entry: {}", e));
+                .push(format!("Error reading directory entry: {e}"));
         }
     });
 
@@ -245,7 +245,7 @@ fn process_directory(
     if !errors.is_empty() {
         eprintln!("\nThe following errors occurred during processing:");
         for error in &errors {
-            eprintln!("  - {}", error);
+            eprintln!("  - {error}");
         }
         eprintln!("\nTotal errors: {}", errors.len());
     } else {
