@@ -2,7 +2,7 @@ use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use pdbtbx::{PDBError, ReadOptions};
 use quick_xml::SeError as XmlError;
-use rust_sasa::options::{self, SASACalcError};
+use rust_sasa::options::SASACalcError;
 use rust_sasa::{SASALevel, options::SASAOptions};
 use rust_sasa::{
     SASAResult, sasa_result_to_json, sasa_result_to_protein_object, sasa_result_to_xml,
