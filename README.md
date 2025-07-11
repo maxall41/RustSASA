@@ -40,48 +40,49 @@ residue_sasa_values = calculate_sasa_at_residue_level("path_to_pdb_file.pdb")
 ```
 See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS.md)
 
-## Using CLI
+## Using CLI 🤖
+
+### Processing single file
 
 ```console
-# Single file
-# Also supports .xml, .pdb, and .cif!
-rust-sasa path_to_pdb_file.pdb output.json
-# Entire directory
-rust-sasa input_directory/ output_directory/ --format json
+rust-sasa path_to_pdb_file.pdb output.json # Also supports .xml, .pdb, and .cif!
+```
+
+### Processing an entire directory
+
+```console
+rust-sasa input_directory/ output_directory/ --format json # Also supports .xml, .pdb, and .cif!
 ```
 
 # Installation
 
-# Rust
+## Rust
 
 ```console
 cargo add rust-sasa
 ```
 
-# Python
+## Python
 
 ```console
 pip install rust-sasa-python
 ```
 
-# CLI
+## CLI
 
-## Method 1: Use Cargo bin install
+### Method 1: Use Cargo bin install
 
-### 1. Install Cargo Bin Install
+#### 1. Install Cargo Bin Install
 ```console
-# With Brew
-brew install cargo-binstall
-# On Linux or MacOs
 curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 ```
 
-### 2. Install rust-sasa
+#### 2. Install rust-sasa
 ```console
 cargo binstall rust-sasa
 ```
 
-## Method 2: Download binary from Github Releases
+### Method 2: Download binary from Github Releases
 
 1. Download latest binary from github releases
 2. Add the binary to your path
@@ -99,16 +100,20 @@ cargo binstall rust-sasa
 
 ## Methodology:
 
-We computed residue level SASA values for the entire AlphaFold E. coli proteome structure database using RustSASA, Freesasa, and Biopython. Benchmarks were run with Hyperfine with options: --warmup 3 --runs 3. All three methods ran across 8 cores on an Apple M3 Macbook.
+We computed residue level SASA values for the entire AlphaFold E. coli proteome structure database using RustSASA, Freesasa, and Biopython. Benchmarks were run with Hyperfine with options: --warmup 3 --runs 3. All three methods ran across 8 cores on an Apple M3 Macbook with 24GB of unified memory. The RustSASA CLI was used to take advantage of profile guided optimization. GNU Parallel was used to run Freesasa and Biopython in parallel.
+
+
+# Validation against Freesasa
+
+![Comparing Freesasa and RustSasa on E. coli proteome\label{fig:example}](imgs/sasa_chain_comparison_E_coli.pdf){ width=50% }
+![Comparing Freesasa and RustSasa on Freesasa comparison dataset\label{fig:example}](imgs/sasa_chain_comparison_freesasa_ds.pdf){ width=50% }
 
 # Other
 
 ## License
 MIT
 
-## Latest update
-
-### Version 0.3.0
+## Latest update (0.3.0)
 
 - 🔥 ~12X Faster
 - 🤖 Implemented Command-line interface (CLI)!
