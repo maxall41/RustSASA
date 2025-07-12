@@ -135,9 +135,11 @@ jobs:
           version: "20.1.0"
 
       - name: Install cargo-pgo
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         run: cargo install cargo-pgo
 
       - name: Build initial binary for PGO
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         run: cargo pgo build -- --target ${{ matrix.target }}
 
       - name: Create temp output directory
