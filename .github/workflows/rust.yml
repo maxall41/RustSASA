@@ -183,6 +183,7 @@ jobs:
             alphafold-UP000000625_83333_ECOLI_v4-dataset
 
       - name: Download AlphaFold dataset
+        shell: bash
         run: |
           if [ ! -f UP000000625_83333_ECOLI_v4.tar ]; then
             wget https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
