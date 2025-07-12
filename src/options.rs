@@ -366,7 +366,7 @@ impl<T> SASAOptions<T> {
         self
     }
 
-    /// Enable or disable parallel processing (default: false)
+    /// Enable or disable parallel processing (default: true)
     pub fn with_parallel(mut self, parallel: bool) -> Self {
         self.parallel = parallel;
         self
