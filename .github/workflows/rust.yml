@@ -185,7 +185,7 @@ jobs:
       - name: Download AlphaFold dataset
         run: |
           if [ ! -f UP000000625_83333_ECOLI_v4.tar ]; then
-            wget https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000000625_83333_ECOLI_v4.tar
+            wget https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
           fi
 
       - name: Run PGO profiling (Unix)
