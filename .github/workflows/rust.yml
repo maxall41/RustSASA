@@ -9,7 +9,6 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
-# Add permissions for the workflow
 permissions:
   contents: write # Required for creating releases
   actions: read
@@ -31,27 +30,8 @@ jobs:
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-index-
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-build-target-
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
 
   test:
     name: Test
@@ -68,32 +48,13 @@ jobs:
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-index-
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-build-target-
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
       - name: Run tests
         run: RUSTFLAGS=-Awarnings cargo test --verbose
 
-  build:
-    name: Build PGO optimized binaries
+  build: #TODO: Get PGO to work in CI/CD
+    name: Build Binaries
     needs: [quality, test]
     strategy:
       matrix:
@@ -119,154 +80,24 @@ jobs:
           toolchain: 1.88.0
           target: ${{ matrix.target }}
           override: true
-          components: llvm-tools-preview
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-index-
-      - name: Setup PGO directories and paths
-        shell: bash
-        run: |
-          # Create PGO profile directory
-          mkdir -p /tmp/pgo-data
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
 
-          # Find the correct llvm-profdata from rustup
-          RUSTUP_HOME=$(rustup show home)
-          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            LLVM_PROFDATA_PATH="$RUSTUP_HOME/toolchains/1.88.0-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/llvm-profdata"
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            LLVM_PROFDATA_PATH="$RUSTUP_HOME/toolchains/1.88.0-x86_64-apple-darwin/lib/rustlib/x86_64-apple-darwin/bin/llvm-profdata"
-          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            LLVM_PROFDATA_PATH="$RUSTUP_HOME/toolchains/1.88.0-x86_64-pc-windows-msvc/lib/rustlib/x86_64-pc-windows-msvc/bin/llvm-profdata.exe"
-          fi
+      - name: Build release binary
+        run: cargo build --verbose --release --target ${{ matrix.target }}
 
-          echo "LLVM_PROFDATA_PATH=$LLVM_PROFDATA_PATH" >> $GITHUB_ENV
-          echo "PGO_DATA_DIR=/tmp/pgo-data" >> $GITHUB_ENV
-
-          # Verify the tool exists
-          if [[ -f "$LLVM_PROFDATA_PATH" ]]; then
-            echo "✓ Found llvm-profdata at: $LLVM_PROFDATA_PATH"
-          else
-            echo "✗ llvm-profdata not found at: $LLVM_PROFDATA_PATH"
-            echo "Searching for llvm-profdata..."
-            find "$RUSTUP_HOME" -name "llvm-profdata*" -type f 2>/dev/null || echo "No llvm-profdata found"
-          fi
-
-      - name: Step 1 - Build instrumented binary
-        shell: bash
-        run: |
-          echo "Building instrumented binary..."
-          RUSTFLAGS="-Cprofile-generate=${{ env.PGO_DATA_DIR }}" \
-            cargo build --release --target ${{ matrix.target }}
-
-      - name: Create temp output directory
-        run: mkdir temp_out
-
-      - name: Cache AlphaFold dataset
-        uses: actions/cache@v4
-        with:
-          path: UP000000625_83333_ECOLI_v4.tar
-          key: alphafold-UP000000625_83333_ECOLI_v4-dataset
-
-      - name: Download AlphaFold dataset
-        shell: bash
-        run: |
-          if [ ! -f UP000000625_83333_ECOLI_v4.tar ]; then
-            curl -L -o UP000000625_83333_ECOLI_v4.tar https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
-          fi
-
-      - name: Step 2 - Run instrumented binary (Unix)
-        if: matrix.os != 'windows-latest'
-        shell: bash
-        run: |
-          echo "Preparing test data..."
-          mkdir -p UP000000625_83333_ECOLI_v4/
-          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
-          rm -rf UP000000625_83333_ECOLI_v4/*.cif
-          gunzip UP000000625_83333_ECOLI_v4/*.gz
-
-          echo "Running instrumented binary..."
-          ./target/${{ matrix.target }}/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-
-          echo "Profile files generated:"
-          ls -la ${{ env.PGO_DATA_DIR }}/ || echo "No profile files found"
-
-      - name: Step 2 - Run instrumented binary (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: powershell
-        run: |
-          Write-Host "Preparing test data..."
-          mkdir UP000000625_83333_ECOLI_v4/
-          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
-          Remove-Item -Path "UP000000625_83333_ECOLI_v4/*.cif" -Force -ErrorAction SilentlyContinue
-          Get-ChildItem -Path "UP000000625_83333_ECOLI_v4" -Filter "*.gz" | ForEach-Object {
-              & "C:\Program Files\7-Zip\7z.exe" x $_.FullName -o"$(Split-Path $_.FullName -Parent)" -y | Out-Null
-              Remove-Item $_.FullName
-          }
-
-          Write-Host "Running instrumented binary..."
-          & "target\${{ matrix.target }}\release\rust-sasa.exe" UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-
-          Write-Host "Profile files generated:"
-          Get-ChildItem -Path "${{ env.PGO_DATA_DIR }}" -ErrorAction SilentlyContinue
-
-      - name: Step 3 - Merge profile data
-        shell: bash
-        run: |
-          echo "Merging profile data..."
-
-          # Count profile files
-          PROFILE_COUNT=$(find ${{ env.PGO_DATA_DIR }} -name "*.profraw" | wc -l)
-          echo "Found $PROFILE_COUNT .profraw files"
-
-          if [ $PROFILE_COUNT -eq 0 ]; then
-            echo "ERROR: No .profraw files found!"
-            exit 1
-          fi
-
-          # Merge profiles
-          "${{ env.LLVM_PROFDATA_PATH }}" merge -o ${{ env.PGO_DATA_DIR }}/merged.profdata ${{ env.PGO_DATA_DIR }}
-
-          # Verify merged profile
-          if [ -f "${{ env.PGO_DATA_DIR }}/merged.profdata" ]; then
-            echo "✓ Successfully created merged.profdata"
-            ls -la ${{ env.PGO_DATA_DIR }}/merged.profdata
-          else
-            echo "✗ Failed to create merged.profdata"
-            exit 1
-          fi
-
-      - name: Step 4 - Build optimized binary
-        shell: bash
-        run: |
-          echo "Building PGO-optimized binary..."
-          RUSTFLAGS="-Cprofile-use=${{ env.PGO_DATA_DIR }}/merged.profdata -Cllvm-args=-pgo-warn-missing-function" \
-            cargo build --release --target ${{ matrix.target }}
-
-      - name: Copy optimized binary (Unix)
+      - name: Copy binary for upload (Unix)
         if: matrix.os != 'windows-latest'
         run: |
           cp target/${{ matrix.target }}/release/rust-sasa ${{ matrix.name }}
-
-      - name: Copy optimized binary (Windows)
+      - name: Copy binary for upload (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           copy target\${{ matrix.target }}\release\rust-sasa.exe ${{ matrix.name }}
         shell: cmd
-
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
@@ -299,4 +130,5 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
