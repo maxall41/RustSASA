@@ -180,16 +180,6 @@ jobs:
           rm -rf UP000000625_83333_ECOLI_v4/*.cif
           gunzip UP000000625_83333_ECOLI_v4/*.gz
 
-          # Debug: Show all LLVM tools available
-          echo "=== Available LLVM tools ==="
-          echo "Rust version: $(rustc --version)"
-          echo "Rust sysroot: $(rustc --print sysroot)"
-
-          # Find all llvm-profdata binaries
-          echo "=== All llvm-profdata locations ==="
-          find $(rustc --print sysroot) -name "llvm-profdata*" -type f 2>/dev/null || true
-          which llvm-profdata || echo "No llvm-profdata in PATH"
-
           # Find the correct llvm-profdata from Rust toolchain
           RUST_SYSROOT=$(rustc --print sysroot)
           LLVM_PROFDATA=$(find "$RUST_SYSROOT" -name "llvm-profdata*" -type f | grep -E "lib/rustlib/[^/]+/bin" | head -1)
@@ -199,24 +189,20 @@ jobs:
             exit 1
           fi
 
-          echo "=== Selected llvm-profdata ==="
-          echo "Path: $LLVM_PROFDATA"
-          echo "Version: $($LLVM_PROFDATA --version)"
+          echo "Using llvm-profdata: $LLVM_PROFDATA"
+          echo "LLVM version: $($LLVM_PROFDATA --version)"
 
-          # Export the path so cargo-pgo uses it
-          export LLVM_PROFDATA
-          export CARGO_PGO_LLVM_PROFDATA=$LLVM_PROFDATA
+          # Build with manual PGO instrumentation
+          echo "Building instrumented binary..."
+          RUSTFLAGS="-Cprofile-generate=/tmp/pgo-data -Cllvm-args=-pgo-instr-format=8" cargo build --release --target ${{ matrix.target }}
 
-          # Debug: Check what cargo-pgo will use
-          echo "=== cargo-pgo info ==="
-          cargo pgo info
+          # Run the instrumented binary
+          echo "Running instrumented binary..."
+          ./target/${{ matrix.target }}/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
 
-          # Debug: Show environment
-          echo "=== Environment variables ==="
-          env | grep -E "(LLVM|RUST|CARGO)" | sort
-
-          echo "=== Running PGO instrumented build ==="
-          cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          # Merge profile data
+          echo "Merging profile data..."
+          $LLVM_PROFDATA merge -o ./merged.profdata /tmp/pgo-data
 
       - name: Optimize with PGO
         if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
@@ -227,17 +213,8 @@ jobs:
         if: matrix.os == 'macos-14'
         shell: bash
         run: |
-          # Find the correct llvm-profdata from Rust toolchain
-          RUST_SYSROOT=$(rustc --print sysroot)
-          LLVM_PROFDATA=$(find "$RUST_SYSROOT" -name "llvm-profdata*" -type f | grep -E "lib/rustlib/[^/]+/bin" | head -1)
-
-          export LLVM_PROFDATA
-          export CARGO_PGO_LLVM_PROFDATA=$LLVM_PROFDATA
-
-          echo "=== Optimizing with PGO ==="
-          echo "Using llvm-profdata: $LLVM_PROFDATA"
-
-          cargo pgo optimize build -- --target ${{ matrix.target }}
+          echo "Building optimized binary with PGO..."
+          RUSTFLAGS="-Cprofile-use=./merged.profdata -Cllvm-args=-pgo-instr-format=8" cargo build --release --target ${{ matrix.target }}
 
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
