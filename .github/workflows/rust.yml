@@ -12,61 +12,61 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  quality:
-    name: Code Quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # quality: # Disabled till we can stop using pdbtbx/ git sub module
+  #   name: Code Quality
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: 1.88.0
-          components: rustfmt, clippy
+  #     - name: Setup Rust
+  #       uses: actions-rust-lang/setup-rust-toolchain@v1
+  #       with:
+  #         toolchain: 1.88.0
+  #         components: rustfmt, clippy
 
-      - name: Get submodules
-        run: |
-          git submodule update --init --recursive
+  #     - name: Get submodules
+  #       run: |
+  #         git submodule update --init --recursive
 
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
+  #     - name: Cache cargo registry
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: ~/.cargo/registry
+  #         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-cargo-registry-
 
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-index-
+  #     - name: Cache cargo index
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: ~/.cargo/git
+  #         key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-cargo-index-
 
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-build-target-
+  #     - name: Cache cargo build
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: target
+  #         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-cargo-build-target-
 
-      # Disabled till we can stop using pdbtbx/ git sub module
-      # - name: Check formatting
-      #   run: cargo fmt --all -- --check
+  #     # Disabled till we can stop using pdbtbx/ git sub module
+  #     # - name: Check formatting
+  #     #   run: cargo fmt --all -- --check
 
-      # - name: Run clippy
-      #   run: |
-      #     cargo clippy
+  #     # - name: Run clippy
+  #     #   run: |
+  #     #     cargo clippy
 
-      - name: Check documentation
-        run: cargo doc --no-deps --document-private-items --all-features
-        env:
-          RUSTDOCFLAGS: "-D warnings"
+  #     - name: Check documentation
+  #       run: cargo doc --no-deps --document-private-items --all-features
+  #       env:
+  #         RUSTDOCFLAGS: "-D warnings"
 
-      - name: Check compilation
-        run: cargo check --all-targets --all-features
+  #     - name: Check compilation
+  #       run: cargo check --all-targets --all-features
 
   test:
     name: Test
