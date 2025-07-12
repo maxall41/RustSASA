@@ -118,14 +118,10 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 ## License
 MIT
 
-## Latest update (0.3.0)
+## Latest update (0.3.1)
 
-- 🔥 ~12X Faster
-- 🤖 Implemented Command-line interface (CLI)!
-- 🧪 Better tests
-- 🆙 Upgraded packages
-- 🦀 Upgraded to Rust Edition 2024
-- ⛓️‍💥 BREAKING: New SASAOptions interface replaces calculate_sasa!
+- ⚡️ Slightly faster due to memory allocation optimization
+- PGO Builds
 
 Also see [changelog](https://github.com/maxall41/rustsasa/blob/master/CHANGELOG.md).
 
