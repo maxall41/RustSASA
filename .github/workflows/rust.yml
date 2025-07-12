@@ -146,8 +146,8 @@ jobs:
           git submodule update --init --recursive
 
       - name: Add Rust tools to path
-        run: echo "$(rustc --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin" >> $GITHUB_PATH
-        if: runner.os == 'Linux'
+        run: echo "$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin" >> $GITHUB_PATH
+        if: runner.os == 'Linux' || runner.os == 'macOS'
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -174,9 +174,27 @@ jobs:
       - name: Create temp output directory
         run: mkdir temp_out
 
+      - name: Cache AlphaFold dataset
+        uses: actions/cache@v4
+        with:
+          path: UP000000625_83333_ECOLI_v4.tar
+          key: alphafold-UP000000625_83333_ECOLI_v4-dataset
+          restore-keys: |
+            alphafold-UP000000625_83333_ECOLI_v4-dataset
+
+      - name: Download AlphaFold dataset
+        run: |
+          if [ ! -f UP000000625_83333_ECOLI_v4.tar ]; then
+            wget https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000000625_83333_ECOLI_v4.tar
+          fi
+
       - name: Run PGO profiling (Unix)
         if: matrix.os != 'windows-latest'
         run: |
+          mkdir UP000000625_83333_ECOLI_v4/
+          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
+          rm -rf  UP000000625_83333_ECOLI_v4/*.cif
+          gunzip UP000000625_83333_ECOLI_v4/*.gz
           LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw" cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
         env:
           LLVM_PROFILE_FILE: "rust-sasa-%p-%m.profraw"
@@ -185,6 +203,14 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           $env:LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw"
+          mkdir UP000000625_83333_ECOLI_v4/
+          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
+          rm -rf  UP000000625_83333_ECOLI_v4/*.cif
+          # Decompress .gz files using 7-Zip, similar to gunzip on Linux
+          Get-ChildItem -Path "UP000000625_83333_ECOLI_v4" -Filter "*.gz" | ForEach-Object {
+              & "C:\Program Files\7-Zip\7z.exe" x $_.FullName -o"$(Split-Path $_.FullName -Parent)" -y | Out-Null
+              Remove-Item $_.FullName # Remove the original .gz file
+          }
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
         shell: powershell
 
