@@ -197,15 +197,21 @@ jobs:
       - name: Run PGO profiling (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          # Set the dynamic library path for macOS to ensure the correct LLVM runtime is found
+          # Use Rust's LLVM tools explicitly
+          RUST_SYSROOT="$(rustc --print sysroot)"
+          export PATH="$RUST_SYSROOT/lib/rustlib/${{ matrix.target }}/bin:$PATH"
+
           if [ "${{ runner.os }}" == "macOS" ]; then
-            export DYLD_LIBRARY_PATH="$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/lib"
+            export DYLD_LIBRARY_PATH="$RUST_SYSROOT/lib/rustlib/${{ matrix.target }}/lib:$DYLD_LIBRARY_PATH"
+            # Ensure we use Rust's LLVM tools, not system ones
+            export LLVM_PROFDATA="$RUST_SYSROOT/lib/rustlib/${{ matrix.target }}/bin/llvm-profdata"
           fi
+
           mkdir UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
-          rm -rf  UP000000625_83333_ECOLI_v4/*.cif
+          rm -rf UP000000625_83333_ECOLI_v4/*.cif
           gunzip UP000000625_83333_ECOLI_v4/*.gz
-          LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw" cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
         env:
           LLVM_PROFILE_FILE: "rust-sasa-%p-%m.profraw"
 
