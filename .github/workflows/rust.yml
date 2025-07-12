@@ -142,7 +142,7 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-          components: llvm-tools-preview
+          components: llvm-tools-preview ${{ matrix.target }}
 
       - name: Get submodules
         run: |
