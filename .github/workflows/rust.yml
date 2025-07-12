@@ -132,7 +132,7 @@ jobs:
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
         with:
-          version: "18.0"
+          version: "20.0"
 
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
