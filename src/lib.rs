@@ -1,4 +1,12 @@
 //! RustSASA is a Rust library for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm.
+//! Example:
+//! ```rust
+//! use pdbtbx::StrictnessLevel;
+//! use rust_sasa::options::{SASAOptions, ResidueLevel};
+//!
+//! let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
+//! let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
+//! ```
 pub mod options;
 // Re-export the new level types and processor trait
 pub use options::{AtomLevel, ChainLevel, ProteinLevel, ResidueLevel, SASAProcessor};
@@ -135,7 +143,6 @@ impl SpatialGrid {
         }
     }
 
-    #[inline(never)]
     fn locate_within_distance(
         &self,
         point: [f32; 3],
@@ -188,7 +195,6 @@ impl SpatialGrid {
 }
 
 /// Generates points on a sphere using the Golden Section Spiral algorithm
-#[inline(never)]
 fn generate_sphere_points(n_points: usize) -> Vec<Vector3<f32>> {
     let mut points = Vec::with_capacity(n_points);
 
@@ -219,11 +225,10 @@ fn generate_sphere_points(n_points: usize) -> Vec<Vector3<f32>> {
 
 #[repr(C)]
 struct NeighborData {
-    threshold_squared: f32, // 4 bytes - put smaller field first
-    idx: usize,             // 8 bytes
+    threshold_squared: f32,
+    idx: u32,
 }
 
-#[inline(never)]
 fn is_accessible_precomputed(
     test_point: &Point3<f32>,
     atom: &Atom,
@@ -234,7 +239,7 @@ fn is_accessible_precomputed(
     // and better cache utilization.
     // let mut neighbors_iter = neighbors.chunks_exact(2);
     for neighbor_data in neighbors {
-        let neighbor = &atoms[neighbor_data.idx];
+        let neighbor = &atoms[neighbor_data.idx as usize];
         if atom.id != neighbor.id {
             // Manual distance calculation is faster than nalgebra's norm_squared
             let pos = neighbor.position.coords.xyz();
@@ -280,7 +285,7 @@ fn precompute_neighbors(
             let neighbor = &atoms[idx];
             let threshold = neighbor.radius + probe_radius;
             neighbor_data.push(NeighborData {
-                idx,
+                idx: idx as u32,
                 threshold_squared: threshold * threshold,
             });
         }
@@ -314,7 +319,6 @@ fn precompute_neighbors(
 ///  }
 ///  let sasa = calculate_sasa_internal(&atoms, 1.4, 100,true);
 /// ```
-#[inline(never)]
 pub fn calculate_sasa_internal(
     atoms: &[Atom],
     probe_radius: f32,
