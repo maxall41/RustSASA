@@ -1,33 +1,29 @@
 name: Rust
-
 on:
   push:
     branches: ["main"]
     tags: ["v*"]
   pull_request:
     branches: ["main"]
-
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-
 jobs:
   quality:
     name: Code Quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.88.0
+          profile: minimal
+          override: true
           components: rustfmt, clippy
-
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -35,7 +31,6 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-
       - name: Cache cargo index
         uses: actions/cache@v4
         with:
@@ -43,7 +38,6 @@ jobs:
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-index-
-
       - name: Cache cargo build
         uses: actions/cache@v4
         with:
@@ -51,22 +45,6 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-target-
-
-      # Disabled till we can stop using pdbtbx/ git sub module
-      # - name: Check formatting
-      #   run: cargo fmt --all -- --check
-
-      # - name: Run clippy
-      #   run: |
-      #     cargo clippy
-
-      # - name: Check documentation
-      #   run: cargo doc --no-deps --document-private-items --all-features
-      #   env:
-      #     RUSTDOCFLAGS: "-D warnings"
-
-      # - name: Check compilation
-      #   run: cargo check --all-targets --all-features
 
   test:
     name: Test
@@ -74,16 +52,15 @@ jobs:
     needs: quality
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.88.0
-
+          profile: minimal
+          override: true
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -91,7 +68,6 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-
       - name: Cache cargo index
         uses: actions/cache@v4
         with:
@@ -99,7 +75,6 @@ jobs:
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-index-
-
       - name: Cache cargo build
         uses: actions/cache@v4
         with:
@@ -107,7 +82,6 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-target-
-
       - name: Run tests
         run: RUSTFLAGS=-Awarnings cargo test --verbose
 
@@ -123,37 +97,25 @@ jobs:
           - target: x86_64-apple-darwin
             os: macos-latest
             name: rust-sasa-macos-x86_64
-          # - target: aarch64-apple-darwin
-          #   os: macos-latest
-          #   name: rust-sasa-macos-aarch64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            name: rust-sasa-macos-aarch64
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             name: rust-sasa-windows-x86_64.exe
-          # - target: aarch64-unknown-linux-gnu
-          #   os: ubuntu-latest
-          #   name: rust-sasa-linux-aarch64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.88.0
           target: ${{ matrix.target }}
+          override: true
           components: llvm-tools-preview
-          rustflags: ""
-
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-
-      - name: Set LLVM tools path
-        if: runner.os == 'Linux' || runner.os == 'macOS'
-        run: |
-          RUST_LLVM_PATH="$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin"
-          echo "$RUST_LLVM_PATH" >> $GITHUB_PATH
-
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -161,7 +123,6 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-
       - name: Cache cargo index
         uses: actions/cache@v4
         with:
@@ -169,82 +130,58 @@ jobs:
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-index-
-
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
-
       - name: Build initial binary for PGO
         run: cargo pgo build -- --target ${{ matrix.target }}
-
       - name: Create temp output directory
         run: mkdir temp_out
-
       - name: Cache AlphaFold dataset
         uses: actions/cache@v4
         with:
           path: UP000000625_83333_ECOLI_v4.tar
           key: alphafold-UP000000625_83333_ECOLI_v4-dataset
-          restore-keys: |
-            alphafold-UP000000625_83333_ECOLI_v4-dataset
-
       - name: Download AlphaFold dataset
         shell: bash
         run: |
           if [ ! -f UP000000625_83333_ECOLI_v4.tar ]; then
             curl -L -o UP000000625_83333_ECOLI_v4.tar https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
           fi
-
       - name: Run PGO profiling (Unix)
         if: matrix.os != 'windows-latest'
+        env:
+          LLVM_PROFILE_FILE: "rust-sasa-%p-%m.profraw"
         run: |
-          # Use Rust's LLVM tools explicitly
-          RUST_SYSROOT="$(rustc --print sysroot)"
-          export PATH="$RUST_SYSROOT/lib/rustlib/${{ matrix.target }}/bin:$PATH"
-
-          if [ "${{ runner.os }}" == "macOS" ]; then
-            export DYLD_LIBRARY_PATH="$RUST_SYSROOT/lib/rustlib/${{ matrix.target }}/lib:$DYLD_LIBRARY_PATH"
-            # Ensure we use Rust's LLVM tools, not system ones
-            export LLVM_PROFDATA="$RUST_SYSROOT/lib/rustlib/${{ matrix.target }}/bin/llvm-profdata"
-          fi
-
-          mkdir UP000000625_83333_ECOLI_v4/
+          mkdir -p UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf UP000000625_83333_ECOLI_v4/*.cif
           gunzip UP000000625_83333_ECOLI_v4/*.gz
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-        env:
-          LLVM_PROFILE_FILE: "rust-sasa-%p-%m.profraw"
-
       - name: Run PGO profiling (Windows)
         if: matrix.os == 'windows-latest'
+        shell: powershell
         run: |
           $env:LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw"
           mkdir UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           Remove-Item -Path "UP000000625_83333_ECOLI_v4/*.cif" -Force
-          # Decompress .gz files using 7-Zip, similar to gunzip on Linux
           Get-ChildItem -Path "UP000000625_83333_ECOLI_v4" -Filter "*.gz" | ForEach-Object {
               & "C:\Program Files\7-Zip\7z.exe" x $_.FullName -o"$(Split-Path $_.FullName -Parent)" -y | Out-Null
-              Remove-Item $_.FullName # Remove the original .gz file
+              Remove-Item $_.FullName
           }
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-        shell: powershell
-
       - name: Optimize with PGO
         run: |
           cargo pgo optimize build -- --target ${{ matrix.target }}
-
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
           cp target/${{ matrix.target }}/release/rust-sasa ${{ matrix.name }}
-
       - name: Copy optimized binary (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           copy target\${{ matrix.target }}\release\rust-sasa.exe ${{ matrix.name }}
         shell: cmd
-
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
@@ -259,21 +196,17 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
-
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
-
       - name: Display structure of downloaded files
         run: ls -la ./artifacts/
-
       - name: Prepare release files
         run: |
           mkdir -p ./release
           find ./artifacts -name "rust-sasa-*" -type f -exec cp {} ./release/ \;
           ls -la ./release/
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
