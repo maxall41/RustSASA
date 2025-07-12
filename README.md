@@ -95,7 +95,7 @@ cargo binstall rust-sasa
 
 ## Results:
 
-- RustSasa: *9.771 s ±  0.188 s*
+- RustSasa: *8.123 s ±  0.259 s*
 
 - Freesasa: *54.914 s ±  0.455 s*
 
