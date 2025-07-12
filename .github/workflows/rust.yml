@@ -129,6 +129,11 @@ jobs:
         with:
           toolchain: 1.88.0
           target: ${{ matrix.target }}
+          components: llvm-tools-preview
+
+      - name: Add Rust tools to path
+        run: echo "$(rustc --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin" >> $GITHUB_PATH
+        if: runner.os == 'Linux'
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -145,9 +150,6 @@ jobs:
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-index-
-
-      - name: Install LLVM tools
-        run: rustup component add llvm-tools-preview
 
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
