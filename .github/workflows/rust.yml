@@ -184,7 +184,9 @@ jobs:
         shell: powershell
 
       - name: Optimize with PGO
-        run: cargo pgo optimize build -- --target ${{ matrix.target }}
+        run: |
+          rustup component add llvm-tools-preview
+          cargo pgo optimize build -- --target ${{ matrix.target }}
 
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
