@@ -98,9 +98,9 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             name: x86_64-rust-sasa-linux-gnu
-          # - target: x86_64-apple-darwin
-          #   os: macos-latest
-          #   name: x86_64-rust-sasa-macos
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            name: x86_64-rust-sasa-macos
           # - target: aarch64-apple-darwin
           #   os: macos-latest
           #   name: aarch64-rust-sasa-macos
