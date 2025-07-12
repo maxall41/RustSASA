@@ -134,15 +134,6 @@ jobs:
         with:
           version: "20.1.0"
 
-      - name: Prioritize Rust toolchain's LLVM tools on macOS
-        if: runner.os == 'macOS'
-        run: |
-          LLVM_PROFDATA_PATH=$(find /Users/runner/work/RustSASA/RustSASA/llvm -name llvm-profdata)
-          echo "Found correct llvm-profdata at: $LLVM_PROFDATA_PATH"
-          LLVM_PROFDATA_DIR=$(dirname "$LLVM_PROFDATA_PATH")
-          echo "Adding '$LLVM_PROFDATA_DIR' to the front of GITHUB_PATH"
-          echo "$LLVM_PROFDATA_DIR" >> $GITHUB_PATH
-
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
 
@@ -159,14 +150,29 @@ jobs:
             curl -L -o UP000000625_83333_ECOLI_v4.tar https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
           fi
 
-      - name: Run PGO profiling (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Run PGO profiling (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           mkdir -p UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf UP000000625_83333_ECOLI_v4/*.cif
           gunzip UP000000625_83333_ECOLI_v4/*.gz
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+
+      - name: Run PGO profiling (MacOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          LLVM_PROFDATA_PATH=$(find $(rustc --print sysroot) -name llvm-profdata)
+          echo "MacOs: Found correct llvm-profdata at: $LLVM_PROFDATA_PATH"
+
+          mkdir -p UP000000625_83333_ECOLI_v4/
+          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
+          rm -rf UP000000625_83333_ECOLI_v4/*.cif
+          gunzip UP000000625_83333_ECOLI_v4/*.gz
+          RUSTFLAGS=-Cprofile-generate=/tmp/pgo-data cargo build
+          ./target/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          $LLVM_PROFDATA_PATH merge -o ./merged.profdata /tmp/pgo-data
+
       - name: Run PGO profiling (Windows)
         if: matrix.os == 'windows-latest'
         shell: powershell
@@ -186,8 +192,13 @@ jobs:
           find target -name "*.profraw" -o -name "*.profdata" 2>/dev/null || echo "No profile files found"
           ls -la target/pgo-profiles/ 2>/dev/null || echo "No pgo-profiles directory"
       - name: Optimize with PGO
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         run: |
           cargo pgo optimize build -- --target ${{ matrix.target }}
+      - name: Optimize with PGO (MacOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          RUSTFLAGS=-Cprofile-use=./merged.profdata cargo build --release
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
