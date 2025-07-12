@@ -120,7 +120,7 @@ jobs:
         shell: bash
         if: matrix.os == 'macos-14'
         run: |
-          rustup target add ${{ matrix.target }}
+          rustup target add stable-${{ matrix.target }}
           rustup component add rust-src --toolchain nightly
           rustup toolchain install ${{ matrix.target }} --force-non-host
           rustup component add llvm-tools-preview
