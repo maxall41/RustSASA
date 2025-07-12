@@ -173,6 +173,7 @@ jobs:
           gunzip UP000000625_83333_ECOLI_v4/*.gz
           RUSTFLAGS=-Cprofile-generate=/tmp/pgo-data cargo build --release
           /Users/runner/work/RustSASA/RustSASA/target/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          echo "Merging profile data"
           $LLVM_PROFDATA_PATH merge -o ./merged.profdata /tmp/pgo-data
 
       - name: Run PGO profiling (Windows)
