@@ -8,6 +8,13 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+
+# Add permissions for the workflow
+permissions:
+  contents: write # Required for creating releases
+  actions: read
+  checks: read
+
 jobs:
   quality:
     name: Code Quality
@@ -130,43 +137,50 @@ jobs:
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-index-
-      - name: Setup LLVM tools path
+      - name: Setup PGO directories and paths
         shell: bash
         run: |
+          # Create PGO profile directory
+          mkdir -p /tmp/pgo-data
+
           # Find the correct llvm-profdata from rustup
-          RUSTUP_TOOLCHAIN_PATH=$(rustup show home)/toolchains/1.88.0-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            RUSTUP_TOOLCHAIN_PATH=$(rustup show home)/toolchains/1.88.0-x86_64-apple-darwin/lib/rustlib/x86_64-apple-darwin/bin
+          RUSTUP_HOME=$(rustup show home)
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            LLVM_PROFDATA_PATH="$RUSTUP_HOME/toolchains/1.88.0-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/llvm-profdata"
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            LLVM_PROFDATA_PATH="$RUSTUP_HOME/toolchains/1.88.0-x86_64-apple-darwin/lib/rustlib/x86_64-apple-darwin/bin/llvm-profdata"
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            RUSTUP_TOOLCHAIN_PATH=$(rustup show home)/toolchains/1.88.0-x86_64-pc-windows-msvc/lib/rustlib/x86_64-pc-windows-msvc/bin
+            LLVM_PROFDATA_PATH="$RUSTUP_HOME/toolchains/1.88.0-x86_64-pc-windows-msvc/lib/rustlib/x86_64-pc-windows-msvc/bin/llvm-profdata.exe"
           fi
 
-          # Set the environment variable for cargo-pgo
-          echo "LLVM_PROFDATA=$RUSTUP_TOOLCHAIN_PATH/llvm-profdata" >> $GITHUB_ENV
-          echo "PATH=$RUSTUP_TOOLCHAIN_PATH:$PATH" >> $GITHUB_ENV
-      - name: Install cargo-pgo
-        run: cargo install cargo-pgo
-      - name: Verify LLVM tools
+          echo "LLVM_PROFDATA_PATH=$LLVM_PROFDATA_PATH" >> $GITHUB_ENV
+          echo "PGO_DATA_DIR=/tmp/pgo-data" >> $GITHUB_ENV
+
+          # Verify the tool exists
+          if [[ -f "$LLVM_PROFDATA_PATH" ]]; then
+            echo "✓ Found llvm-profdata at: $LLVM_PROFDATA_PATH"
+          else
+            echo "✗ llvm-profdata not found at: $LLVM_PROFDATA_PATH"
+            echo "Searching for llvm-profdata..."
+            find "$RUSTUP_HOME" -name "llvm-profdata*" -type f 2>/dev/null || echo "No llvm-profdata found"
+          fi
+
+      - name: Step 1 - Build instrumented binary
         shell: bash
         run: |
-          echo "LLVM_PROFDATA path: $LLVM_PROFDATA"
-          if [[ -f "$LLVM_PROFDATA" ]]; then
-            echo "✓ llvm-profdata found"
-            $LLVM_PROFDATA --version || echo "Could not get version"
-          else
-            echo "✗ llvm-profdata not found at expected location"
-            # Fallback: try to find it
-            find $(rustup show home) -name "llvm-profdata*" -type f 2>/dev/null || echo "No llvm-profdata found"
-          fi
-      - name: Build initial binary for PGO
-        run: cargo pgo build -- --target ${{ matrix.target }}
+          echo "Building instrumented binary..."
+          RUSTFLAGS="-Cprofile-generate=${{ env.PGO_DATA_DIR }}" \
+            cargo build --release --target ${{ matrix.target }}
+
       - name: Create temp output directory
         run: mkdir temp_out
+
       - name: Cache AlphaFold dataset
         uses: actions/cache@v4
         with:
           path: UP000000625_83333_ECOLI_v4.tar
           key: alphafold-UP000000625_83333_ECOLI_v4-dataset
+
       - name: Download AlphaFold dataset
         shell: bash
         run: |
@@ -174,18 +188,27 @@ jobs:
             curl -L -o UP000000625_83333_ECOLI_v4.tar https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
           fi
 
-      - name: Run PGO profiling (Unix)
+      - name: Step 2 - Run instrumented binary (Unix)
         if: matrix.os != 'windows-latest'
+        shell: bash
         run: |
+          echo "Preparing test data..."
           mkdir -p UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf UP000000625_83333_ECOLI_v4/*.cif
           gunzip UP000000625_83333_ECOLI_v4/*.gz
-          cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-      - name: Run PGO profiling (Windows)
+
+          echo "Running instrumented binary..."
+          ./target/${{ matrix.target }}/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+
+          echo "Profile files generated:"
+          ls -la ${{ env.PGO_DATA_DIR }}/ || echo "No profile files found"
+
+      - name: Step 2 - Run instrumented binary (Windows)
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
+          Write-Host "Preparing test data..."
           mkdir UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           Remove-Item -Path "UP000000625_83333_ECOLI_v4/*.cif" -Force -ErrorAction SilentlyContinue
@@ -193,25 +216,57 @@ jobs:
               & "C:\Program Files\7-Zip\7z.exe" x $_.FullName -o"$(Split-Path $_.FullName -Parent)" -y | Out-Null
               Remove-Item $_.FullName
           }
-          cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-      - name: Debug PGO profiles
+
+          Write-Host "Running instrumented binary..."
+          & "target\${{ matrix.target }}\release\rust-sasa.exe" UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+
+          Write-Host "Profile files generated:"
+          Get-ChildItem -Path "${{ env.PGO_DATA_DIR }}" -ErrorAction SilentlyContinue
+
+      - name: Step 3 - Merge profile data
         shell: bash
         run: |
-          echo "Checking for profile files..."
-          find target -name "*.profraw" -o -name "*.profdata" 2>/dev/null || echo "No profile files found"
-          ls -la target/pgo-profiles/ 2>/dev/null || echo "No pgo-profiles directory"
-      - name: Optimize with PGO
+          echo "Merging profile data..."
+
+          # Count profile files
+          PROFILE_COUNT=$(find ${{ env.PGO_DATA_DIR }} -name "*.profraw" | wc -l)
+          echo "Found $PROFILE_COUNT .profraw files"
+
+          if [ $PROFILE_COUNT -eq 0 ]; then
+            echo "ERROR: No .profraw files found!"
+            exit 1
+          fi
+
+          # Merge profiles
+          "${{ env.LLVM_PROFDATA_PATH }}" merge -o ${{ env.PGO_DATA_DIR }}/merged.profdata ${{ env.PGO_DATA_DIR }}
+
+          # Verify merged profile
+          if [ -f "${{ env.PGO_DATA_DIR }}/merged.profdata" ]; then
+            echo "✓ Successfully created merged.profdata"
+            ls -la ${{ env.PGO_DATA_DIR }}/merged.profdata
+          else
+            echo "✗ Failed to create merged.profdata"
+            exit 1
+          fi
+
+      - name: Step 4 - Build optimized binary
+        shell: bash
         run: |
-          cargo pgo optimize build -- --target ${{ matrix.target }}
+          echo "Building PGO-optimized binary..."
+          RUSTFLAGS="-Cprofile-use=${{ env.PGO_DATA_DIR }}/merged.profdata -Cllvm-args=-pgo-warn-missing-function" \
+            cargo build --release --target ${{ matrix.target }}
+
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
           cp target/${{ matrix.target }}/release/rust-sasa ${{ matrix.name }}
+
       - name: Copy optimized binary (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           copy target\${{ matrix.target }}\release\rust-sasa.exe ${{ matrix.name }}
         shell: cmd
+
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
@@ -238,11 +293,10 @@ jobs:
           find ./artifacts -name "rust-sasa-*" -type f -exec cp {} ./release/ \;
           ls -la ./release/
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: ./release/*
           draft: false
           prerelease: false
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
