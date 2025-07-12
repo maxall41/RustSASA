@@ -24,8 +24,27 @@ jobs:
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-      - name: Cache cargo artifacts
-        uses: Swatinem/rust-cache@v2
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-index-
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-target-
 
   test:
     name: Test
@@ -42,13 +61,32 @@ jobs:
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-      - name: Cache cargo artifacts
-        uses: Swatinem/rust-cache@v2
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-index-
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-target-
       - name: Run tests
         run: RUSTFLAGS=-Awarnings cargo test --verbose
 
-  build: #TODO: Get PGO to work in CI/CD
-    name: Build Binaries
+  build:
+    name: Build PGO optimized binaries
     needs: [quality, test]
     strategy:
       matrix:
@@ -74,20 +112,102 @@ jobs:
           toolchain: 1.88.0
           target: ${{ matrix.target }}
           override: true
+          components: llvm-tools-preview
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-      - name: Cache cargo artifacts
-        uses: Swatinem/rust-cache@v2
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-index-
+      - name: Setup LLVM tools path
+        shell: bash
+        run: |
+          # Find the correct llvm-profdata from rustup
+          RUSTUP_TOOLCHAIN_PATH=$(rustup show home)/toolchains/1.88.0-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            RUSTUP_TOOLCHAIN_PATH=$(rustup show home)/toolchains/1.88.0-x86_64-apple-darwin/lib/rustlib/x86_64-apple-darwin/bin
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            RUSTUP_TOOLCHAIN_PATH=$(rustup show home)/toolchains/1.88.0-x86_64-pc-windows-msvc/lib/rustlib/x86_64-pc-windows-msvc/bin
+          fi
 
-      - name: Build release binary
-        run: cargo build --verbose --release --target ${{ matrix.target }}
+          # Set the environment variable for cargo-pgo
+          echo "LLVM_PROFDATA=$RUSTUP_TOOLCHAIN_PATH/llvm-profdata" >> $GITHUB_ENV
+          echo "PATH=$RUSTUP_TOOLCHAIN_PATH:$PATH" >> $GITHUB_ENV
+      - name: Install cargo-pgo
+        run: cargo install cargo-pgo
+      - name: Verify LLVM tools
+        shell: bash
+        run: |
+          echo "LLVM_PROFDATA path: $LLVM_PROFDATA"
+          if [[ -f "$LLVM_PROFDATA" ]]; then
+            echo "✓ llvm-profdata found"
+            $LLVM_PROFDATA --version || echo "Could not get version"
+          else
+            echo "✗ llvm-profdata not found at expected location"
+            # Fallback: try to find it
+            find $(rustup show home) -name "llvm-profdata*" -type f 2>/dev/null || echo "No llvm-profdata found"
+          fi
+      - name: Build initial binary for PGO
+        run: cargo pgo build -- --target ${{ matrix.target }}
+      - name: Create temp output directory
+        run: mkdir temp_out
+      - name: Cache AlphaFold dataset
+        uses: actions/cache@v4
+        with:
+          path: UP000000625_83333_ECOLI_v4.tar
+          key: alphafold-UP000000625_83333_ECOLI_v4-dataset
+      - name: Download AlphaFold dataset
+        shell: bash
+        run: |
+          if [ ! -f UP000000625_83333_ECOLI_v4.tar ]; then
+            curl -L -o UP000000625_83333_ECOLI_v4.tar https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
+          fi
 
-      - name: Copy binary for upload (Unix)
+      - name: Run PGO profiling (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          mkdir -p UP000000625_83333_ECOLI_v4/
+          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
+          rm -rf UP000000625_83333_ECOLI_v4/*.cif
+          gunzip UP000000625_83333_ECOLI_v4/*.gz
+          cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+      - name: Run PGO profiling (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          mkdir UP000000625_83333_ECOLI_v4/
+          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
+          Remove-Item -Path "UP000000625_83333_ECOLI_v4/*.cif" -Force -ErrorAction SilentlyContinue
+          Get-ChildItem -Path "UP000000625_83333_ECOLI_v4" -Filter "*.gz" | ForEach-Object {
+              & "C:\Program Files\7-Zip\7z.exe" x $_.FullName -o"$(Split-Path $_.FullName -Parent)" -y | Out-Null
+              Remove-Item $_.FullName
+          }
+          cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+      - name: Debug PGO profiles
+        shell: bash
+        run: |
+          echo "Checking for profile files..."
+          find target -name "*.profraw" -o -name "*.profdata" 2>/dev/null || echo "No profile files found"
+          ls -la target/pgo-profiles/ 2>/dev/null || echo "No pgo-profiles directory"
+      - name: Optimize with PGO
+        run: |
+          cargo pgo optimize build -- --target ${{ matrix.target }}
+      - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
           cp target/${{ matrix.target }}/release/rust-sasa ${{ matrix.name }}
-      - name: Copy binary for upload (Windows)
+      - name: Copy optimized binary (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           copy target\${{ matrix.target }}\release\rust-sasa.exe ${{ matrix.name }}
