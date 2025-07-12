@@ -139,6 +139,7 @@ jobs:
           toolchain: 1.88.0
           target: ${{ matrix.target }}
           components: llvm-tools-preview
+          rustflags: ""
 
       - name: Get submodules
         run: |
@@ -168,7 +169,7 @@ jobs:
         run: cargo install cargo-pgo
 
       - name: Build initial binary for PGO
-        run: RUSTFLAGS=-Awarnings cargo pgo build -- --target ${{ matrix.target }}
+        run: cargo pgo build -- --target ${{ matrix.target }}
 
       - name: Create temp output directory
         run: mkdir temp_out
@@ -189,7 +190,7 @@ jobs:
 
       - name: Optimize with PGO
         run: |
-          RUSTFLAGS=-Awarnings cargo pgo optimize build -- --target ${{ matrix.target }}
+          cargo pgo optimize build -- --target ${{ matrix.target }}
 
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
