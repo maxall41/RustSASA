@@ -11,7 +11,7 @@ documentation = "https://docs.rs/rust-sasa/latest/rust_sasa/"
 rust-version = "1.85.0"
 
 [dependencies]
-pdbtbx = { git = 'https://github.com/maxall41/pdbtbx.git', rev = 'b590f92465e3b5cf2c7a9ea2c684472b4bd7d34f' }
+pdbtbx = { path = "pdbtbx", version = "0.12.0" }             # We have to use a git module because you cannot use a git+rev version in a published crate for some reason...
 nalgebra = "0.33.2"
 rayon = "1.10.0"
 snafu = "0.8.6"

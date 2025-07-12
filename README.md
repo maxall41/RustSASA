@@ -2,6 +2,7 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/maxall41/RustSASA/rust.yml)
 ![Crates.io Downloads (recent)](https://img.shields.io/crates/dr/rust-sasa)
 ![Crates.io License](https://img.shields.io/crates/l/rust-sasa)
+![rustc 1.85+](https://img.shields.io/badge/msrv-rustc_1.85+-red.svg)
 
 RustSASA is a **Rust library** for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm[1]. It can be used in place of Freesasa, Biopython, or any other SASA calculation library. You can us it directly in Rust or use our Python bindings! We also have a CLI if you prefer that.
 
@@ -18,9 +19,11 @@ RustSASA is a **Rust library** for computing the absolute solvent accessible sur
 
 ```rust
 use pdbtbx::StrictnessLevel;
-use rust_sasa::{Atom, calculate_sasa, calculate_sasa_internal, SASALevel};
+use rust_sasa::options::{SASAOptions, ResidueLevel};
+
 let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
-let result = calculate_sasa(&pdb,None,None,SASALevel::Residue);
+let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
+
 ```
 Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sasa/)
 
@@ -92,7 +95,7 @@ cargo binstall rust-sasa
 
 ## Results:
 
-- RustSasa: *9.771 s ±  0.188 s*
+- RustSasa: *8.123 s ±  0.259 s*
 
 - Freesasa: *54.914 s ±  0.455 s*
 
@@ -105,8 +108,10 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 
 # Validation against Freesasa
 
-![Comparing Freesasa and RustSasa on E. coli proteome](https://github.com/maxall41/RustSASA/blob/main/imgs/sasa_chain_comparison_E_coli.pdf)
-![Comparing Freesasa and RustSasa on Freesasa comparison dataset](https://github.com/maxall41/RustSASA/blob/main/imgs/sasa_chain_comparison_freesasa_ds.pdf)
+![Comparing Freesasa and RustSasa on E. coli proteome](https://github.com/maxall41/RustSASA/blob/main/imgs/sasa_chain_comparison_E_coli.svg)
+
+
+![Comparing Freesasa and RustSasa on Freesasa comparison dataset](https://github.com/maxall41/RustSASA/blob/main/imgs/sasa_chain_comparison_freesasa_ds.svg)
 
 # Other
 
