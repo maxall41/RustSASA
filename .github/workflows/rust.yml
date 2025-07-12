@@ -148,9 +148,11 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-      - name: Add Rust tools to path
-        run: echo "$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin" >> $GITHUB_PATH
+      - name: Set LLVM tools path
         if: runner.os == 'Linux' || runner.os == 'macOS'
+        run: |
+          echo "$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin" >> $GITHUB_PATH
+          echo "LLVM_CONFIG_PATH=$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin/llvm-config" >> $GITHUB_ENV
 
       - name: Cache cargo registry
         uses: actions/cache@v4
