@@ -132,7 +132,16 @@ jobs:
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
         with:
-          version: "20.0"
+          version: "20.1.0"
+
+      - name: Prioritize Rust toolchain's LLVM tools on macOS
+        if: runner.os == 'macOS'
+        run: |
+          LLVM_PROFDATA_PATH=$(find /Users/runner/work/RustSASA/RustSASA/llvm -name llvm-profdata)
+          echo "Found correct llvm-profdata at: $LLVM_PROFDATA_PATH"
+          LLVM_PROFDATA_DIR=$(dirname "$LLVM_PROFDATA_PATH")
+          echo "Adding '$LLVM_PROFDATA_DIR' to the front of GITHUB_PATH"
+          echo "$LLVM_PROFDATA_DIR" >> $GITHUB_PATH
 
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
