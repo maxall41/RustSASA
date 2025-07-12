@@ -146,6 +146,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-index-
 
+      - name: Install LLVM tools
+        run: rustup component add llvm-tools-preview
+
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
 
@@ -185,7 +188,6 @@ jobs:
 
       - name: Optimize with PGO
         run: |
-          rustup component add llvm-tools-preview
           cargo pgo optimize build -- --target ${{ matrix.target }}
 
       - name: Copy optimized binary (Unix)
