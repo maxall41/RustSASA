@@ -109,7 +109,7 @@ jobs:
             ${{ runner.os }}-cargo-build-target-
 
       - name: Run tests
-        run: cargo test --verbose
+        run: RUSTFLAGS=-Awarnings cargo test --verbose
 
   build:
     name: Build PGO optimized binaries
@@ -168,7 +168,7 @@ jobs:
         run: cargo install cargo-pgo
 
       - name: Build initial binary for PGO
-        run: cargo pgo build -- --target ${{ matrix.target }}
+        run: RUSTFLAGS=-Awarnings cargo pgo build -- --target ${{ matrix.target }}
 
       - name: Create temp output directory
         run: mkdir temp_out
@@ -203,7 +203,7 @@ jobs:
 
       - name: Optimize with PGO
         run: |
-          cargo pgo optimize build -- --target ${{ matrix.target }}
+          RUSTFLAGS=-Awarnings cargo pgo optimize build -- --target ${{ matrix.target }}
 
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
