@@ -98,40 +98,40 @@ jobs:
           - target: x86_64-unknown-linux-gnu # CONFIRMED WORKING
             os: ubuntu-latest
             name: x86_64-rust-sasa-linux-gnu
-          # - target: x86_64-apple-darwin
-          #   os: macos-latest
-          #   arch: x86
-          #   name: x86_64-rust-sasa-macos
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            name: aarch64-rust-sasa-macos
           - target: x86_64-pc-windows-msvc # CONFIRMED WORKING
             os: windows-latest
             name: rust-sasa-windows-x86_64.exe
-          # - target: aarch64-unknown-linux-gnu
-          #   os: ubuntu-latest
-          #   name: rust-sasa-linux-gnu-aarch64
-          # - target: aarch64-pc-windows-msvc
-          #   os: windows-latest
-          #   name: aarch64-rust-sasa-windows-msvc
+          - target: aarch64-apple-darwin
+            os: macos-14
+            name: rust-sasa-macos-aarch64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
+        if: matrix.os != "macos-14"
         with:
           toolchain: 1.88.0
           target: ${{ matrix.target }}
           override: true
           components: llvm-tools-preview
 
+      - name: Setup Rust Toolchain
+        shell: bash
+        if: matrix.os == "macos-14"
+        run: |
+          rustup target add ${{ inputs.target }}
+          rustup component add rust-src --toolchain nightly
+          rustup toolchain install ${{ matrix.target }} --force-non-host
+          rustup component add llvm-tools-preview
+
       - name: Get submodules
         run: |
           git submodule update --init --recursive
 
       - name: Install LLVM and Clang
-        if: matrix.os != 'macos-latest'
         uses: KyleMayes/install-llvm-action@v2
+        if: matrix.os != "macos-14"
         with:
           version: "20.1.0"
 
@@ -162,35 +162,6 @@ jobs:
           gunzip UP000000625_83333_ECOLI_v4/*.gz
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
 
-      - name: Run PGO profiling (MacOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          # Find llvm-profdata from the llvm-tools-preview component
-          RUST_SYSROOT=$(rustc --print sysroot)
-          LLVM_PROFDATA_PATH=$(find "$RUST_SYSROOT" -name llvm-profdata | grep -E "lib/rustlib/[^/]+/bin" | head -1)
-
-          if [ -z "$LLVM_PROFDATA_PATH" ]; then
-            echo "Error: Could not find llvm-profdata in Rust toolchain"
-            exit 1
-          fi
-
-          echo "MacOS: Using llvm-profdata at: $LLVM_PROFDATA_PATH"
-          echo "LLVM version: $($LLVM_PROFDATA_PATH --version)"
-
-          mkdir -p UP000000625_83333_ECOLI_v4/
-          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
-          rm -rf UP000000625_83333_ECOLI_v4/*.cif
-          gunzip UP000000625_83333_ECOLI_v4/*.gz
-
-          # Build with PGO instrumentation
-          RUSTFLAGS="-Cprofile-generate=/tmp/pgo-data" cargo build --release --target ${{ matrix.target }}
-
-          # Run the instrumented binary
-          ./target/${{ matrix.target }}/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-
-          echo "Merging profile data"
-          $LLVM_PROFDATA_PATH merge -o ./merged.profdata /tmp/pgo-data
-
       - name: Run PGO profiling (Windows)
         if: matrix.os == 'windows-latest'
         shell: powershell
@@ -203,20 +174,27 @@ jobs:
               Remove-Item $_.FullName
           }
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-      - name: Debug PGO profiles
+
+      - name: Run PGO profiling (MacOS)
+        if: matrix.os == 'macos-14'
         shell: bash
         run: |
-          echo "Checking for profile files..."
-          find target -name "*.profraw" -o -name "*.profdata" 2>/dev/null || echo "No profile files found"
-          ls -la target/pgo-profiles/ 2>/dev/null || echo "No pgo-profiles directory"
+          mkdir -p UP000000625_83333_ECOLI_v4/
+          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
+          rm -rf UP000000625_83333_ECOLI_v4/*.cif
+          gunzip UP000000625_83333_ECOLI_v4/*.gz
+
+          # target_libdir=$(rustc --print target-libdir)
+          # bin_dir=$(dirname "$target_libdir")/bin
+          # llvm_profdata_path=$(find "$bin_dir" -name "llvm-profdata*" | head -n 1)
+
+          cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+
       - name: Optimize with PGO
         if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         run: |
           cargo pgo optimize build -- --target ${{ matrix.target }}
-      - name: Optimize with PGO (MacOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          RUSTFLAGS="-Cprofile-use=./merged.profdata" cargo build --release --target ${{ matrix.target }}
+
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
