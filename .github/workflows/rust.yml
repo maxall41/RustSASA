@@ -151,8 +151,8 @@ jobs:
       - name: Set LLVM tools path
         if: runner.os == 'Linux' || runner.os == 'macOS'
         run: |
-          echo "$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin" >> $GITHUB_PATH
-          echo "LLVM_CONFIG_PATH=$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin/llvm-config" >> $GITHUB_ENV
+          RUST_LLVM_PATH="$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin"
+          echo "$RUST_LLVM_PATH" >> $GITHUB_PATH
 
       - name: Cache cargo registry
         uses: actions/cache@v4
