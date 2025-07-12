@@ -129,9 +129,9 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             name: rust-sasa-windows-x86_64.exe
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-            name: rust-sasa-linux-aarch64
+          # - target: aarch64-unknown-linux-gnu
+          #   os: ubuntu-latest
+          #   name: rust-sasa-linux-aarch64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -209,7 +209,7 @@ jobs:
           $env:LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw"
           mkdir UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
-          rm -rf  UP000000625_83333_ECOLI_v4/*.cif
+          Remove-Item -Path "UP000000625_83333_ECOLI_v4/*.cif" -Force
           # Decompress .gz files using 7-Zip, similar to gunzip on Linux
           Get-ChildItem -Path "UP000000625_83333_ECOLI_v4" -Filter "*.gz" | ForEach-Object {
               & "C:\Program Files\7-Zip\7z.exe" x $_.FullName -o"$(Split-Path $_.FullName -Parent)" -y | Out-Null
