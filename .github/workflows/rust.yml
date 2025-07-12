@@ -130,7 +130,7 @@ jobs:
           git submodule update --init --recursive
 
       - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v2
+        uses: maxall41/install-llvm-action-qx@v2
         with:
           version: "14.0"
 
