@@ -129,6 +129,9 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             name: rust-sasa-windows-x86_64.exe
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: rust-sasa-linux-aarch64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -186,7 +189,7 @@ jobs:
         shell: bash
         run: |
           if [ ! -f UP000000625_83333_ECOLI_v4.tar ]; then
-            wget https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
+            curl -L -o UP000000625_83333_ECOLI_v4.tar https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
           fi
 
       - name: Run PGO profiling (Unix)
