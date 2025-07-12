@@ -130,6 +130,7 @@ jobs:
           git submodule update --init --recursive
 
       - name: Install LLVM and Clang
+        if: matrix.os != 'macos-latest'
         uses: KyleMayes/install-llvm-action@v2
         with:
           version: "20.1.0"
@@ -164,15 +165,29 @@ jobs:
       - name: Run PGO profiling (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
-          LLVM_PROFDATA_PATH=$(find $(rustc --print sysroot) -name llvm-profdata)
-          echo "MacOs: Found correct llvm-profdata at: $LLVM_PROFDATA_PATH"
+          # Find llvm-profdata from the llvm-tools-preview component
+          RUST_SYSROOT=$(rustc --print sysroot)
+          LLVM_PROFDATA_PATH=$(find "$RUST_SYSROOT" -name llvm-profdata | grep -E "lib/rustlib/[^/]+/bin" | head -1)
+
+          if [ -z "$LLVM_PROFDATA_PATH" ]; then
+            echo "Error: Could not find llvm-profdata in Rust toolchain"
+            exit 1
+          fi
+
+          echo "MacOS: Using llvm-profdata at: $LLVM_PROFDATA_PATH"
+          echo "LLVM version: $($LLVM_PROFDATA_PATH --version)"
 
           mkdir -p UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf UP000000625_83333_ECOLI_v4/*.cif
           gunzip UP000000625_83333_ECOLI_v4/*.gz
-          RUSTFLAGS=-Cprofile-generate=/tmp/pgo-data cargo build --release
-          /Users/runner/work/RustSASA/RustSASA/target/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+
+          # Build with PGO instrumentation
+          RUSTFLAGS="-Cprofile-generate=/tmp/pgo-data" cargo build --release --target ${{ matrix.target }}
+
+          # Run the instrumented binary
+          ./target/${{ matrix.target }}/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+
           echo "Merging profile data"
           $LLVM_PROFDATA_PATH merge -o ./merged.profdata /tmp/pgo-data
 
@@ -201,7 +216,7 @@ jobs:
       - name: Optimize with PGO (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
-          RUSTFLAGS=-Cprofile-use=./merged.profdata cargo build --release
+          RUSTFLAGS="-Cprofile-use=./merged.profdata" cargo build --release --target ${{ matrix.target }}
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
