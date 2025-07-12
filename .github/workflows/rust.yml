@@ -176,11 +176,6 @@ jobs:
       - name: Run PGO profiling (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          wget https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000000625_83333_ECOLI_v4.tar
-          mkdir UP000000625_83333_ECOLI_v4/
-          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
-          rm -rf  UP000000625_83333_ECOLI_v4/*.cif
-          gunzip UP000000625_83333_ECOLI_v4/*.gz
           LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw" cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
         env:
           LLVM_PROFILE_FILE: "rust-sasa-%p-%m.profraw"
@@ -189,15 +184,6 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           $env:LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw"
-          wget https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000000625_83333_ECOLI_v4.tar
-          mkdir UP000000625_83333_ECOLI_v4/
-          tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
-          rm -rf  UP000000625_83333_ECOLI_v4/*.cif
-          # Decompress .gz files using 7-Zip, similar to gunzip on Linux
-          Get-ChildItem -Path "UP000000625_83333_ECOLI_v4" -Filter "*.gz" | ForEach-Object {
-              & "C:\Program Files\7-Zip\7z.exe" x $_.FullName -o"$(Split-Path $_.FullName -Parent)" -y | Out-Null
-              Remove-Item $_.FullName # Remove the original .gz file
-          }
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
         shell: powershell
 
