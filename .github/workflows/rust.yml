@@ -180,29 +180,40 @@ jobs:
           rm -rf UP000000625_83333_ECOLI_v4/*.cif
           gunzip UP000000625_83333_ECOLI_v4/*.gz
 
+          # Clean environment to avoid LLVM version conflicts
+          unset LLVM_PATH LLVM_CONFIG_PATH LLVM_PROFDATA
+
+          # Use local profile directory instead of /tmp
+          PGO_DATA_DIR="./pgo-profiles"
+          mkdir -p "$PGO_DATA_DIR"
+
           # Find the correct llvm-profdata from Rust toolchain
           RUST_SYSROOT=$(rustc --print sysroot)
           LLVM_PROFDATA=$(find "$RUST_SYSROOT" -name "llvm-profdata*" -type f | grep -E "lib/rustlib/[^/]+/bin" | head -1)
 
           if [ -z "$LLVM_PROFDATA" ]; then
-            echo "ERROR: Could not find llvm-profdata in Rust toolchain"
+            echo "Error: Could not find llvm-profdata in Rust toolchain"
             exit 1
           fi
 
           echo "Using llvm-profdata: $LLVM_PROFDATA"
           echo "LLVM version: $($LLVM_PROFDATA --version)"
+          echo "Profile directory: $PGO_DATA_DIR"
 
           # Build with manual PGO instrumentation
           echo "Building instrumented binary..."
-          RUSTFLAGS="-Cprofile-generate=/tmp/pgo-data -Cllvm-args=-pgo-instr-format=8" cargo build --release --target ${{ matrix.target }}
+          env -i PATH="$PATH" HOME="$HOME" CARGO_HOME="$CARGO_HOME" RUSTUP_HOME="$RUSTUP_HOME" \
+            RUSTFLAGS="-Cprofile-generate=$PGO_DATA_DIR" \
+            cargo build --release --target ${{ matrix.target }}
 
-          # Run the instrumented binary
+          # Run the instrumented binary in clean environment
           echo "Running instrumented binary..."
-          ./target/${{ matrix.target }}/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          env -i PATH="$PATH" HOME="$HOME" \
+            ./target/${{ matrix.target }}/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
 
           # Merge profile data
           echo "Merging profile data..."
-          $LLVM_PROFDATA merge -o ./merged.profdata /tmp/pgo-data
+          "$LLVM_PROFDATA" merge -o ./merged.profdata "$PGO_DATA_DIR"
 
       - name: Optimize with PGO
         if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
@@ -214,7 +225,7 @@ jobs:
         shell: bash
         run: |
           echo "Building optimized binary with PGO..."
-          RUSTFLAGS="-Cprofile-use=./merged.profdata -Cllvm-args=-pgo-instr-format=8" cargo build --release --target ${{ matrix.target }}
+          RUSTFLAGS="-Cprofile-use=./merged.profdata" cargo build --release --target ${{ matrix.target }}
 
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
