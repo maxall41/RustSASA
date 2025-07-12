@@ -171,10 +171,14 @@ jobs:
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf UP000000625_83333_ECOLI_v4/*.cif
           gunzip UP000000625_83333_ECOLI_v4/*.gz
-          RUSTFLAGS=-Cprofile-generate=/tmp/pgo-data cargo build
+          RUSTFLAGS=-Cprofile-generate=/tmp/pgo-data cargo build --release
+          echo "> ls /Users/runner/work/RustSASA/RustSASA/"
           ls /Users/runner/work/RustSASA/RustSASA/
+          echo "> ls /Users/runner/work/RustSASA/RustSASA/target/"
           ls /Users/runner/work/RustSASA/RustSASA/target/
+          echo "> ls /Users/runner/work/RustSASA/RustSASA/target/${{ matrix.target }}"
           ls /Users/runner/work/RustSASA/RustSASA/target/${{ matrix.target }}/
+          echo "> ls /Users/runner/work/RustSASA/RustSASA/target/${{ matrix.target }}/release/"
           ls /Users/runner/work/RustSASA/RustSASA/target/${{ matrix.target }}/release/
           /Users/runner/work/RustSASA/RustSASA/target/${{ matrix.target }}/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
           $LLVM_PROFDATA_PATH merge -o ./merged.profdata /tmp/pgo-data
