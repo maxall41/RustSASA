@@ -136,17 +136,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: stable
-          profile: minimal
-          override: true
-          components: llvm-tools-preview ${{ matrix.target }}
+          toolchain: 1.88.0
+          target: ${{ matrix.target }}
+          components: llvm-tools-preview
+          rustflags: ""
 
       - name: Get submodules
         run: |
           git submodule update --init --recursive
+
+      - name: Set LLVM tools path
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        run: |
+          echo "$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin" >> $GITHUB_PATH
+          echo "LLVM_CONFIG_PATH=$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/bin/llvm-config" >> $GITHUB_ENV
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -191,6 +197,10 @@ jobs:
       - name: Run PGO profiling (Unix)
         if: matrix.os != 'windows-latest'
         run: |
+          # Set the dynamic library path for macOS to ensure the correct LLVM runtime is found
+          if [ "${{ runner.os }}" == "macOS" ]; then
+            export DYLD_LIBRARY_PATH="$(rustc --print sysroot)/lib/rustlib/${{ matrix.target }}/lib"
+          fi
           mkdir UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf  UP000000625_83333_ECOLI_v4/*.cif
