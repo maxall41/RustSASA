@@ -149,8 +149,6 @@ jobs:
           fi
       - name: Run PGO profiling (Unix)
         if: matrix.os != 'windows-latest'
-        env:
-          LLVM_PROFILE_FILE: "rust-sasa-%p-%m.profraw"
         run: |
           mkdir -p UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
@@ -161,7 +159,6 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          $env:LLVM_PROFILE_FILE="rust-sasa-%p-%m.profraw"
           mkdir UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           Remove-Item -Path "UP000000625_83333_ECOLI_v4/*.cif" -Force
