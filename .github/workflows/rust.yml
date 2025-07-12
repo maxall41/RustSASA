@@ -106,11 +106,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
+        if: matrix.os != 'macos-14'
         with:
           toolchain: 1.88.0
           target: ${{ matrix.target }}
           override: true
           components: llvm-tools-preview
+
+      - name: Setup Rust Toolchain
+        shell: bash
+        if: matrix.os == 'macos-14'
+        run: |
+          rustup component add llvm-tools-preview
 
       - name: Get submodules
         run: |
@@ -118,6 +125,7 @@ jobs:
 
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
+        if: matrix.os != 'macos-14'
         with:
           version: "20.1.0"
 
@@ -159,12 +167,20 @@ jobs:
               Remove-Item $_.FullName
           }
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-
+      - name: Debug PGO profiles
+        shell: bash
+        run: |
+          echo "Checking for profile files..."
+          find target -name "*.profraw" -o -name "*.profdata" 2>/dev/null || echo "No profile files found"
+          ls -la target/pgo-profiles/ 2>/dev/null || echo "No pgo-profiles directory"
       - name: Optimize with PGO
         if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         run: |
           cargo pgo optimize build -- --target ${{ matrix.target }}
-
+      - name: Optimize with PGO (MacOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          RUSTFLAGS="-Cprofile-use=./merged.profdata" cargo build --release --target ${{ matrix.target }}
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
