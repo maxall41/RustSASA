@@ -95,16 +95,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: x86_64-unknown-linux-gnu
+          - target: x86_64-unknown-linux-gnu # CONFIRMED WORKING
             os: ubuntu-latest
             name: x86_64-rust-sasa-linux-gnu
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            name: x86_64-rust-sasa-macos
-          # - target: aarch64-apple-darwin
+          # - target: x86_64-apple-darwin
           #   os: macos-latest
-          #   name: aarch64-rust-sasa-macos
-          - target: x86_64-pc-windows-msvc
+          #   arch: x86
+          #   name: x86_64-rust-sasa-macos
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            name: aarch64-rust-sasa-macos
+          - target: x86_64-pc-windows-msvc # CONFIRMED WORKING
             os: windows-latest
             name: rust-sasa-windows-x86_64.exe
           # - target: aarch64-unknown-linux-gnu
@@ -131,7 +132,7 @@ jobs:
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
         with:
-          version: "10.0"
+          version: "14.0"
 
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
