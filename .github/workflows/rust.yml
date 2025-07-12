@@ -180,7 +180,7 @@ jobs:
           ls /Users/runner/work/RustSASA/RustSASA/target/${{ matrix.target }}/
           echo "> ls /Users/runner/work/RustSASA/RustSASA/target/${{ matrix.target }}/release/"
           ls /Users/runner/work/RustSASA/RustSASA/target/${{ matrix.target }}/release/
-          /Users/runner/work/RustSASA/RustSASA/target/${{ matrix.target }}/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          /Users/runner/work/RustSASA/RustSASA/target/release/rust-sasa UP000000625_83333_ECOLI_v4/ temp_out/ --format json
           $LLVM_PROFDATA_PATH merge -o ./merged.profdata /tmp/pgo-data
 
       - name: Run PGO profiling (Windows)
