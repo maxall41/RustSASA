@@ -103,7 +103,7 @@ jobs:
           #   arch: x86
           #   name: x86_64-rust-sasa-macos
           - target: aarch64-apple-darwin
-            os: macos-15
+            os: macos-latest
             name: aarch64-rust-sasa-macos
           - target: x86_64-pc-windows-msvc # CONFIRMED WORKING
             os: windows-latest
