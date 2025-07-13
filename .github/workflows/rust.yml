@@ -1,7 +1,7 @@
 name: Rust
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "radical"]
     tags: ["v*"]
   pull_request:
     branches: ["main"]
@@ -101,23 +101,19 @@ jobs:
           - target: x86_64-pc-windows-msvc # CONFIRMED WORKING
             os: windows-latest
             name: rust-sasa-windows-x86_64.exe
+          - target: aarch64-apple-darwin
+            os: macos-15
+            name: rust-sasa-aarch64-apple-darwin
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
-        if: matrix.os != 'macos-14'
         with:
           toolchain: 1.88.0
           target: ${{ matrix.target }}
           override: true
           components: llvm-tools-preview
-
-      - name: Setup Rust Toolchain
-        shell: bash
-        if: matrix.os == 'macos-14'
-        run: |
-          rustup component add llvm-tools-preview
 
       - name: Get submodules
         run: |
@@ -125,12 +121,15 @@ jobs:
 
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
-        if: matrix.os != 'macos-14'
         with:
           version: "20.1.0"
 
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
+
+      - name: Setup tmate session
+        if: matrix.os == 'macos-15'
+        uses: mxschmitt/action-tmate@v3
 
       - name: Build initial binary for PGO
         if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
@@ -174,13 +173,8 @@ jobs:
           find target -name "*.profraw" -o -name "*.profdata" 2>/dev/null || echo "No profile files found"
           ls -la target/pgo-profiles/ 2>/dev/null || echo "No pgo-profiles directory"
       - name: Optimize with PGO
-        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         run: |
           cargo pgo optimize build -- --target ${{ matrix.target }}
-      - name: Optimize with PGO (MacOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          RUSTFLAGS="-Cprofile-use=./merged.profdata" cargo build --release --target ${{ matrix.target }}
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
