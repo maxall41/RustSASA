@@ -8,7 +8,7 @@ RustSASA is a **Rust library** for computing the absolute solvent accessible sur
 
 # Features:
 - 🦀 Written in Pure Rust
-- ⚡️ Ludicrously fast. **46X** Faster than Biopython and **7X** faster than Freesasa.
+- ⚡️ Ludicrously fast. **46X Faster** than Biopython and **7X faster** than Freesasa.
 - 🧪 Full test coverage
 - 🐍 Python support
 - 🤖 Command line interface
