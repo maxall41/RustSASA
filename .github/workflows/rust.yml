@@ -22,12 +22,10 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.88.0
-          profile: minimal
-          override: true
+          # profile: minimal
+          # override: true
           components: rustfmt, clippy
-      - name: Get submodules
-        run: |
-          git submodule update --init --recursive
+          submodules: recursive
 
       - name: Check formatting
         run: cargo fmt --check
