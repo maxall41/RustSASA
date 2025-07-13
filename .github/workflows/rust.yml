@@ -52,7 +52,9 @@ jobs:
       - name: Check formatting
         run: cargo fmt --check
       - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        env:
+          RUSTFLAGS: "-Dwarnings"
+        run: cargo clippy --all-targets --all-features --workspace --exclude pdbtbx
 
   test:
     name: Test
@@ -114,7 +116,7 @@ jobs:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.86.0
+          toolchain: 1.88.0
           target: ${{ matrix.target }}
           override: true
           components: llvm-tools-preview
@@ -126,14 +128,10 @@ jobs:
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
         with:
-          version: "19.1.7"
+          version: "20.1.0"
 
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
-
-      - name: Setup tmate session
-        if: matrix.os == 'macos-15'
-        uses: mxschmitt/action-tmate@v3
 
       - name: Build initial binary for PGO
         if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
@@ -170,12 +168,6 @@ jobs:
               Remove-Item $_.FullName
           }
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
-      - name: Debug PGO profiles
-        shell: bash
-        run: |
-          echo "Checking for profile files..."
-          find target -name "*.profraw" -o -name "*.profdata" 2>/dev/null || echo "No profile files found"
-          ls -la target/pgo-profiles/ 2>/dev/null || echo "No pgo-profiles directory"
       - name: Optimize with PGO
         run: |
           cargo pgo optimize build -- --target ${{ matrix.target }}
