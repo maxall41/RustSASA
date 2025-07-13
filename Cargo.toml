@@ -25,6 +25,3 @@ mimalloc = { version = "0.1.47", default-features = false }
 
 [dev-dependencies]
 approx = "0.5.1"
-
-[workspace]
-members = ['pdbtbx']
