@@ -110,7 +110,7 @@ jobs:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.88.0
+          toolchain: 1.86.0
           target: ${{ matrix.target }}
           override: true
           components: llvm-tools-preview
@@ -122,7 +122,7 @@ jobs:
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
         with:
-          version: "20.1.5"
+          version: "20.1.0"
 
       - name: Install cargo-pgo
         run: cargo install cargo-pgo
