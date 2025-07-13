@@ -27,3 +27,4 @@ mimalloc = { version = "0.1.47", default-features = false }
 approx = "0.5.1"
 
 [workspace]
+members = ['rust-sasa', 'pdbtbx']
