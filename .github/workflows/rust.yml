@@ -49,6 +49,10 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-target-
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
   test:
     name: Test
@@ -101,9 +105,9 @@ jobs:
           - target: x86_64-pc-windows-msvc # CONFIRMED WORKING
             os: windows-latest
             name: rust-sasa-windows-x86_64.exe
-          - target: aarch64-apple-darwin
-            os: macos-15
-            name: rust-sasa-aarch64-apple-darwin
+          # - target: aarch64-apple-darwin
+          #   os: macos-15
+          #   name: rust-sasa-aarch64-apple-darwin
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
