@@ -513,7 +513,7 @@ mod tests {
         for (actual, expected) in sasa.iter().zip(FIXED_LOW_RES_ATOMS.iter()) {
             assert_abs_diff_eq!(actual, expected, epsilon = 25.0);
         }
-        println!("Time elapsed (INTERNAL): {:?}", duration);
+        println!("Time elapsed (INTERNAL): {duration:?}");
     }
 
     #[test]
@@ -527,15 +527,15 @@ mod tests {
         let start = Instant::now();
         let atom_sasa = SASAOptions::<AtomLevel>::new().process(&pdb).unwrap();
         let duration = start.elapsed();
-        println!("Time elapsed (ATOM): {:?}", duration);
+        println!("Time elapsed (ATOM): {duration:?}");
 
         assert_abs_diff_eq!(protein_sasa.global_total, 20268.004, epsilon = 1500.0);
         // Compare element by element since Vec<f32> doesn't implement AbsDiffEq
         for (actual, expected) in atom_sasa.iter().zip(FIXED_LOW_RES_ATOMS.iter()) {
             assert_abs_diff_eq!(actual, expected, epsilon = 25.0);
         }
-        println!("PROTEIN SASA {:?}", protein_sasa);
-        println!("CHAIN SASA {:?}", chain_sasa);
+        println!("PROTEIN SASA {protein_sasa:?}");
+        println!("CHAIN SASA {chain_sasa:?}");
     }
 
     #[test]
@@ -560,7 +560,7 @@ mod tests {
             .process(&pdb)
             .unwrap();
         let duration = start.elapsed();
-        println!("Time elapsed (ATOM): {:?}", duration);
+        println!("Time elapsed (ATOM): {duration:?}");
 
         assert_abs_diff_eq!(protein_sasa.global_total, 20279.314, epsilon = 1500.0);
         assert_abs_diff_eq!(protein_sasa.polar_total, 4279.8906, epsilon = 1500.0);
