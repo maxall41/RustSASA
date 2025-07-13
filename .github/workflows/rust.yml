@@ -97,7 +97,7 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu # CONFIRMED WORKING
             os: ubuntu-latest
-            name: x86_64-rust-sasa-linux-gnu
+            name: rust-sasa-linux-gnu-x86_64
           - target: x86_64-pc-windows-msvc # CONFIRMED WORKING
             os: windows-latest
             name: rust-sasa-windows-x86_64.exe
