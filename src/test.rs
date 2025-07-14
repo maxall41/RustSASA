@@ -575,4 +575,62 @@ mod tests {
             assert_abs_diff_eq!(actual, expected, epsilon = 25.0);
         }
     }
+
+    #[test]
+    fn spatial_grid() {
+        use crate::structures::spatial_grid::SpatialGrid;
+
+        // Create test atoms in a simple 2x2x2 grid pattern
+        let atoms = vec![
+            Atom {
+                position: Point3::new(0.0, 0.0, 0.0),
+                radius: 1.0,
+                id: 1,
+                parent_id: None,
+            },
+            Atom {
+                position: Point3::new(5.0, 0.0, 0.0),
+                radius: 1.0,
+                id: 2,
+                parent_id: None,
+            },
+            Atom {
+                position: Point3::new(0.0, 5.0, 0.0),
+                radius: 1.0,
+                id: 3,
+                parent_id: None,
+            },
+            Atom {
+                position: Point3::new(10.0, 10.0, 10.0),
+                radius: 1.0,
+                id: 4,
+                parent_id: None,
+            },
+        ];
+
+        // Create spatial grid with cell size of 3.0
+        let grid = SpatialGrid::new(&atoms, 3.0);
+
+        let mut result = Vec::new();
+
+        // Test 1: Search near origin - should find atoms 1, 2, and 3
+        grid.locate_within_distance([0.0, 0.0, 0.0], 36.0, &atoms, &mut result); // radius^2 = 36, so radius = 6
+        assert!(result.contains(&0)); // atom at (0,0,0)
+        assert!(result.contains(&1)); // atom at (5,0,0) - distance = 5
+        assert!(result.contains(&2)); // atom at (0,5,0) - distance = 5
+        assert!(!result.contains(&3)); // atom at (10,10,10) - distance = ~17.3
+
+        // Test 2: Search near the distant atom - should only find atom 4
+        grid.locate_within_distance([10.0, 10.0, 10.0], 4.0, &atoms, &mut result); // radius^2 = 4, so radius = 2
+        assert_eq!(result.len(), 1);
+        assert!(result.contains(&3)); // atom at (10,10,10)
+
+        // Test 3: Search with large radius - should find all atoms
+        grid.locate_within_distance([5.0, 5.0, 5.0], 100.0, &atoms, &mut result); // radius^2 = 100, so radius = 10
+        assert_eq!(result.len(), 4);
+
+        // Test 4: Search in empty space - should find no atoms
+        grid.locate_within_distance([100.0, 100.0, 100.0], 1.0, &atoms, &mut result); // radius^2 = 1, so radius = 1
+        assert_eq!(result.len(), 0);
+    }
 }
