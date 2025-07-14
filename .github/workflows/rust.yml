@@ -33,8 +33,10 @@ jobs:
       - name: Check formatting
         run: cargo fmt --check
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      - name: Hack to fix clippy submodules issue
+        run: |
+          sed -i 's/pdbtbx = { path = "pdbtbx", version = "0.12.0" }/pdbtbx = "0.12.0"/' Cargo.toml
+          rm -rf pdbtbx/
 
       - name: Run clippy
         env:
