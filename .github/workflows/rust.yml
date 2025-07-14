@@ -79,8 +79,22 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-target-
-      - name: Run tests
-        run: RUSTFLAGS=-Awarnings cargo test --verbose
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Hack to fix code cov report
+        run: |
+          sed -i 's/pdbtbx = { path = "pdbtbx", version = "0.12.0" }/pdbtbx = "0.12.0"/' Cargo.toml
+          rm -rf pdbtbx/
+      - name: Generate code coverage
+        env:
+          RUSTFLAGS: "-Awarnings"
+        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --fail-under-lines 70
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: true
 
   build:
     name: Build PGO optimized binaries
