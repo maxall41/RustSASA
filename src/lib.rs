@@ -2,7 +2,7 @@
 //! Example:
 //! ```rust
 //! use pdbtbx::StrictnessLevel;
-//! use rust_sasa::options::{SASAOptions, ResidueLevel};
+//! use rust_sasa::{SASAOptions, ResidueLevel};
 //!
 //! let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
 //! let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
@@ -10,197 +10,24 @@
 pub mod options;
 // Re-export the new level types and processor trait
 pub use options::{AtomLevel, ChainLevel, ProteinLevel, ResidueLevel, SASAProcessor};
+use utils::consts::ANGLE_INCREMENT;
+pub mod structures;
 mod test;
 mod utils;
 
+pub use crate::options::*;
+pub use crate::structures::atomic::*;
+
+use structures::spatial_grid::SpatialGrid;
 // Re-export io functions for use in the binary crate
 pub use utils::io::{sasa_result_to_json, sasa_result_to_protein_object, sasa_result_to_xml};
 
 use nalgebra::{Point3, Vector3};
 use rayon::prelude::*;
-use serde::Serialize;
-
-/// This struct represents an individual Atom
-#[derive(Clone)]
-#[repr(C)]
-pub struct Atom {
-    /// The 3D position of the atom (12 bytes)
-    pub position: Point3<f32>,
-    /// The Van Der Walls radius of the atom (4 bytes)
-    pub radius: f32,
-    /// A unique Id for the atom (8 bytes)
-    pub id: usize,
-    /// Parent Id (8 bytes)
-    pub parent_id: Option<isize>,
-}
-
-/// Can be used to specify output resolution of SASA computation for convenience.
-#[derive(clap::ValueEnum, Clone, Default, Debug)]
-pub enum SASALevel {
-    Atom,
-    #[default]
-    Residue,
-    Chain,
-    Protein,
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-pub struct ChainResult {
-    /// Chain name
-    pub name: String,
-    /// Chain SASA value
-    pub value: f32,
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-pub struct ResidueResult {
-    /// Residue serial number
-    pub serial_number: isize,
-    /// SASA value for residue
-    pub value: f32,
-    //// The name of the residue
-    pub name: String,
-    /// Wether the residue is polar
-    pub is_polar: bool,
-    /// Chain ID
-    pub chain_id: String,
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-pub struct ProteinResult {
-    /// The total SASA value for the entire protein
-    pub global_total: f32,
-    /// The total polar SASA value for the entire protein
-    pub polar_total: f32,
-    /// The total *non*-polar SASA value for the entire protein
-    pub non_polar_total: f32,
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-pub enum SASAResult {
-    Atom(Vec<f32>),
-    Residue(Vec<ResidueResult>),
-    Chain(Vec<ChainResult>),
-    Protein(ProteinResult),
-}
-
-/// Fast 3D grid for spatial queries
-#[repr(C)]
-struct SpatialGrid {
-    grid: Vec<Vec<Vec<Vec<usize>>>>, // 3D grid of atom indices
-    min_bounds: [f32; 3],            // 12 bytes
-    cell_size: f32,                  // 4 bytes
-    grid_size: [usize; 3],           // 24 bytes
-}
-
-impl SpatialGrid {
-    fn new(atoms: &[Atom], cell_size: f32) -> Self {
-        // Calculate bounds
-        let mut min_bounds = [f32::INFINITY; 3];
-        let mut max_bounds = [f32::NEG_INFINITY; 3];
-
-        for atom in atoms {
-            let pos = atom.position.coords.xyz();
-            for i in 0..3 {
-                min_bounds[i] = min_bounds[i].min(pos[i]);
-                max_bounds[i] = max_bounds[i].max(pos[i]);
-            }
-        }
-
-        // Add padding
-        for i in 0..3 {
-            min_bounds[i] -= cell_size;
-            max_bounds[i] += cell_size;
-        }
-
-        // Calculate grid size
-        let grid_size = [
-            ((max_bounds[0] - min_bounds[0]) / cell_size).ceil() as usize + 1,
-            ((max_bounds[1] - min_bounds[1]) / cell_size).ceil() as usize + 1,
-            ((max_bounds[2] - min_bounds[2]) / cell_size).ceil() as usize + 1,
-        ];
-
-        // Initialize grid
-        let mut grid = vec![vec![vec![Vec::new(); grid_size[2]]; grid_size[1]]; grid_size[0]];
-
-        // Add atoms to grid
-        for (atom_idx, atom) in atoms.iter().enumerate() {
-            let pos = atom.position.coords.xyz();
-            let cell_x = ((pos[0] - min_bounds[0]) / cell_size) as usize;
-            let cell_y = ((pos[1] - min_bounds[1]) / cell_size) as usize;
-            let cell_z = ((pos[2] - min_bounds[2]) / cell_size) as usize;
-
-            if cell_x < grid_size[0] && cell_y < grid_size[1] && cell_z < grid_size[2] {
-                grid[cell_x][cell_y][cell_z].push(atom_idx);
-            }
-        }
-
-        SpatialGrid {
-            grid,
-            cell_size,
-            min_bounds,
-            grid_size,
-        }
-    }
-
-    fn locate_within_distance(
-        &self,
-        point: [f32; 3],
-        radius_squared: f32,
-        atoms: &[Atom],
-        result: &mut Vec<usize>,
-    ) {
-        result.clear();
-        let radius = radius_squared.sqrt();
-
-        // Calculate cell range to search - use integer math where possible
-        let inv_cell_size = 1.0 / self.cell_size;
-        let search_radius = radius + self.cell_size;
-
-        let min_cell = [
-            (((point[0] - search_radius) - self.min_bounds[0]) * inv_cell_size).max(0.0) as usize,
-            (((point[1] - search_radius) - self.min_bounds[1]) * inv_cell_size).max(0.0) as usize,
-            (((point[2] - search_radius) - self.min_bounds[2]) * inv_cell_size).max(0.0) as usize,
-        ];
-        let max_cell = [
-            (((point[0] + search_radius) - self.min_bounds[0]) * inv_cell_size)
-                .min(self.grid_size[0] as f32 - 1.0) as usize,
-            (((point[1] + search_radius) - self.min_bounds[1]) * inv_cell_size)
-                .min(self.grid_size[1] as f32 - 1.0) as usize,
-            (((point[2] + search_radius) - self.min_bounds[2]) * inv_cell_size)
-                .min(self.grid_size[2] as f32 - 1.0) as usize,
-        ];
-
-        // Search cells with manual loop unrolling for better performance
-        for x in min_cell[0]..=max_cell[0] {
-            for y in min_cell[1]..=max_cell[1] {
-                for z in min_cell[2]..=max_cell[2] {
-                    let cell = &self.grid[x][y][z];
-                    for &atom_idx in cell {
-                        let atom = &atoms[atom_idx];
-                        let pos = atom.position.coords.xyz();
-                        // Use fused multiply-add for better performance
-                        let dx = point[0] - pos[0];
-                        let dy = point[1] - pos[1];
-                        let dz = point[2] - pos[2];
-                        let dist_sq = dx.mul_add(dx, dy.mul_add(dy, dz * dz));
-                        if dist_sq <= radius_squared {
-                            result.push(atom_idx);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 /// Generates points on a sphere using the Golden Section Spiral algorithm
 fn generate_sphere_points(n_points: usize) -> Vec<Vector3<f32>> {
     let mut points = Vec::with_capacity(n_points);
-
-    // Precompute constants
-    const GOLDEN_RATIO: f32 = 1.618_034;
-    const ANGLE_INCREMENT: f32 = 2.0 * std::f32::consts::PI * GOLDEN_RATIO;
     let inv_n_points = 1.0 / n_points as f32;
 
     for i in 0..n_points {
@@ -221,12 +48,6 @@ fn generate_sphere_points(n_points: usize) -> Vec<Vector3<f32>> {
     }
 
     points
-}
-
-#[repr(C)]
-struct NeighborData {
-    threshold_squared: f32,
-    idx: u32,
 }
 
 fn is_accessible_precomputed(
