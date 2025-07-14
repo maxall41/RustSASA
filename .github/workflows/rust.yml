@@ -15,7 +15,7 @@ permissions:
 jobs:
   quality:
     name: Code Quality
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust
@@ -30,22 +30,22 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-      - name: Check formatting
-        run: cargo fmt --check
-
       - name: Hack to fix clippy submodules issue
         run: |
           sed -i 's/pdbtbx = { path = "pdbtbx", version = "0.12.0" }/pdbtbx = "0.12.0"/' Cargo.toml
           rm -rf pdbtbx/
 
+      - name: Check formatting
+        run: cargo fmt --check
+
       - name: Run clippy
         env:
           RUSTFLAGS: "-Dwarnings"
-        run: cargo clippy -p rust-sasa
+        run: cargo clippy --all-targets --all-features
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: quality
     steps:
       - uses: actions/checkout@v4
@@ -89,10 +89,10 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu # CONFIRMED WORKING
-            os: ubuntu-latest
+            os: ubuntu-24.04
             name: rust-sasa-linux-gnu-x86_64
           - target: x86_64-pc-windows-msvc # CONFIRMED WORKING
-            os: windows-latest
+            os: windows-2025
             name: rust-sasa-windows-x86_64.exe
           # - target: aarch64-apple-darwin
           #   os: macos-15
@@ -121,7 +121,7 @@ jobs:
         run: cargo install cargo-pgo
 
       - name: Build initial binary for PGO
-        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'windows-2025' || matrix.os == 'ubuntu-24.04'
         run: cargo pgo build -- --target ${{ matrix.target }}
 
       - name: Create temp output directory
@@ -135,7 +135,7 @@ jobs:
           fi
 
       - name: Run PGO profiling (Linux/Unix)
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-15'
+        if: matrix.os == 'ubuntu-24.04' || matrix.os == 'macos-15'
         run: |
           mkdir -p UP000000625_83333_ECOLI_v4/
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
@@ -144,7 +144,7 @@ jobs:
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
 
       - name: Run PGO profiling (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2025'
         shell: powershell
         run: |
           mkdir UP000000625_83333_ECOLI_v4/
@@ -159,11 +159,11 @@ jobs:
         run: |
           cargo pgo optimize build -- --target ${{ matrix.target }}
       - name: Copy optimized binary (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2025'
         run: |
           cp target/${{ matrix.target }}/release/rust-sasa ${{ matrix.name }}
       - name: Copy optimized binary (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2025'
         run: |
           copy target\${{ matrix.target }}\release\rust-sasa.exe ${{ matrix.name }}
         shell: cmd
@@ -177,7 +177,7 @@ jobs:
   release:
     name: Create Release
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
