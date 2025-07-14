@@ -81,6 +81,10 @@ jobs:
             ${{ runner.os }}-cargo-build-target-
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Hack to fix code cov report
+        run: |
+          sed -i 's/pdbtbx = { path = "pdbtbx", version = "0.12.0" }/pdbtbx = "0.12.0"/' Cargo.toml
+          rm -rf pdbtbx/
       - name: Generate code coverage
         env:
           RUSTFLAGS: "-Awarnings"
@@ -88,7 +92,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
           fail_ci_if_error: true
 
