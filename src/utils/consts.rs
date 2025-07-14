@@ -11,3 +11,6 @@ pub(crate) static POLAR_AMINO_ACIDS: LazyLock<HashSet<String>> = LazyLock::new(|
     m.insert("TYR".to_string());
     m
 });
+
+pub(crate) const GOLDEN_RATIO: f32 = 1.618_034;
+pub(crate) const ANGLE_INCREMENT: f32 = 2.0 * std::f32::consts::PI * GOLDEN_RATIO;

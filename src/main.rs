@@ -3,10 +3,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 use pdbtbx::{PDBError, ReadOptions};
 use quick_xml::SeError as XmlError;
 use rust_sasa::options::SASACalcError;
-use rust_sasa::{SASALevel, options::SASAOptions};
-use rust_sasa::{
-    SASAResult, sasa_result_to_json, sasa_result_to_protein_object, sasa_result_to_xml,
-};
+use rust_sasa::options::SASAOptions;
+use rust_sasa::structures::atomic::SASALevel;
+use rust_sasa::structures::atomic::SASAResult;
+use rust_sasa::{sasa_result_to_json, sasa_result_to_protein_object, sasa_result_to_xml};
 use snafu::{ResultExt, Snafu};
 
 #[global_allocator]
