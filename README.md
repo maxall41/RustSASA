@@ -129,5 +129,12 @@ Also see [changelog](https://github.com/maxall41/rustsasa/blob/master/CHANGELOG.
 
 Contributions are welcome! Please feel free to submit pull requests and open issues. As this is an actively developed library, I encourage sharing your thoughts, ideas, suggestions, and feedback.
 
+## Roadmap
+
+- [ ] Use mimalloc V3: Once out of beta, if it provides better performances.
+- [ ] Automated MacOS PGO builds: See https://github.com/Kobzol/cargo-pgo/issues/68.
+- [ ] Automated BOLT for Linux builds.
+- [ ] Use minimal parser.
+
 # Citations:
 1: Shrake A, Rupley JA. Environment and exposure to solvent of protein atoms. Lysozyme and insulin. J Mol Biol. 1973 Sep 15;79(2):351-71. doi: 10.1016/0022-2836(73)90011-9. PMID: 4760134.
