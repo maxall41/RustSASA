@@ -1,6 +1,7 @@
+use crate::structures::atomic::{ChainResult, ProteinResult, ResidueResult};
 use crate::utils::consts::POLAR_AMINO_ACIDS;
 use crate::utils::{serialize_chain_id, simd_sum};
-use crate::{Atom, ChainResult, ProteinResult, ResidueResult, calculate_sasa_internal};
+use crate::{Atom, calculate_sasa_internal};
 use nalgebra::Point3;
 use pdbtbx::PDB;
 use snafu::OptionExt;

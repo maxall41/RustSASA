@@ -1,7 +1,8 @@
-use crate::SASAResult;
 use pdbtbx::PDB;
 use quick_xml::SeError as XmlError;
 use serde_json::Error as JsonError;
+
+use crate::structures::atomic::SASAResult;
 
 pub fn sasa_result_to_json(result: &SASAResult) -> Result<String, JsonError> {
     serde_json::to_string(result)
