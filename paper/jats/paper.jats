@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.2 20190208//EN"
+                  "JATS-publishing1.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="1.2" article-type="other">
+<front>
+<journal-meta>
+<journal-id></journal-id>
+<journal-title-group>
+<journal-title>Journal of Open Source Software</journal-title>
+<abbrev-journal-title>JOSS</abbrev-journal-title>
+</journal-title-group>
+<issn publication-format="electronic">2475-9066</issn>
+<publisher>
+<publisher-name>Open Journals</publisher-name>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="publisher-id">0</article-id>
+<article-id pub-id-type="doi">N/A</article-id>
+<title-group>
+<article-title>RustSASA: A Rust Crate for Accelerated Solvent Accessible
+Surface Area Calculations</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<contrib-id contrib-id-type="orcid">https://orcid.org/0000-0002-0959-1164</contrib-id>
+<name>
+<surname>Campbell</surname>
+<given-names>Maxwell J.</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<aff id="aff-1">
+<institution-wrap>
+<institution>University of California, San Francisco, United
+States</institution>
+</institution-wrap>
+</aff>
+</contrib-group>
+<pub-date date-type="pub" publication-format="electronic" iso-8601-date="2025-07-16">
+<day>16</day>
+<month>7</month>
+<year>2025</year>
+</pub-date>
+<volume>¿VOL?</volume>
+<issue>¿ISSUE?</issue>
+<fpage>¿PAGE?</fpage>
+<permissions>
+<copyright-statement>Authors of papers retain copyright and release the
+work under a Creative Commons Attribution 4.0 International License (CC
+BY 4.0)</copyright-statement>
+<copyright-year>1970</copyright-year>
+<copyright-holder>The article authors</copyright-holder>
+<license license-type="open-access" xlink:href="https://creativecommons.org/licenses/by/4.0/">
+<license-p>Authors of papers retain copyright and release the work under
+a Creative Commons Attribution 4.0 International License (CC BY
+4.0)</license-p>
+</license>
+</permissions>
+<kwd-group kwd-group-type="author">
+<kwd>Rust</kwd>
+<kwd>Bioinformatics</kwd>
+<kwd>Proteomics</kwd>
+<kwd>Molecular Dynamics</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="summary">
+  <title>Summary</title>
+  <p>Solvent accessible surface area (SASA) calculations are fundamental
+  for understanding protein structure, function, and dynamics in
+  computational biology. These calculations quantify the surface area of
+  biomolecules accessible to solvent molecules, providing insights into
+  protein folding, stability, and intermolecular interactions. The
+  Shrake-Rupley algorithm has served as the standard for SASA
+  calculations since 1973, but existing implementations often become
+  computational bottlenecks when analyzing large protein datasets. As
+  proteomics datasets continue to grow exponentially—with initiatives
+  like AlphaFold producing hundreds of millions of predicted protein
+  structures—the need for efficient SASA calculation tools has become
+  increased dramatically. RustSASA addresses this challenge by providing
+  a high-performance implementation of the Shrake-Rupley algorithm
+  written in pure Rust, delivering a 7× speed improvement over Freesasa
+  while maintaining calculation accuracy and providing interfaces for
+  multiple programming languages.</p>
+</sec>
+<sec id="statement-of-need">
+  <title>Statement of need</title>
+  <p>Current SASA calculation tools represent a significant
+  computational bottleneck in structural biology workflows, particularly
+  for molecular dynamics simulations and high-throughput analyses.
+  Popular implementations such as those in Biopython and Freesasa, while
+  accurate, become prohibitively slow when processing large protein
+  datasets.</p>
+  <p>RustSASA addresses this performance gap by leveraging Rust’s
+  zero-cost abstractions and memory safety guarantees. Benchmarking on
+  representative protein structures demonstrates that RustSASA achieves
+  a 7× improvement over Freesasa and a 46× improvement over Biopython
+  implementations. This performance advantage reduces computational
+  costs for high-throughput structural analyses and makes large-scale
+  comparative studies feasible. Furthermore, RustSASA’s multi-language
+  support (Rust and Python) and command-line interface ensure broad
+  accessibility across the computational biology community.</p>
+</sec>
+<sec id="results">
+  <title>Results</title>
+  <sec id="calculation-quality">
+    <title>Calculation Quality</title>
+    <p><inline-graphic mimetype="application" mime-subtype="pdf" xlink:href="sasa_chain_comparison_E_coli.pdf">
+      <alt-text>Comparing Freesasa and RustSasa on E. coli
+      proteome</alt-text>
+    </inline-graphic>
+    <inline-graphic mimetype="application" mime-subtype="pdf" xlink:href="sasa_chain_comparison_freesasa_ds.pdf">
+      <alt-text>Comparing Freesasa and RustSasa on Freesasa comparison
+      dataset</alt-text>
+    </inline-graphic></p>
+    <p>To evaluate the accuracy of RustSASA calculations, we compared
+    results to Freesasa
+    (<xref alt="Mitternacht, 2016" rid="ref-Mitternacht_2016" ref-type="bibr">Mitternacht,
+    2016</xref>) on both the predicted E. coli proteome from AlphaFold
+    (<xref alt="Jumper et al., 2021" rid="ref-Jumper2021" ref-type="bibr">Jumper
+    et al., 2021</xref>) and the Freesasa evaluation dataset.</p>
+    <p>RustSASA produces SASA values that closely match those from
+    Freesasa, achieving Pearson correlation coefficients &gt; 0.95 on
+    both datasets.</p>
+  </sec>
+  <sec id="performance">
+    <title>Performance</title>
+    <fig>
+      <caption><p>Comparing Freesasa, RustSasa, and Biopython
+      performance on E. coli
+      proteome<styled-content id="figU003Aexample"></styled-content></p></caption>
+      <graphic mimetype="application" mime-subtype="pdf" xlink:href="performance_comparison.pdf" />
+    </fig>
+    <p>We evaluated the performance of Freesasa, RustSASA, and Biopython
+    (<xref alt="Cock et al., 2009" rid="ref-biopython" ref-type="bibr">Cock
+    et al., 2009</xref>) on the predicted E. coli proteome using
+    Hyperfine
+    (<xref alt="Peter, 2023" rid="ref-Hyperfine" ref-type="bibr">Peter,
+    2023</xref>) with three runs and three warmup iterations on an Apple
+    MacBook Air with an M3 processor and 24GB of unified memory. All
+    methods utilized parallel processing across eight cores: GNU
+    parallel
+    (<xref alt="Tange, 2011" rid="ref-Tange2011a" ref-type="bibr">Tange,
+    2011</xref>) for Freesasa and Biopython, and RustSASA’s internal
+    parallelization.</p>
+    <p>RustSASA processed the entire proteome in ~8 seconds compared to
+    ~55 seconds for Freesasa and ~368 seconds for Biopython,
+    representing 7× and 46× speed improvements, respectively.</p>
+  </sec>
+</sec>
+<sec id="conclusion">
+  <title>Conclusion</title>
+  <p>RustSASA provides a significant advancement in SASA calculation
+  performance while maintaining accuracy, addressing a bottleneck in
+  computational structural biology. The 7× speed improvement over
+  current standards enables previously intractable analyses of large
+  protein datasets and molecular dynamics simulations. By providing
+  interfaces for multiple programming languages alongside a command-line
+  tool, RustSASA ensures broad accessibility across the research
+  community. As structural biology datasets continue to expand,
+  efficient computational tools like RustSASA become essential for
+  advancing our understanding of protein structure and function.</p>
+</sec>
+<sec id="acknowledgements">
+  <title>Acknowledgements</title>
+  <p>We would like to thank Rodrigo Honorato for his valuable
+  contributions to this project.</p>
+</sec>
+</body>
+<back>
+<ref-list>
+  <title></title>
+  <ref id="ref-Mitternacht_2016">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Mitternacht</surname><given-names>Simon</given-names></name>
+      </person-group>
+      <article-title>FreeSASA: An open source c library for solvent accessible surface area calculations</article-title>
+      <source>F1000Research</source>
+      <publisher-name>F1000 Research Ltd</publisher-name>
+      <year iso-8601-date="2016-02">2016</year><month>02</month>
+      <volume>5</volume>
+      <issn>2046-1402</issn>
+      <uri>http://dx.doi.org/10.12688/f1000research.7931.1</uri>
+      <pub-id pub-id-type="doi">10.12688/f1000research.7931.1</pub-id>
+      <fpage>189</fpage>
+      <lpage></lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-Jumper2021">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Jumper</surname><given-names>John</given-names></name>
+        <name><surname>Evans</surname><given-names>Richard</given-names></name>
+        <name><surname>Pritzel</surname><given-names>Alexander</given-names></name>
+        <name><surname>Green</surname><given-names>Tim</given-names></name>
+        <name><surname>Figurnov</surname><given-names>Michael</given-names></name>
+        <name><surname>Ronneberger</surname><given-names>Olaf</given-names></name>
+        <name><surname>Tunyasuvunakool</surname><given-names>Kathryn</given-names></name>
+        <name><surname>Bates</surname><given-names>Russ</given-names></name>
+        <name><surname>Žídek</surname><given-names>Augustin</given-names></name>
+        <name><surname>Potapenko</surname><given-names>Anna</given-names></name>
+        <name><surname>Bridgland</surname><given-names>Alex</given-names></name>
+        <name><surname>Meyer</surname><given-names>Clemens</given-names></name>
+        <name><surname>Kohl</surname><given-names>Simon A. A.</given-names></name>
+        <name><surname>Ballard</surname><given-names>Andrew J.</given-names></name>
+        <name><surname>Cowie</surname><given-names>Andrew</given-names></name>
+        <name><surname>Romera-Paredes</surname><given-names>Bernardino</given-names></name>
+        <name><surname>Nikolov</surname><given-names>Stanislav</given-names></name>
+        <name><surname>Jain</surname><given-names>Rishub</given-names></name>
+        <name><surname>Adler</surname><given-names>Jonas</given-names></name>
+        <name><surname>Back</surname><given-names>Trevor</given-names></name>
+        <name><surname>Petersen</surname><given-names>Stig</given-names></name>
+        <name><surname>Reiman</surname><given-names>David</given-names></name>
+        <name><surname>Clancy</surname><given-names>Ellen</given-names></name>
+        <name><surname>Zielinski</surname><given-names>Michal</given-names></name>
+        <name><surname>Steinegger</surname><given-names>Martin</given-names></name>
+        <name><surname>Pacholska</surname><given-names>Michalina</given-names></name>
+        <name><surname>Berghammer</surname><given-names>Tamas</given-names></name>
+        <name><surname>Bodenstein</surname><given-names>Sebastian</given-names></name>
+        <name><surname>Silver</surname><given-names>David</given-names></name>
+        <name><surname>Vinyals</surname><given-names>Oriol</given-names></name>
+        <name><surname>Senior</surname><given-names>Andrew W.</given-names></name>
+        <name><surname>Kavukcuoglu</surname><given-names>Koray</given-names></name>
+        <name><surname>Kohli</surname><given-names>Pushmeet</given-names></name>
+        <name><surname>Hassabis</surname><given-names>Demis</given-names></name>
+      </person-group>
+      <article-title>Highly accurate protein structure prediction with AlphaFold</article-title>
+      <source>Nature</source>
+      <year iso-8601-date="2021-08-01">2021</year><month>08</month><day>01</day>
+      <volume>596</volume>
+      <issue>7873</issue>
+      <issn>1476-4687</issn>
+      <uri>https://doi.org/10.1038/s41586-021-03819-2</uri>
+      <pub-id pub-id-type="doi">10.1038/s41586-021-03819-2</pub-id>
+      <fpage>583</fpage>
+      <lpage>589</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-Hyperfine">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>Peter</surname><given-names>David</given-names></name>
+      </person-group>
+      <article-title>Hyperfine</article-title>
+      <year iso-8601-date="2023-03">2023</year><month>03</month>
+      <uri>https://github.com/sharkdp/hyperfine</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-biopython">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Cock</surname><given-names>Peter JA</given-names></name>
+        <name><surname>Antao</surname><given-names>Tiago</given-names></name>
+        <name><surname>Chang</surname><given-names>Jeffrey T</given-names></name>
+        <name><surname>Chapman</surname><given-names>Brad A</given-names></name>
+        <name><surname>Cox</surname><given-names>Cymon J</given-names></name>
+        <name><surname>Dalke</surname><given-names>Andrew</given-names></name>
+        <name><surname>Friedberg</surname><given-names>Iddo</given-names></name>
+        <name><surname>Hamelryck</surname><given-names>Thomas</given-names></name>
+        <name><surname>Kauff</surname><given-names>Frank</given-names></name>
+        <name><surname>Wilczynski</surname><given-names>Bartek</given-names></name>
+        <name><surname>others</surname></name>
+      </person-group>
+      <article-title>Biopython: Freely available python tools for computational molecular biology and bioinformatics</article-title>
+      <source>Bioinformatics</source>
+      <publisher-name>Oxford University Press</publisher-name>
+      <year iso-8601-date="2009">2009</year>
+      <volume>25</volume>
+      <issue>11</issue>
+      <fpage>1422</fpage>
+      <lpage>1423</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-Tange2011a">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Tange</surname><given-names>O.</given-names></name>
+      </person-group>
+      <article-title>GNU parallel - the command-line power tool</article-title>
+      <source>;login: The USENIX Magazine</source>
+      <publisher-loc>Frederiksberg, Denmark</publisher-loc>
+      <year iso-8601-date="2011-02">2011</year><month>02</month>
+      <volume>36</volume>
+      <issue>1</issue>
+      <uri>http://www.gnu.org/s/parallel</uri>
+      <fpage>42</fpage>
+      <lpage>47</lpage>
+    </element-citation>
+  </ref>
+</ref-list>
+</back>
+</article>

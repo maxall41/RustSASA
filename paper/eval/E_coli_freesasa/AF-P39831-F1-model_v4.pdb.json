@@ -1,0 +1,40 @@
+{
+  "source":"FreeSASA 2.1.2",
+  "length-unit":"Ångström",
+  "results":[
+    {
+      "input":"UP000000625_83333_ECOLI_v4\/AF-P39831-F1-model_v4.pdb",
+      "classifier":"ProtOr",
+      "parameters":{
+        "algorithm":"Lee & Richards",
+        "probe-radius":1.3999999999999999,
+        "resolution":20
+      },
+      "structure":[
+        {
+          "chains":[
+            {
+              "label":"A",
+              "n-residues":248,
+              "area":{
+                "total":12625.464772625357,
+                "polar":5680.0483898870225,
+                "apolar":6945.4163827383363,
+                "main-chain":2709.6235677975174,
+                "side-chain":9915.8412048278387
+              }
+            }
+          ],
+          "model":1,
+          "area":{
+            "total":12625.464772625357,
+            "polar":5680.0483898870225,
+            "apolar":6945.4163827383363,
+            "main-chain":2709.6235677975174,
+            "side-chain":9915.8412048278387
+          }
+        }
+      ]
+    }
+  ]
+}
