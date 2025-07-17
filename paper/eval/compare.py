@@ -155,7 +155,7 @@ def main(freesasa_dir, rsasa_dir, plot_title):
     plt.axis("equal")
 
     # Add statistics text box
-    stats_text = f"n = {len(freesasa_values)}\nr = {correlation:.4f}\np = {p_value:.2e}"
+    stats_text = f"n = {len(freesasa_values)}\nr = {correlation:.4f}\np = {p_value:.2e}\nRMSE = {rmse:.2f} Ų"
     plt.text(
         0.05,
         0.95,
