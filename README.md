@@ -7,6 +7,20 @@
 
 RustSASA is a **Rust library** for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm[1]. It can be used in place of Freesasa, Biopython, or any other SASA calculation library. You can us it directly in Rust or use our Python bindings! We also have a CLI if you prefer that.
 
+## Table of Contents
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Rust](#using-in-rust-)
+  - [Python](#using-in-python-)
+  - [CLI](#using-cli-)
+  - [MDAnalysis](#using-with-mdanalysis)
+- [Benchmarks](#benchmarking)
+- [Validation](#validation-against-freesasa)
+- [Contributing](#contributing)
+- [License](#license)
+
 # Features:
 - 🦀 Written in Pure Rust
 - ⚡️ Ludicrously fast. **46X Faster** than Biopython and **7X faster** than Freesasa.
@@ -81,19 +95,18 @@ See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more 
 
 # Installation
 
-## Rust
+## Rust 🦀
 
 ```
 cargo add rust-sasa
 ```
 
-## Python
-
+## Python 🐍
 ```
 pip install rust-sasa-python
 ```
 
-## CLI
+## CLI 🤖
 
 ### Method 1: Use Cargo bin install
 
@@ -111,8 +124,8 @@ cargo binstall rust-sasa
 
 ### Method 2: Download binary from Github Releases
 
-1. Download latest binary from github releases
-2. Add the binary to your path
+1. Download latest binary from github releases.
+2. Add the binary to your path.
 3. Done!
 
 # Benchmarking
@@ -153,12 +166,13 @@ Also see [changelog](https://github.com/maxall41/rustsasa/blob/master/CHANGELOG.
 
 Contributions are welcome! Please feel free to submit pull requests and open issues. As this is an actively developed library, I encourage sharing your thoughts, ideas, suggestions, and feedback.
 
-## Roadmap
+## 🗺️ Roadmap
 
 - [ ] Use mimalloc V3: Once out of beta, if it provides better performances.
 - [ ] Automated MacOS PGO builds: See https://github.com/Kobzol/cargo-pgo/issues/68.
 - [ ] Automated BOLT for Linux builds.
 - [ ] Use minimal parser.
+- [ ] Implement PowerSasa algorithm. Faster?
 
 # Citations:
 1: Shrake A, Rupley JA. Environment and exposure to solvent of protein atoms. Lysozyme and insulin. J Mol Biol. 1973 Sep 15;79(2):351-71. doi: 10.1016/0022-2836(73)90011-9. PMID: 4760134.
