@@ -58,9 +58,8 @@ rust-sasa path_to_pdb_file.pdb output.json # Also supports .xml, .pdb, and .cif!
 rust-sasa input_directory/ output_directory/ --format json # Also supports .xml, .pdb, and .cif!
 ```
 
-<<<<<<< Updated upstream
-=======
-## Using with MDAnalysis <img src="imgs/mdanalysis-logo.png" width="10" height="10">
+
+## Using with MDAnalysis <img src="imgs/mdanalysis-logo.png" width="25" height="25">
 
 ```bash
 pip install mdsasa-bolt
