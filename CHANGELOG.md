@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## Latest update (0.3.1)
+
+- ⚡️ Slightly faster due to memory allocation optimization
+- PGO Builds
+
 ## Version 0.3.0
 
 - 🔥 ~12X Faster
