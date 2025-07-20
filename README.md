@@ -89,7 +89,7 @@ cargo add rust-sasa
 
 ## Python
 
-```console
+```
 pip install rust-sasa-python
 ```
 
@@ -97,13 +97,15 @@ pip install rust-sasa-python
 
 ### Method 1: Use Cargo bin install
 
-#### 1. Install Cargo Bin Install
-```console
+**1. Install Cargo Bin Install**
+
+```
 curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 ```
 
-#### 2. Install rust-sasa
-```console
+**2. Install rust-sasa**
+
+```
 cargo binstall rust-sasa
 ```
 
