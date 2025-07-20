@@ -58,6 +58,36 @@ rust-sasa path_to_pdb_file.pdb output.json # Also supports .xml, .pdb, and .cif!
 rust-sasa input_directory/ output_directory/ --format json # Also supports .xml, .pdb, and .cif!
 ```
 
+<<<<<<< Updated upstream
+=======
+## Using with MDAnalysis <img src="imgs/mdanalysis-logo.png" width="10" height="10">
+
+```bash
+pip install mdsasa-bolt
+```
+
+```python
+import MDAnalysis as mda
+from mdsasa_bolt import SASAAnalysis
+
+# Load your trajectory
+u = mda.Universe("topology.pdb", "trajectory.dcd")
+
+# Create SASA analysis
+sasa_analysis = SASAAnalysis(u, select="protein")
+
+# Run the analysis
+sasa_analysis.run()
+
+# Access results
+print(f"Mean total SASA: {sasa_analysis.results.mean_total_area:.2f} Ų")
+print(f"SASA per frame: {sasa_analysis.results.total_area}")
+print(f"SASA per residue: {sasa_analysis.results.residue_area}")
+```
+
+See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more information.
+
+>>>>>>> Stashed changes
 # Installation
 
 ## Rust
