@@ -5,13 +5,13 @@
 ![rustc 1.85+](https://img.shields.io/badge/msrv-rustc_1.85+-red.svg)
 [![codecov](https://codecov.io/github/maxall41/rustsasa/graph/badge.svg?token=SHM6RRMKSL)](https://codecov.io/github/maxall41/rustsasa)
 
-RustSASA is a **Rust library** for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm[1]. It can be used in place of Freesasa, Biopython, or any other SASA calculation library. You can us it directly in Rust or use our Python bindings! We also have a CLI if you prefer that.
+⚡ Ludicrously fast **Rust crate** for protein SASA calculations - 46x faster than Biopython, 7x faster than FreeSASA. Pure Rust with Python bindings & CLI. Implements Shrake-Rupley algorithm[1].
 
-## Table of Contents
+
+# Table of Contents
 - [Features](#features)
-- [Quick Start](#quick-start)
 - [Installation](#installation)
-- [Usage](#usage)
+- [Quick start](#quick-start)
   - [Rust](#using-in-rust-)
   - [Python](#using-in-python-)
   - [CLI](#using-cli-)
@@ -28,7 +28,26 @@ RustSASA is a **Rust library** for computing the absolute solvent accessible sur
 - 🐍 Python support
 - 🤖 Command line interface
 
-# Usage
+# Installation
+
+## Rust 🦀
+
+```
+cargo add rust-sasa
+```
+
+## Python 🐍
+```
+pip install rust-sasa-python
+```
+
+## MDAnalysis package <img src="https://github.com/maxall41/RustSASA/blob/radical/imgs/mdanalysis-logo.png" width="25" height="25">
+
+```
+pip install mdsasa-bolt
+```
+
+# Quick start
 
 ## Using in Rust 🦀
 
@@ -92,19 +111,6 @@ print(f"SASA per residue: {sasa_analysis.results.residue_area}")
 ```
 
 See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more information. Installation instructions below.
-
-# Installation
-
-## Rust 🦀
-
-```
-cargo add rust-sasa
-```
-
-## Python 🐍
-```
-pip install rust-sasa-python
-```
 
 ## CLI 🤖
 
