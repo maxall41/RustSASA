@@ -8,11 +8,11 @@
 ⚡ Ludicrously fast **Rust crate** for protein SASA calculations - **46x faster** than Biopython, **7x faster** than FreeSASA. Pure Rust with Python bindings & CLI. Implements Shrake-Rupley algorithm[1].
 
 # Features:
-- 🦀 Written in Pure Rust
-- ⚡️ Ludicrously fast. **46X Faster** than Biopython and **7X faster** than Freesasa.
-- 🧪 Full test coverage
-- 🐍 Python support
-- 🤖 Command line interface
+- 🦀 Written in Pure Rust.
+- ⚡️ Ludicrously fast. **46X Faster** than Biopython, **14X** faster than mdakit_sasa, and **7X faster** than Freesasa.
+- 🧪 Full test coverage.
+- 🐍 Python support.
+- 🤖 Command line interface.
 
 # Table of Contents
 - [Features](#features)
@@ -46,9 +46,7 @@ pip install rust-sasa-python
 pip install mdsasa-bolt
 ```
 
-## CLI 🤖
-
-### Method 1: Use Cargo bin install
+## Command-line interface 🤖
 
 **1. Install Cargo Bin Install**
 
@@ -62,12 +60,6 @@ curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-
 cargo binstall rust-sasa
 ```
 
-### Method 2: Download binary from Github Releases
-
-1. Download latest binary from github releases.
-2. Add the binary to your path.
-3. Done!
-
 # Quick start
 
 ## Using in Rust 🦀
@@ -80,7 +72,7 @@ let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
 let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
 
 ```
-Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sasa/)
+Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sasa/).
 
 ## Using in Python 🐍
 
@@ -110,7 +102,7 @@ rust-sasa input_directory/ output_directory/ --format json # Also supports .xml,
 
 ## Using with MDAnalysis <img src="https://github.com/maxall41/RustSASA/blob/radical/imgs/mdanalysis-logo.png" width="25" height="25">
 
-RustSASA can be used with MDAnalysis to calculate SASA for a protein in a trajectory. RustSASA/MDSASA-BOLT is **17x faster** than mdakit_sasa.
+RustSASA can be used with MDAnalysis to calculate SASA for a protein in a trajectory. RustSASA is **17x faster** than mdakit_sasa.
 
 ```python
 import MDAnalysis as mda
