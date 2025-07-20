@@ -1,0 +1,40 @@
+{
+  "source":"FreeSASA 2.1.2",
+  "length-unit":"Ångström",
+  "results":[
+    {
+      "input":"pdb_files\/1h16.pdb",
+      "classifier":"ProtOr",
+      "parameters":{
+        "algorithm":"Lee & Richards",
+        "probe-radius":1.3999999999999999,
+        "resolution":20
+      },
+      "structure":[
+        {
+          "chains":[
+            {
+              "label":"A",
+              "n-residues":759,
+              "area":{
+                "total":25946.660614535384,
+                "polar":12129.161228196408,
+                "apolar":13817.499386338975,
+                "main-chain":5044.3680740682439,
+                "side-chain":20902.292540467162
+              }
+            }
+          ],
+          "model":1,
+          "area":{
+            "total":25946.660614535384,
+            "polar":12129.161228196408,
+            "apolar":13817.499386338975,
+            "main-chain":5044.3680740682439,
+            "side-chain":20902.292540467162
+          }
+        }
+      ]
+    }
+  ]
+}
