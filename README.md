@@ -59,7 +59,7 @@ rust-sasa input_directory/ output_directory/ --format json # Also supports .xml,
 ```
 
 
-## Using with MDAnalysis <img src="imgs/mdanalysis-logo.png" width="25" height="25">
+## Using with MDAnalysis <img src="https://github.com/maxall41/RustSASA/blob/radical/imgs/mdanalysis-logo.png" width="25" height="25">
 
 ```bash
 pip install mdsasa-bolt
