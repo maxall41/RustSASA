@@ -56,9 +56,6 @@ fn is_accessible_precomputed(
     neighbors: &[NeighborData],
     atoms: &[Atom],
 ) -> bool {
-    // Optimize neighbor checks by processing in pairs for potential SIMD benefits
-    // and better cache utilization.
-    // let mut neighbors_iter = neighbors.chunks_exact(2);
     for neighbor_data in neighbors {
         let neighbor = &atoms[neighbor_data.idx as usize];
         if atom.id != neighbor.id {

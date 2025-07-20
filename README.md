@@ -79,9 +79,11 @@ Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sas
 You can now utilize RustSasa within Python to speed up your scripts! Take a look at [rust-sasa-python](https://github.com/maxall41/rust-sasa-python)!
 
 ```python
-from rust_sasa_python import calculate_sasa_at_residue_level
-# Also supports mmCIF files!
-residue_sasa_values = calculate_sasa_at_residue_level("path_to_pdb_file.pdb")
+import rust_sasa_python as sasa
+
+# Simple calculation - use convenience function
+result = sasa.calculate_protein_sasa("protein.pdb")
+print(f"Total SASA: {result.total:.2f}")
 ```
 
 See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS.md).
