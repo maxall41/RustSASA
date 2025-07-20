@@ -32,38 +32,31 @@ Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sas
 
 You can now utilize RustSasa within Python to speed up your scripts! Take a look at [rust-sasa-python](https://github.com/maxall41/rust-sasa-python)!
 
-Installation:
-```
-pip install rust-sasa-python
-```
-Example:
 ```python
 from rust_sasa_python import calculate_sasa_at_residue_level
 # Also supports mmCIF files!
 residue_sasa_values = calculate_sasa_at_residue_level("path_to_pdb_file.pdb")
 ```
-See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS.md)
+
+See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS.md). Installation instructions below.
 
 ## Using CLI 🤖
 
-### Processing single file
+**Processing single file**
 
 ```
 rust-sasa path_to_pdb_file.pdb output.json # Also supports .xml, .pdb, and .cif!
 ```
 
-### Processing an entire directory
+**Processing an entire directory**
 
 ```
 rust-sasa input_directory/ output_directory/ --format json # Also supports .xml, .pdb, and .cif!
 ```
 
+Installation instructions below.
 
 ## Using with MDAnalysis <img src="https://github.com/maxall41/RustSASA/blob/radical/imgs/mdanalysis-logo.png" width="25" height="25">
-
-```bash
-pip install mdsasa-bolt
-```
 
 ```python
 import MDAnalysis as mda
@@ -84,7 +77,7 @@ print(f"SASA per frame: {sasa_analysis.results.total_area}")
 print(f"SASA per residue: {sasa_analysis.results.residue_area}")
 ```
 
-See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more information.
+See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more information. Installation instructions below.
 
 # Installation
 
