@@ -5,16 +5,62 @@
 ![rustc 1.85+](https://img.shields.io/badge/msrv-rustc_1.85+-red.svg)
 [![codecov](https://codecov.io/github/maxall41/rustsasa/graph/badge.svg?token=SHM6RRMKSL)](https://codecov.io/github/maxall41/rustsasa)
 
-RustSASA is a **Rust library** for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm[1]. It can be used in place of Freesasa, Biopython, or any other SASA calculation library. You can us it directly in Rust or use our Python bindings! We also have a CLI if you prefer that.
+⚡ Ludicrously fast **Rust crate** for protein SASA calculations - **46x faster** than Biopython, **7x faster** than FreeSASA. Pure Rust with Python bindings & CLI. Implements Shrake-Rupley algorithm[1].
 
 # Features:
-- 🦀 Written in Pure Rust
-- ⚡️ Ludicrously fast. **46X Faster** than Biopython and **7X faster** than Freesasa.
-- 🧪 Full test coverage
-- 🐍 Python support
-- 🤖 Command line interface
+- 🦀 Written in Pure Rust.
+- ⚡️ Ludicrously fast. **46X Faster** than Biopython, **14X** faster than mdakit_sasa, and **7X faster** than Freesasa.
+- 🧪 Full test coverage.
+- 🐍 Python support.
+- 🤖 Command line interface.
 
-# Usage
+# Table of Contents
+- [Features](#features)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+  - [Rust](#using-in-rust-)
+  - [Python](#using-in-python-)
+  - [CLI](#using-cli-)
+  - [MDAnalysis](#using-with-mdanalysis)
+- [Benchmarks](#benchmarking)
+- [Validation](#validation-against-freesasa)
+- [Contributing](#contributing)
+- [License](#license)
+
+# Installation
+
+## Rust 🦀
+
+```
+cargo add rust-sasa
+```
+
+## Python 🐍
+```
+pip install rust-sasa-python
+```
+
+## MDAnalysis package <img src="https://github.com/maxall41/RustSASA/blob/radical/imgs/mdanalysis-logo.png" width="25" height="25">
+
+```
+pip install mdsasa-bolt
+```
+
+## Command-line interface 🤖
+
+**1. Install Cargo Bin Install**
+
+```
+curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+```
+
+**2. Install rust-sasa**
+
+```
+cargo binstall rust-sasa
+```
+
+# Quick start
 
 ## Using in Rust 🦀
 
@@ -26,17 +72,12 @@ let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
 let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
 
 ```
-Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sasa/)
+Full documentation can be found [here](https://docs.rs/rust-sasa/latest/rust_sasa/).
 
 ## Using in Python 🐍
 
 You can now utilize RustSasa within Python to speed up your scripts! Take a look at [rust-sasa-python](https://github.com/maxall41/rust-sasa-python)!
 
-Installation:
-```
-pip install rust-sasa-python
-```
-Example:
 ```python
 import rust_sasa_python as sasa
 
@@ -45,27 +86,25 @@ result = sasa.calculate_protein_sasa("protein.pdb")
 print(f"Total SASA: {result.total:.2f}")
 ```
 
-See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS.md)
+See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS.md).
 
 ## Using CLI 🤖
 
-### Processing single file
+**Processing single file**
 
-```console
+```
 rust-sasa path_to_pdb_file.pdb output.json # Also supports .xml, .pdb, and .cif!
 ```
 
-### Processing an entire directory
+**Processing an entire directory**
 
-```console
+```
 rust-sasa input_directory/ output_directory/ --format json # Also supports .xml, .pdb, and .cif!
 ```
 
-## Using with MDAnalysis
+## Using with MDAnalysis <img src="https://github.com/maxall41/RustSASA/blob/radical/imgs/mdanalysis-logo.png" width="25" height="25">
 
-```bash
-pip install mdsasa-bolt
-```
+RustSASA can be used with MDAnalysis to calculate SASA for a protein in a trajectory. RustSASA is **17x faster** than mdakit_sasa.
 
 ```python
 import MDAnalysis as mda
@@ -87,40 +126,6 @@ print(f"SASA per residue: {sasa_analysis.results.residue_area}")
 ```
 
 See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more information.
-
-# Installation
-
-## Rust
-
-```console
-cargo add rust-sasa
-```
-
-## Python
-
-```console
-pip install rust-sasa-python
-```
-
-## CLI
-
-### Method 1: Use Cargo bin install
-
-#### 1. Install Cargo Bin Install
-```console
-curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-```
-
-#### 2. Install rust-sasa
-```console
-cargo binstall rust-sasa
-```
-
-### Method 2: Download binary from Github Releases
-
-1. Download latest binary from github releases
-2. Add the binary to your path
-3. Done!
 
 # Benchmarking
 
@@ -160,12 +165,14 @@ Also see [changelog](https://github.com/maxall41/rustsasa/blob/master/CHANGELOG.
 
 Contributions are welcome! Please feel free to submit pull requests and open issues. As this is an actively developed library, I encourage sharing your thoughts, ideas, suggestions, and feedback.
 
-## Roadmap
+## 🗺️ Roadmap
 
 - [ ] Use mimalloc V3: Once out of beta, if it provides better performances.
 - [ ] Automated MacOS PGO builds: See https://github.com/Kobzol/cargo-pgo/issues/68.
 - [ ] Automated BOLT for Linux builds.
 - [ ] Use minimal parser.
+- [ ] Implement PowerSasa algorithm. Faster?
 
 # Citations:
+
 1: Shrake A, Rupley JA. Environment and exposure to solvent of protein atoms. Lysozyme and insulin. J Mol Biol. 1973 Sep 15;79(2):351-71. doi: 10.1016/0022-2836(73)90011-9. PMID: 4760134.
