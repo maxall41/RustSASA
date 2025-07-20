@@ -48,13 +48,13 @@ See full docs [here](https://github.com/maxall41/rust-sasa-python/blob/main/DOCS
 
 ### Processing single file
 
-```console
+```
 rust-sasa path_to_pdb_file.pdb output.json # Also supports .xml, .pdb, and .cif!
 ```
 
 ### Processing an entire directory
 
-```console
+```
 rust-sasa input_directory/ output_directory/ --format json # Also supports .xml, .pdb, and .cif!
 ```
 
@@ -86,12 +86,11 @@ print(f"SASA per residue: {sasa_analysis.results.residue_area}")
 
 See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more information.
 
->>>>>>> Stashed changes
 # Installation
 
 ## Rust
 
-```console
+```
 cargo add rust-sasa
 ```
 
