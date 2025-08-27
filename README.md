@@ -168,7 +168,7 @@ Contributions are welcome! Please feel free to submit pull requests and open iss
 
 ## How to cite
 
-If you use the RustSASA library in your publication please cite it. To cite this reposity scroll up to the top of this page, and then hover over the "Cite this repository" button in the right hand GitHub side bar. This will give you a citation in your desired format (i.e: BiBTeX, APA). 
+If you use the RustSASA library in your publication please cite it. To cite this reposity scroll up to the top of this page, and then click on the "Cite this repository" button in the right hand GitHub side bar. This will give you a citation in your desired format (i.e: BiBTeX, APA). 
 
 # Citations:
 
