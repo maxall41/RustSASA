@@ -26,6 +26,7 @@
 - [Validation](#validation-against-freesasa)
 - [Contributing](#contributing)
 - [License](#license)
+- [How to cite](#how-to-cite)
 
 # Installation
 
@@ -165,13 +166,9 @@ Also see [changelog](https://github.com/maxall41/rustsasa/blob/master/CHANGELOG.
 
 Contributions are welcome! Please feel free to submit pull requests and open issues. As this is an actively developed library, I encourage sharing your thoughts, ideas, suggestions, and feedback.
 
-## 🗺️ Roadmap
+## How to cite
 
-- [ ] Use mimalloc V3: Once out of beta, if it provides better performance.
-- [ ] Automated MacOS PGO builds: See https://github.com/Kobzol/cargo-pgo/issues/68.
-- [ ] Automated BOLT for Linux builds.
-- [ ] Use minimal parser.
-- [ ] Implement PowerSasa algorithm. Faster?
+If you use the RustSASA library in your publication please cite it. To cite this reposity scroll up to the top of this page, and then hover over the "Cite this repository" button in the right hand GitHub side bar. This will give you a citation in your desired format (i.e: BiBTeX, APA). 
 
 # Citations:
 
