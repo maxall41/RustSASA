@@ -83,7 +83,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   a high-performance implementation of the Shrake-Rupley algorithm
   written in pure Rust, delivering a 7× speed improvement over Freesasa
   while maintaining calculation accuracy and providing interfaces for
-  multiple programming languages.</p>
+  multiple programming languages and frameworks (i.e: MDAnalysis).</p>
 </sec>
 <sec id="statement-of-need">
   <title>Statement of need</title>
@@ -96,12 +96,12 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <p>RustSASA addresses this performance gap by leveraging Rust’s
   zero-cost abstractions and memory safety guarantees. Benchmarking on
   representative protein structures demonstrates that RustSASA achieves
-  a 7× improvement over Freesasa and a 46× improvement over Biopython
-  implementations. This performance advantage reduces computational
-  costs for high-throughput structural analyses and makes large-scale
-  comparative studies feasible. Furthermore, RustSASA’s multi-language
-  support (Rust and Python) and command-line interface ensure broad
-  accessibility across the computational biology community.</p>
+  a 7× improvement over Freesasa, and a 46× performance improvement over
+  Biopython. This performance advantage reduces computational costs for
+  high-throughput structural analyses and makes large-scale comparative
+  studies feasible. Furthermore, RustSASA’s multi-language support (Rust
+  and Python), command-line interface, and MDAnalysis package ensure
+  broad accessibility across the computational biology community.</p>
 </sec>
 <sec id="results">
   <title>Results</title>
@@ -138,13 +138,13 @@ a Creative Commons Attribution 4.0 International License (CC BY
     et al., 2009</xref>) on the predicted E. coli proteome using
     Hyperfine
     (<xref alt="Peter, 2023" rid="ref-Hyperfine" ref-type="bibr">Peter,
-    2023</xref>) with three runs and three warmup iterations on an Apple
-    MacBook Air with an M3 processor and 24GB of unified memory. All
-    methods utilized parallel processing across eight cores: GNU
+    2023</xref>) with three runs and three warmup iterations on a 2024
+    Apple MacBook Air with an M3 processor and 24GB of unified memory.
+    All methods utilized parallel processing across eight cores. GNU
     parallel
     (<xref alt="Tange, 2011" rid="ref-Tange2011a" ref-type="bibr">Tange,
-    2011</xref>) for Freesasa and Biopython, and RustSASA’s internal
-    parallelization.</p>
+    2011</xref>) was used to parallelize Freesasa and Biopython, while
+    RustSASA’s utilized its internal parallelization.</p>
     <p>RustSASA processed the entire proteome in ~8 seconds compared to
     ~55 seconds for Freesasa and ~368 seconds for Biopython,
     representing 7× and 46× speed improvements, respectively.</p>
@@ -158,15 +158,16 @@ a Creative Commons Attribution 4.0 International License (CC BY
   current standards enables previously intractable analyses of large
   protein datasets and molecular dynamics simulations. By providing
   interfaces for multiple programming languages alongside a command-line
-  tool, RustSASA ensures broad accessibility across the research
-  community. As structural biology datasets continue to expand,
-  efficient computational tools like RustSASA become essential for
-  advancing our understanding of protein structure and function.</p>
+  tool and MDAnalysis package, RustSASA ensures broad accessibility
+  across the research community. As structural biology datasets continue
+  to expand, efficient computational tools like RustSASA become
+  essential for advancing our understanding of protein structure and
+  function.</p>
 </sec>
 <sec id="acknowledgements">
   <title>Acknowledgements</title>
-  <p>We would like to thank Rodrigo Honorato for his valuable
-  contributions to this project.</p>
+  <p>We would like to thank Rodrigo Honorato and Niccolo’ Bruciaferri
+  for their valuable contributions to this project.</p>
 </sec>
 </body>
 <back>
