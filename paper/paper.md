@@ -19,13 +19,13 @@ bibliography: paper.bib
 
 # Summary
 
-Solvent accessible surface area (SASA) calculations are fundamental for understanding protein structure, function, and dynamics in computational biology. These calculations quantify the surface area of biomolecules accessible to solvent molecules, providing insights into protein folding, stability, and intermolecular interactions. The Shrake-Rupley algorithm has served as the standard for SASA calculations since 1973, but existing implementations often become computational bottlenecks when analyzing large protein datasets. As proteomics datasets continue to grow exponentially—with initiatives like AlphaFold producing hundreds of millions of predicted protein structures—the need for efficient SASA calculation tools has become increased dramatically. RustSASA addresses this challenge by providing a high-performance implementation of the Shrake-Rupley algorithm written in pure Rust, delivering a 7× speed improvement over Freesasa while maintaining calculation accuracy and providing interfaces for multiple programming languages and frameworks (i.e: MDAnalysis).
+Solvent accessible surface area (SASA) calculations are fundamental for understanding protein structure, function, and dynamics in computational biology. These calculations quantify the surface area of biomolecules accessible to solvent molecules, providing insights into protein folding, stability, and intermolecular interactions. The Shrake-Rupley algorithm has served as the standard for SASA calculations since 1973, but existing implementations often become computational bottlenecks when analyzing large protein datasets. As proteomics datasets continue to grow with initiatives like AlphaFold producing hundreds of millions of predicted protein structures the need for efficient SASA calculation tools has increased dramatically. RustSASA addresses this challenge by providing a high-performance implementation of the Shrake-Rupley algorithm written in pure Rust, delivering a 7× speed improvement over Freesasa while maintaining calculation accuracy and providing interfaces for multiple programming languages and frameworks (i.e: MDAnalysis).
 
 # Statement of need
 
 Current SASA calculation tools represent a significant computational bottleneck in structural biology workflows, particularly for molecular dynamics simulations and high-throughput analyses. Popular implementations such as those in Biopython and Freesasa, while accurate, become prohibitively slow when processing large protein datasets.
 
-RustSASA addresses this performance gap by leveraging Rust's zero-cost abstractions and memory safety guarantees. Benchmarking on representative protein structures demonstrates that RustSASA achieves a 7× improvement over Freesasa, and a 46× performance improvement over Biopython. This performance advantage reduces computational costs for high-throughput structural analyses and makes large-scale comparative studies feasible. Furthermore, RustSASA's multi-language support (Rust and Python), command-line interface, and MDAnalysis package ensure broad accessibility across the computational biology community.
+RustSASA addresses this performance gap by leveraging Rust's zero-cost abstractions and memory safety guarantees to create a SASA calculation crate that is significantly faster than Freesasa and Biopython. Benchmarking on representative protein structures demonstrates that RustSASA achieves a 7× improvement over Freesasa, and a 46× performance improvement over Biopython. This performance advantage reduces computational costs for high-throughput structural analyses and makes large-scale comparative studies feasible. Furthermore, RustSASA's multi-language support (Rust and Python), command-line interface, and MDAnalysis package ensure broad accessibility across the computational biology community.
 
 # Results
 
@@ -34,9 +34,7 @@ RustSASA addresses this performance gap by leveraging Rust's zero-cost abstracti
 ![Comparing Freesasa and RustSasa on E. coli proteome\label{fig:example}](eval/sasa_chain_comparison_E_coli.pdf){ width=50% }
 ![Comparing Freesasa and RustSasa on Freesasa comparison dataset\label{fig:example}](eval/sasa_chain_comparison_freesasa_ds.pdf){ width=50% }
 
-To evaluate the accuracy of RustSASA calculations, we compared results to Freesasa [@Mitternacht_2016] on both the predicted E. coli proteome from AlphaFold [@Jumper2021] and the Freesasa evaluation dataset.
-
-RustSASA produces SASA values that closely match those from Freesasa, achieving Pearson correlation coefficients > 0.95 on both datasets.
+To evaluate the accuracy of RustSASA calculations, we compared results to Freesasa [@Mitternacht_2016] on both the predicted E. coli proteome from AlphaFold [@Jumper2021] and the Freesasa evaluation dataset. RustSASA produces SASA values that closely match those from Freesasa, achieving Pearson correlation coefficients > 0.95 on both datasets.
 
 ## Performance
 
