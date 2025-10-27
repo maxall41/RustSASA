@@ -95,6 +95,8 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
           fail_ci_if_error: false
+      - name: Test
+        run: cargo test
 
   build:
     name: Build PGO optimized binaries
