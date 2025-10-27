@@ -20,7 +20,7 @@ clap = { version = "4.5.50", features = ["derive"] }
 serde = "1.0.228"
 serde_json = "1.0.145"
 quick-xml = { version = "0.38.3", features = ["serialize"] }
-indicatif = "0.18.0"
+indicatif = "0.18.2"
 mimalloc = { version = "0.1.48", default-features = false }
 
 [dev-dependencies]
