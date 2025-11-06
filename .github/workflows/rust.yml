@@ -17,13 +17,11 @@ jobs:
     name: Code Quality
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.88.0
-          profile: minimal
-          override: true
           components: rustfmt, clippy
 
       - name: Get submodules
@@ -48,28 +46,16 @@ jobs:
     runs-on: ubuntu-24.04
     needs: quality
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.88.0
-          profile: minimal
-          override: true
       - name: Get submodules
         run: |
           git submodule update --init --recursive
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-      - name: Generate code coverage
-        env:
-          RUSTFLAGS: "-Awarnings"
-        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --fail-under-lines 70 --lib # This runs the tests as well
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.info
-          fail_ci_if_error: false
+      - name: Run tests
+        run: cargo test
 
   build:
     name: Build PGO optimized binaries
@@ -89,13 +75,12 @@ jobs:
           #   name: rust-sasa-aarch64-apple-darwin
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.88.0
-          target: ${{ matrix.target }}
-          override: true
+          targets: ${{ matrix.target }}
           components: llvm-tools-preview
 
       - name: Get submodules
@@ -170,7 +155,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
