@@ -21,7 +21,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.88.0
+          toolchain: 1.91.0
           components: rustfmt, clippy
 
       - name: Get submodules
@@ -50,7 +50,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.88.0
+          toolchain: 1.91.0
       - name: Get submodules
         run: |
           git submodule update --init --recursive
@@ -79,7 +79,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.88.0
+          toolchain: 1.91.0
           targets: ${{ matrix.target }}
           components: llvm-tools-preview
 
