@@ -72,13 +72,6 @@ jobs:
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-index-
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-build-target-
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Hack to fix code cov report
@@ -88,15 +81,13 @@ jobs:
       - name: Generate code coverage
         env:
           RUSTFLAGS: "-Awarnings"
-        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --fail-under-lines 70 --lib
+        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --fail-under-lines 70 --lib # This runs the tests as well
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
           fail_ci_if_error: false
-      - name: Test
-        run: cargo test
 
   build:
     name: Build PGO optimized binaries
