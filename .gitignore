@@ -5,3 +5,5 @@ paper/eval/E_coli_freesasa
 paper/eval/E_coli_biopython
 paper/eval/freesasa_dataset_proc=freesasa
 paper/eval/freesasa_dataset_proc=rustsasa
+paper/eval/temp_out/
+paper/eval/pdb_files/
