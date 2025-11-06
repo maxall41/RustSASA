@@ -60,10 +60,6 @@ jobs:
           git submodule update --init --recursive
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
-      - name: Hack to fix code cov report
-        run: |
-          sed -i 's/pdbtbx = { path = "pdbtbx", version = "0.12.0" }/pdbtbx = "0.12.0"/' Cargo.toml
-          rm -rf pdbtbx/
       - name: Generate code coverage
         env:
           RUSTFLAGS: "-Awarnings"
