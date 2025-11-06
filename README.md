@@ -155,12 +155,11 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 ## License
 MIT
 
-## Latest update (0.3.1)
+## Version 0.4.0 (Latest Update)
 
-- ⚡️ Slightly faster due to memory allocation optimization
-- PGO Builds
-
-Also see [changelog](https://github.com/maxall41/rustsasa/blob/master/CHANGELOG.md).
+- Replace custom SIMD implementation with `pulp` theoretically improving performance on x86 CPUs with AVX SIMD extensions.
+- Better support for PDB files with bad records (i.e: old space group like `H 3` or bad `SEQADV` record).
+- Update package dependencies.
 
 ## Contributing
 
@@ -168,7 +167,7 @@ Contributions are welcome! Please feel free to submit pull requests and open iss
 
 ## How to cite
 
-If you use the RustSASA library in your publication please cite it. To cite this reposity scroll up to the top of this page, and then click on the "Cite this repository" button in the right hand GitHub side bar. This will give you a citation in your desired format (i.e: BiBTeX, APA). 
+If you use the RustSASA library in your publication please cite it. To cite this reposity scroll up to the top of this page, and then click on the "Cite this repository" button in the right hand GitHub side bar. This will give you a citation in your desired format (i.e: BiBTeX, APA).
 
 # Citations:
 
