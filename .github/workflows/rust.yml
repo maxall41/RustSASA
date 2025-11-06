@@ -148,7 +148,7 @@ jobs:
         shell: bash
         run: |
           if [ ! -f UP000000625_83333_ECOLI_v4.tar ]; then
-            curl -L -o UP000000625_83333_ECOLI_v4.tar https://f005.backblazeb2.com/file/publicbucket498328942/UP000000625_83333_ECOLI_v4.tar
+            curl -L -o UP000000625_83333_ECOLI_v4.tar https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000000625_83333_ECOLI_v6.tar
           fi
 
       - name: Run PGO profiling (Linux/Unix)

@@ -1,2 +1,7 @@
 /target
 .DS_Store
+paper/eval/E_coli_RSASA
+paper/eval/E_coli_freesasa
+paper/eval/E_coli_biopython
+paper/eval/freesasa_dataset_proc=freesasa
+paper/eval/freesasa_dataset_proc=rustsasa

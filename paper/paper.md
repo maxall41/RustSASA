@@ -34,7 +34,7 @@ RustSASA addresses this performance gap by leveraging Rust's zero-cost abstracti
 ![Comparing Freesasa and RustSasa on E. coli proteome\label{fig:example}](eval/sasa_chain_comparison_E_coli.pdf){ width=50% }
 ![Comparing Freesasa and RustSasa on Freesasa comparison dataset\label{fig:example}](eval/sasa_chain_comparison_freesasa_ds.pdf){ width=50% }
 
-To evaluate the accuracy of RustSASA calculations, we compared results to Freesasa [@Mitternacht_2016] on both the predicted E. coli proteome from AlphaFold [@Jumper2021] and the Freesasa evaluation dataset. RustSASA produces SASA values that closely match those from Freesasa, achieving Pearson correlation coefficients > 0.95 on both datasets.
+To evaluate the accuracy of RustSASA calculations, we compared results to Freesasa [@Mitternacht_2016] on both the predicted E. coli proteome from AlphaFold [@Jumper2021] and the Freesasa evaluation dataset. RustSASA produces SASA values that closely match those from Freesasa, achieving Pearson correlation coefficients > 0.98 on both datasets.
 
 ## Performance
 
@@ -50,6 +50,6 @@ RustSASA provides a significant advancement in SASA calculation performance whil
 
 # Acknowledgements
 
-We would like to thank Rodrigo Honorato and Niccolo' Bruciaferri for their valuable contributions to this project.
+We would like to thank Rodrigo Honorato and Niccolò Bruciaferri for their valuable contributions to this project.
 
 # References

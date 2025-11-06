@@ -486,7 +486,7 @@ mod tests {
 
     #[test]
     fn internal_test() {
-        let (pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
         let mut atoms = vec![];
         for atom in pdb.atoms() {
             atoms.push(Atom {
@@ -518,7 +518,7 @@ mod tests {
 
     #[test]
     fn external_test() {
-        let (pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
         let protein_sasa = SASAOptions::<ProteinLevel>::new().process(&pdb).unwrap();
         let chain_sasa = SASAOptions::<ChainLevel>::new().process(&pdb).unwrap();
 
@@ -539,8 +539,34 @@ mod tests {
     }
 
     #[test]
+    fn check_pdb_w_bad_seqadv_record() {
+        let (pdb, _errors) = pdbtbx::open("./pdbs/bad_seqadv_1A06.pdb").unwrap();
+        let protein_sasa = SASAOptions::<ProteinLevel>::new().process(&pdb).unwrap();
+
+        let start = Instant::now();
+        let duration = start.elapsed();
+        println!("Time elapsed (ATOM): {duration:?}");
+
+        assert_abs_diff_eq!(protein_sasa.global_total, 14466.709, epsilon = 1500.0);
+        println!("PROTEIN SASA {protein_sasa:?}");
+    }
+
+    #[test]
+    fn check_pdb_w_atypical_spacegroup() {
+        let (pdb, _errors) = pdbtbx::open("./pdbs/151L_H3.pdb").unwrap();
+        let protein_sasa = SASAOptions::<ProteinLevel>::new().process(&pdb).unwrap();
+
+        let start = Instant::now();
+        let duration = start.elapsed();
+        println!("Time elapsed (ATOM): {duration:?}");
+
+        assert_abs_diff_eq!(protein_sasa.global_total, 9558.812, epsilon = 1500.0);
+        println!("PROTEIN SASA {protein_sasa:?}");
+    }
+
+    #[test]
     fn external_test_high_res() {
-        let (pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
         let protein_sasa = SASAOptions::<ProteinLevel>::new()
             .with_n_points(960)
             .process(&pdb)

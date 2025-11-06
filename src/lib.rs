@@ -4,7 +4,7 @@
 //! use pdbtbx::StrictnessLevel;
 //! use rust_sasa::{SASAOptions, ResidueLevel};
 //!
-//! let (mut pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
+//! let (mut pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
 //! let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
 //! ```
 pub mod options;
@@ -124,7 +124,7 @@ fn precompute_neighbors(
 /// use pdbtbx::StrictnessLevel;
 /// use rust_sasa::{Atom, calculate_sasa_internal};
 /// let (mut pdb, _errors) = pdbtbx::open(
-///             "./example.cif",
+///             "./pdbs/example.cif",
 ///         ).unwrap();
 /// let mut atoms = vec![];
 /// for atom in pdb.atoms() {
