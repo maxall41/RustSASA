@@ -10,6 +10,9 @@ categories = ["science"]
 keywords = ["Rust", "Bioinformatics", "SASA"]
 documentation = "https://docs.rs/rust-sasa/latest/rust_sasa/"
 rust-version = "1.85.0"
+exclude = [
+    "paper/"
+]
 
 [dependencies]
 pdbtbx = { path = "pdbtbx", version = "0.12.0" }             # We have to use a git module because you cannot use a git+rev version in a published crate for some reason...
