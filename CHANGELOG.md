@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## Latest update (0.3.1)
+## Version 0.4.0 (Latest Update)
+
+- Replace custom SIMD implementation with `pulp` theoretically improving performance on x86 CPUs with AVX SIMD extensions.
+- Better support for PDB files with bad records (i.e: old space group like `H 3` or bad `SEQADV` record).
+- Update package dependencies.
+
+## Version 0.3.1
 
 - ⚡️ Slightly faster due to memory allocation optimization
 - PGO Builds
