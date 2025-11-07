@@ -67,7 +67,7 @@ def extract_matching_chain_values(freesasa_chains, rsasa_chains):
     return freesasa_values, rsasa_values
 
 
-def main(freesasa_dir, rsasa_dir, plot_title):
+def main(freesasa_dir, rsasa_dir, plot_title, output_file):
     # Directory paths provided via CLI arguments
 
     # Check if directories exist
@@ -130,45 +130,59 @@ def main(freesasa_dir, rsasa_dir, plot_title):
     rmse = np.sqrt(np.mean((freesasa_values - rsasa_values) ** 2))
     mae = np.mean(np.abs(freesasa_values - rsasa_values))
 
-    # Create scatter plot
     plt.figure(figsize=(10, 8))
-    plt.rcParams.update({"font.size": 20})
-    plt.scatter(freesasa_values, rsasa_values, alpha=0.6, s=30)
+    fontsize = 18
+    linewidth = 2.5
+    colors = ["#4477AA"]  # color-blind friendly blue from Paul Tol’s palette
 
-    # Add 1:1 line for reference
+    # Create axes
+    ax = plt.subplot(111)
+
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.spines["left"].set_linewidth(linewidth)
+    ax.spines["bottom"].set_linewidth(linewidth)
+    ax.xaxis.set_tick_params(width=linewidth, length=8, direction="out")
+    ax.yaxis.set_tick_params(width=linewidth, length=8, direction="out")
+
+    ax.scatter(
+        freesasa_values,
+        rsasa_values,
+        alpha=0.6,
+        s=50,
+        color=colors[0],
+        edgecolor="none",
+    )
+
     min_val = min(freesasa_values.min(), rsasa_values.min())
     max_val = max(freesasa_values.max(), rsasa_values.max())
-    plt.plot([min_val, max_val], [min_val, max_val], "r--", alpha=0.8, label="y=x")
+    ax.plot([min_val, max_val], [min_val, max_val], color="gray", linestyle="--", linewidth=2)
 
-    # Add labels and title
-    plt.xlabel("FreeSASA Total")
-    plt.ylabel("RustSASA Total")
-    plt.title(
-        plot_title,
-    )
-    plt.legend()
+    ax.set_xlabel("FreeSASA Chain Total", fontsize=fontsize + 2)
+    ax.set_ylabel("RustSASA Chain Total", fontsize=fontsize + 2)
+    ax.set_title(plot_title, fontsize=fontsize + 4, pad=15)
 
-    # Add grid
-    plt.grid(True, alpha=0.3)
+    ax.tick_params(axis="both", which="major", labelsize=fontsize)
+    ax.ticklabel_format(style="sci", axis="both", scilimits=(0, 0))
+    ax.xaxis.get_offset_text().set_fontsize(fontsize - 2)
+    ax.yaxis.get_offset_text().set_fontsize(fontsize - 2)
 
-    # Make plot square
-    plt.axis("equal")
+    ax.grid(True, alpha=0.3, linestyle="--")
+    ax.set_aspect("equal", adjustable="box")
 
-    # Add statistics text box
-    stats_text = f"n = {len(freesasa_values)}\nr = {correlation:.4f}\np = {p_value:.2e}\nRMSE = {rmse:.2f} Ų"
-    plt.text(
+    stats_text = f"n = {len(freesasa_values)}\nr = {correlation:.4f}\np = {p_value:.2e}\nRMSE = {rmse:.2f}"
+    ax.text(
         0.05,
         0.95,
         stats_text,
-        transform=plt.gca().transAxes,
-        verticalalignment="top",
-        bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
+        transform=ax.transAxes,
+        va="top",
+        fontsize=fontsize - 2,
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="gray", alpha=0.8),
     )
 
     plt.tight_layout()
-
-    # Save plot
-    plt.savefig("sasa_chain_comparison.pdf", bbox_inches="tight")
+    plt.savefig(output_file, bbox_inches="tight", dpi=300)
 
     print("\nResults:")
     print(f"Pearson correlation coefficient: {correlation:.4f}")
