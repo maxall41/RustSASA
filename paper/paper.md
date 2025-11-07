@@ -31,14 +31,14 @@ RustSASA addresses this performance gap by leveraging Rust's zero-cost abstracti
 
 ## Calculation Quality
 
-![Comparing Freesasa and RustSasa on E. coli proteome\label{fig:example}](eval/sasa_chain_comparison_E_coli.pdf){ width=50% }
-![Comparing Freesasa and RustSasa on Freesasa comparison dataset\label{fig:example}](eval/sasa_chain_comparison_freesasa_ds.pdf){ width=50% }
+![Comparing Freesasa and RustSasa on E. coli proteome\label{fig:example}](eval/figures/sasa_chain_comparison_E_coli.pdf){ width=50% }
+![Comparing Freesasa and RustSasa on Freesasa comparison dataset\label{fig:example}](eval/figures/sasa_chain_comparison_freesasa_ds.pdf){ width=50% }
 
 To evaluate the accuracy of RustSASA calculations, we compared results to Freesasa [@Mitternacht_2016] on both the predicted E. coli proteome from AlphaFold [@Jumper2021] and the Freesasa evaluation dataset. RustSASA produces SASA values that closely match those from Freesasa, achieving Pearson correlation coefficients > 0.98 on both datasets.
 
 ## Performance
 
-![Comparing Freesasa, RustSasa, and Biopython performance on E. coli proteome\label{fig:example}](eval/performance_comparison.pdf){ width=100% }
+![Comparing Freesasa, RustSasa, and Biopython performance on E. coli proteome\label{fig:example}](eval/figures/performance_comparison.pdf){ width=100% }
 
 We evaluated the performance of Freesasa, RustSASA, and Biopython [@biopython] on the predicted E. coli proteome using Hyperfine [@Hyperfine] with three runs and three warmup iterations on a 2024 Apple MacBook Air with an M3 processor and 24GB of unified memory. All methods utilized parallel processing across eight cores. GNU parallel [@Tange2011a] was used to parallelize Freesasa and Biopython, while RustSASA's utilized its internal parallelization.
 
