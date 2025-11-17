@@ -23,7 +23,7 @@ clap = { version = "4.5.52", features = ["derive"] }
 serde = "1.0.228"
 serde_json = "1.0.145"
 quick-xml = { version = "0.38.3", features = ["serialize"] }
-indicatif = "0.18.2"
+indicatif = "0.18.3"
 mimalloc = { version = "0.1.48", default-features = false }
 pulp = "0.22.2"
 
