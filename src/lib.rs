@@ -90,12 +90,7 @@ fn precompute_neighbors(
 
     for atom in atoms.iter() {
         let xyz = atom.position.coords.xyz();
-        grid.locate_within_distance(
-            [xyz[0], xyz[1], xyz[2]],
-            sr_squared,
-            atoms,
-            &mut temp_candidates,
-        );
+        grid.locate_within_distance([xyz[0], xyz[1], xyz[2]], sr_squared, &mut temp_candidates);
 
         // Precompute squared thresholds for each neighbor
         let mut neighbor_data = Vec::with_capacity(temp_candidates.len());
