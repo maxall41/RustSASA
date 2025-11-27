@@ -76,7 +76,7 @@ fn precompute_neighbors(
     let sr = probe_radius + (max_radii * 2.0);
     let sr_squared = sr * sr;
 
-    for (_, atom) in atoms.iter().enumerate() {
+    for atom in atoms.iter() {
         let xyz = atom.position.coords.xyz();
         grid.locate_within_distance([xyz[0], xyz[1], xyz[2]], sr_squared, &mut temp_candidates);
 
