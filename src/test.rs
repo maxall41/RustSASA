@@ -486,7 +486,7 @@ mod tests {
 
     #[test]
     fn internal_test() {
-        let (pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
         let mut atoms = vec![];
         for atom in pdb.atoms() {
             atoms.push(Atom {
@@ -518,7 +518,7 @@ mod tests {
 
     #[test]
     fn external_test() {
-        let (pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
         let protein_sasa = SASAOptions::<ProteinLevel>::new().process(&pdb).unwrap();
         let chain_sasa = SASAOptions::<ChainLevel>::new().process(&pdb).unwrap();
 
@@ -539,8 +539,34 @@ mod tests {
     }
 
     #[test]
+    fn check_pdb_w_bad_seqadv_record() {
+        let (pdb, _errors) = pdbtbx::open("./pdbs/bad_seqadv_1A06.pdb").unwrap();
+        let protein_sasa = SASAOptions::<ProteinLevel>::new().process(&pdb).unwrap();
+
+        let start = Instant::now();
+        let duration = start.elapsed();
+        println!("Time elapsed (ATOM): {duration:?}");
+
+        assert_abs_diff_eq!(protein_sasa.global_total, 14466.709, epsilon = 1500.0);
+        println!("PROTEIN SASA {protein_sasa:?}");
+    }
+
+    #[test]
+    fn check_pdb_w_atypical_spacegroup() {
+        let (pdb, _errors) = pdbtbx::open("./pdbs/151L_H3.pdb").unwrap();
+        let protein_sasa = SASAOptions::<ProteinLevel>::new().process(&pdb).unwrap();
+
+        let start = Instant::now();
+        let duration = start.elapsed();
+        println!("Time elapsed (ATOM): {duration:?}");
+
+        assert_abs_diff_eq!(protein_sasa.global_total, 9558.812, epsilon = 1500.0);
+        println!("PROTEIN SASA {protein_sasa:?}");
+    }
+
+    #[test]
     fn external_test_high_res() {
-        let (pdb, _errors) = pdbtbx::open("./example.cif").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
         let protein_sasa = SASAOptions::<ProteinLevel>::new()
             .with_n_points(960)
             .process(&pdb)
@@ -614,23 +640,23 @@ mod tests {
         let mut result = Vec::new();
 
         // Test 1: Search near origin - should find atoms 1, 2, and 3
-        grid.locate_within_distance([0.0, 0.0, 0.0], 36.0, &atoms, &mut result); // radius^2 = 36, so radius = 6
+        grid.locate_within_distance([0.0, 0.0, 0.0], 36.0, &mut result); // radius^2 = 36, so radius = 6
         assert!(result.contains(&0)); // atom at (0,0,0)
         assert!(result.contains(&1)); // atom at (5,0,0) - distance = 5
         assert!(result.contains(&2)); // atom at (0,5,0) - distance = 5
         assert!(!result.contains(&3)); // atom at (10,10,10) - distance = ~17.3
 
         // Test 2: Search near the distant atom - should only find atom 4
-        grid.locate_within_distance([10.0, 10.0, 10.0], 4.0, &atoms, &mut result); // radius^2 = 4, so radius = 2
+        grid.locate_within_distance([10.0, 10.0, 10.0], 4.0, &mut result); // radius^2 = 4, so radius = 2
         assert_eq!(result.len(), 1);
         assert!(result.contains(&3)); // atom at (10,10,10)
 
         // Test 3: Search with large radius - should find all atoms
-        grid.locate_within_distance([5.0, 5.0, 5.0], 100.0, &atoms, &mut result); // radius^2 = 100, so radius = 10
+        grid.locate_within_distance([5.0, 5.0, 5.0], 100.0, &mut result); // radius^2 = 100, so radius = 10
         assert_eq!(result.len(), 4);
 
         // Test 4: Search in empty space - should find no atoms
-        grid.locate_within_distance([100.0, 100.0, 100.0], 1.0, &atoms, &mut result); // radius^2 = 1, so radius = 1
+        grid.locate_within_distance([100.0, 100.0, 100.0], 1.0, &mut result); // radius^2 = 1, so radius = 1
         assert_eq!(result.len(), 0);
     }
 }
