@@ -5,11 +5,11 @@
 ![rustc 1.85+](https://img.shields.io/badge/msrv-rustc_1.85+-red.svg)
 [![codecov](https://codecov.io/github/maxall41/rustsasa/graph/badge.svg?token=SHM6RRMKSL)](https://codecov.io/github/maxall41/rustsasa)
 
-⚡ Ludicrously fast **Rust crate** for protein solvent accessible surface area (SASA) calculations - **46x faster** than Biopython, **7x faster** than FreeSASA. Pure Rust with Python bindings & CLI. Implements Shrake-Rupley algorithm [1].
+⚡ Ludicrously fast **Rust crate** for protein solvent accessible surface area (SASA) calculations - **46x faster** than Biopython, **5x faster** than FreeSASA. Pure Rust with Python bindings & CLI. Implements Shrake-Rupley algorithm [1].
 
 # Features:
 - 🦀 Written in Pure Rust.
-- ⚡️ Ludicrously fast. **46X faster** than Biopython, **14X faster** than mdakit_sasa, and **7X faster** than Freesasa.
+- ⚡️ Ludicrously fast. **46X faster** than Biopython, **14X faster** than mdakit_sasa, and **5X faster** than Freesasa.
 - 🧪 Full test coverage.
 - 🐍 Python support.
 - 🤖 Command line interface.
@@ -132,9 +132,9 @@ See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more 
 
 ## Results:
 
-- RustSasa: *8.071 s ±  0.361 s*
+- RustSasa: *5.554 s ± 0.049 s*
 
-- Freesasa: *54.914 s ±  0.455 s*
+- Freesasa: *28.042 s ± 2.269 s*
 
 - Biopython: *368.025 s ± 51.156 s*
 
