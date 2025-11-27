@@ -60,6 +60,10 @@ struct Args {
     /// Output format (required when processing directories, inferred from file extension for single files)
     #[arg(short, long, value_enum)]
     format: Option<OutputFormat>,
+
+    /// Number of Shrake Rupely points
+    #[arg(short, long, default_value_t = 100)]
+    n_points: usize,
 }
 
 #[derive(Debug, Snafu)]
@@ -97,14 +101,15 @@ fn process(
     output_file: String,
     output_depth: SASALevel,
     format: &OutputFormat,
+    n_points: usize,
     parallel: bool,
 ) -> Result<(), CLIError> {
     let (pdb, _) = ReadOptions::default()
         .set_level(pdbtbx::StrictnessLevel::Loose)
         .read(input_file)
         .map_err(|errors| CLIError::InputFileRead { errors })?;
-    let result =
-        calculate_sasa_and_wrap(&pdb, &output_depth, parallel).context(SASACalculationSnafu)?;
+    let result = calculate_sasa_and_wrap(&pdb, &output_depth, n_points, parallel)
+        .context(SASACalculationSnafu)?;
 
     match format {
         OutputFormat::Xml => {
@@ -137,30 +142,35 @@ fn process(
 fn calculate_sasa_and_wrap(
     pdb: &pdbtbx::PDB,
     level: &SASALevel,
+    n_points: usize,
     parallel: bool,
 ) -> Result<SASAResult, SASACalcError> {
     match level {
         SASALevel::Atom => {
             let result = SASAOptions::atom_level()
                 .with_parallel(parallel)
+                .with_n_points(n_points)
                 .process(pdb)?;
             Ok(SASAResult::Atom(result))
         }
         SASALevel::Residue => {
             let result = SASAOptions::residue_level()
                 .with_parallel(parallel)
+                .with_n_points(n_points)
                 .process(pdb)?;
             Ok(SASAResult::Residue(result))
         }
         SASALevel::Chain => {
             let result = SASAOptions::chain_level()
                 .with_parallel(parallel)
+                .with_n_points(n_points)
                 .process(pdb)?;
             Ok(SASAResult::Chain(result))
         }
         SASALevel::Protein => {
             let result = SASAOptions::protein_level()
                 .with_parallel(parallel)
+                .with_n_points(n_points)
                 .process(pdb)?;
             Ok(SASAResult::Protein(result))
         }
@@ -184,6 +194,7 @@ fn process_directory(
     input_dir: &str,
     output_dir: &str,
     output_depth: SASALevel,
+    n_points: usize,
     format: &OutputFormat,
 ) -> Result<(), CLIError> {
     use rayon::prelude::*;
@@ -217,7 +228,14 @@ fn process_directory(
                 let output_path = format!("{output_dir}/{filename}.{extension}");
 
                 pb.set_message(format!("Processing {filename}"));
-                match process(input_path, output_path, output_depth.clone(), format, false) {
+                match process(
+                    input_path,
+                    output_path,
+                    output_depth.clone(),
+                    format,
+                    n_points,
+                    false,
+                ) {
                     Ok(_) => pb.inc(1),
                     Err(e) => {
                         errors
@@ -258,12 +276,20 @@ fn process_single_file(
     input_file: String,
     output_file: String,
     output_depth: SASALevel,
+    n_points: usize,
 ) -> Result<(), CLIError> {
     println!("Processing single file...");
 
     let format = OutputFormat::from_file_extension(&output_file);
 
-    process(input_file, output_file, output_depth, &format, true)?;
+    process(
+        input_file,
+        output_file,
+        output_depth,
+        &format,
+        n_points,
+        true,
+    )?;
     println!("Finished!");
     Ok(())
 }
@@ -278,8 +304,14 @@ fn main() -> Result<(), CLIError> {
                 "Format argument is required when processing directories",
             ),
         })?;
-        process_directory(&args.input, &args.output, args.output_depth, &format)
+        process_directory(
+            &args.input,
+            &args.output,
+            args.output_depth,
+            args.n_points,
+            &format,
+        )
     } else {
-        process_single_file(args.input, args.output, args.output_depth)
+        process_single_file(args.input, args.output, args.output_depth, args.n_points)
     }
 }

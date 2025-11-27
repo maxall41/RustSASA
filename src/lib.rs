@@ -80,28 +80,6 @@ fn precompute_neighbors(
         let xyz = atom.position.coords.xyz();
         grid.locate_within_distance([xyz[0], xyz[1], xyz[2]], sr_squared, &mut temp_candidates);
 
-        // Sort the candidates so the closest neighbors appears first.
-        // This maximizes the chance of an early exit in is_accessible_precomputed
-        let center_pos = atom.position;
-        temp_candidates.sort_unstable_by(|&a_idx, &b_idx| {
-            let pos_a = atoms[a_idx].position;
-            let pos_b = atoms[b_idx].position;
-
-            let dx_a = center_pos.x - pos_a.x;
-            let dy_a = center_pos.y - pos_a.y;
-            let dz_a = center_pos.z - pos_a.z;
-            let dist_sq_a = dx_a * dx_a + dy_a * dy_a + dz_a * dz_a;
-
-            let dx_b = center_pos.x - pos_b.x;
-            let dy_b = center_pos.y - pos_b.y;
-            let dz_b = center_pos.z - pos_b.z;
-            let dist_sq_b = dx_b * dx_b + dy_b * dy_b + dz_b * dz_b;
-
-            dist_sq_a
-                .partial_cmp(&dist_sq_b)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-
         // Precompute squared thresholds for each neighbor
         let mut neighbor_data = Vec::with_capacity(temp_candidates.len());
         for &idx in &temp_candidates {
