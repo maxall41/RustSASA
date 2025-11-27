@@ -25,7 +25,7 @@ Solvent accessible surface area (SASA) calculations are fundamental for understa
 
 Current SASA calculation tools represent a significant computational bottleneck in structural biology workflows, particularly for molecular dynamics simulations and high-throughput analyses. Popular implementations such as those in Biopython and Freesasa, while accurate, become prohibitively slow when processing large protein datasets.
 
-RustSASA addresses this performance gap by leveraging Rust's zero-cost abstractions and memory safety guarantees to create a SASA calculation crate that is significantly faster than Freesasa and Biopython. Benchmarking on representative protein structures demonstrates that RustSASA achieves a 5× improvement over Freesasa, and a 46× performance improvement over Biopython. This performance advantage reduces computational costs for high-throughput structural analyses and makes large-scale comparative studies feasible. Furthermore, RustSASA's multi-language support (Rust and Python), command-line interface, and MDAnalysis package ensure broad accessibility across the computational biology community.
+RustSASA addresses this performance gap by leveraging Rust's zero-cost abstractions and memory safety guarantees to create a SASA calculation crate that is significantly faster than Freesasa and Biopython. Benchmarking on representative protein structures demonstrates that RustSASA achieves a 5× improvement over Freesasa, and a 63× performance improvement over Biopython. This performance advantage reduces computational costs for high-throughput structural analyses and makes large-scale comparative studies feasible. Furthermore, RustSASA's multi-language support (Rust and Python), command-line interface, and MDAnalysis package ensure broad accessibility across the computational biology community.
 
 # Results
 
@@ -43,7 +43,7 @@ To evaluate the accuracy of RustSASA calculations, we compared results to Freesa
 
 We evaluated the performance of Freesasa, RustSASA, and Biopython [@biopython] in two common use cases. First, we performed SASA calculations for all proteins in the E. coli proteome. Second, we evaluated the performance of these methods on a single randomly selected protein (A0A385XJ53) from the AlphaFold E. coli proteome. 
 
-For the full proteome benchmark we used Hyperfine [@Hyperfine] with 3 runs and 3 warmup iterations. All methods utilized parallel processing across eight cores. GNU parallel [@Tange2011a] was used to parallelize Freesasa and Biopython, while RustSASA utilized its internal parallelization. RustSASA processed the entire proteome in ~5 seconds compared to ~28 seconds for Freesasa and ~368 seconds for Biopython, representing 5× and 46× speed improvements, respectively. 
+For the full proteome benchmark we used Hyperfine [@Hyperfine] with 3 runs and 3 warmup iterations. All methods utilized parallel processing across eight cores. GNU parallel [@Tange2011a] was used to parallelize Freesasa and Biopython, while RustSASA utilized its internal parallelization. RustSASA processed the entire proteome in ~5 seconds compared to ~28 seconds for Freesasa and ~368 seconds for Biopython, representing 5× and 63× speed improvements, respectively. 
 
 For the single protein benchmark, we used Hyperfine with 3 warmup iterations and 25 runs. RustSASA processed the protein in 4.3ms (±0.5), Freesasa processed the protein in 4.0ms (±0.2), and Biopython processed the protein in 250.8ms (±2.0). 
 
