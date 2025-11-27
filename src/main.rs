@@ -61,7 +61,7 @@ struct Args {
     #[arg(short, long, value_enum)]
     format: Option<OutputFormat>,
 
-    /// Number of Shrake Rupely points
+    /// Number of Shrake Rupley points
     #[arg(short, long, default_value_t = 100)]
     n_points: usize,
 }
