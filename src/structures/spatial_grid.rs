@@ -122,23 +122,19 @@ impl SpatialGrid {
     ) {
         result.clear();
         let radius = radius_squared.sqrt();
-        let search_radius = radius + self.cell_size;
         let inv_cell_size = 1.0 / self.cell_size;
 
         // Calculate index ranges
         // Using min/max and clamping to grid dimensions
-        let min_x =
-            (((point[0] - search_radius) - self.min_bounds[0]) * inv_cell_size).max(0.0) as usize;
-        let min_y =
-            (((point[1] - search_radius) - self.min_bounds[1]) * inv_cell_size).max(0.0) as usize;
-        let min_z =
-            (((point[2] - search_radius) - self.min_bounds[2]) * inv_cell_size).max(0.0) as usize;
+        let min_x = (((point[0] - radius) - self.min_bounds[0]) * inv_cell_size).max(0.0) as usize;
+        let min_y = (((point[1] - radius) - self.min_bounds[1]) * inv_cell_size).max(0.0) as usize;
+        let min_z = (((point[2] - radius) - self.min_bounds[2]) * inv_cell_size).max(0.0) as usize;
 
-        let max_x = (((point[0] + search_radius) - self.min_bounds[0]) * inv_cell_size)
+        let max_x = (((point[0] + radius) - self.min_bounds[0]) * inv_cell_size)
             .min(self.grid_dims[0] as f32 - 1.0) as usize;
-        let max_y = (((point[1] + search_radius) - self.min_bounds[1]) * inv_cell_size)
+        let max_y = (((point[1] + radius) - self.min_bounds[1]) * inv_cell_size)
             .min(self.grid_dims[1] as f32 - 1.0) as usize;
-        let max_z = (((point[2] + search_radius) - self.min_bounds[2]) * inv_cell_size)
+        let max_z = (((point[2] + radius) - self.min_bounds[2]) * inv_cell_size)
             .min(self.grid_dims[2] as f32 - 1.0) as usize;
 
         let stride_y = self.strides[1];
@@ -151,14 +147,55 @@ impl SpatialGrid {
 
         // Iterate flat indices
         for z in min_z..=max_z {
+            let cell_min_z = self.min_bounds[2] + (z as f32) * self.cell_size;
+            let cell_max_z = cell_min_z + self.cell_size;
+            let dz = if pz < cell_min_z {
+                cell_min_z - pz
+            } else if pz > cell_max_z {
+                pz - cell_max_z
+            } else {
+                0.0
+            };
+            let dz_sq = dz * dz;
+            if dz_sq > radius_squared {
+                continue;
+            }
+
             let z_offset = z * stride_z;
             for y in min_y..=max_y {
-                let y_offset = z_offset + y * stride_y;
+                let cell_min_y = self.min_bounds[1] + (y as f32) * self.cell_size;
+                let cell_max_y = cell_min_y + self.cell_size;
+                let dy = if py < cell_min_y {
+                    cell_min_y - py
+                } else if py > cell_max_y {
+                    py - cell_max_y
+                } else {
+                    0.0
+                };
+                let dy_sq = dy * dy;
+                if dz_sq + dy_sq > radius_squared {
+                    continue;
+                }
 
+                let y_offset = z_offset + y * stride_y;
                 let row_start_idx = y_offset + min_x;
                 let row_end_idx = y_offset + max_x;
 
-                for cell_idx in row_start_idx..=row_end_idx {
+                for (x, cell_idx) in (min_x..=max_x).zip(row_start_idx..=row_end_idx) {
+                    let cell_min_x = self.min_bounds[0] + (x as f32) * self.cell_size;
+                    let cell_max_x = cell_min_x + self.cell_size;
+                    let dx = if px < cell_min_x {
+                        cell_min_x - px
+                    } else if px > cell_max_x {
+                        px - cell_max_x
+                    } else {
+                        0.0
+                    };
+                    let dx_sq = dx * dx;
+                    if dz_sq + dy_sq + dx_sq > radius_squared {
+                        continue;
+                    }
+
                     let start = self.cell_starts[cell_idx] as usize;
                     let end = self.cell_starts[cell_idx + 1] as usize;
 

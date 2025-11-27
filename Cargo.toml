@@ -29,3 +29,9 @@ pulp = "0.22.2"
 
 [dev-dependencies]
 approx = "0.5.1"
+criterion = "0.5"
+rand = "0.8"
+
+[[bench]]
+name = "spatial_bench"
+harness = false

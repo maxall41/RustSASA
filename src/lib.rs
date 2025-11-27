@@ -17,6 +17,7 @@ mod utils;
 
 pub use crate::options::*;
 pub use crate::structures::atomic::*;
+use crate::utils::ARCH;
 
 use structures::spatial_grid::SpatialGrid;
 // Re-export io functions for use in the binary crate
@@ -273,11 +274,9 @@ pub fn calculate_sasa_internal(
     // Use precomputed neighbors
     let neighbor_indices = precompute_neighbors(atoms, probe_radius, max_radii);
 
-    let arch = Arch::new();
-
     // Helper closure to wrap the kernel dispatch
     let process_atom = |(i, neighbors): (usize, &Vec<NeighborData>)| {
-        arch.dispatch(AtomSasaKernel {
+        ARCH.dispatch(AtomSasaKernel {
             atom_index: i,
             atoms,
             neighbors,
