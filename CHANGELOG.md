@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## Version 0.4.0 (Latest Update)
+## Version 0.5.0 (Latest update)
+
+* Implemented new SIMD SASA calculation kernel and improved spatial grid data structure, thus improving performance by ~35% compared to v0.4.0.
+* Fixed benchmarking issue that exaggerated RustSASA's performance (see issue #40); paper and readme have been updated accordingly.
+* Added `--n-points` option to CLI to enable customization of the Shrake-Rupley algorithm.  
+
+## Version 0.4.0
 
 - Replace custom SIMD implementation with `pulp` theoretically improving performance on x86 CPUs with AVX SIMD extensions.
 - Better support for PDB files with bad records (i.e: old space group like `H 3` or bad `SEQADV` record).
