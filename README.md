@@ -5,11 +5,11 @@
 ![rustc 1.85+](https://img.shields.io/badge/msrv-rustc_1.85+-red.svg)
 [![codecov](https://codecov.io/github/maxall41/rustsasa/graph/badge.svg?token=SHM6RRMKSL)](https://codecov.io/github/maxall41/rustsasa)
 
-⚡ Ludicrously fast **Rust crate** for protein SASA calculations - **46x faster** than Biopython, **7x faster** than FreeSASA. Pure Rust with Python bindings & CLI. Implements Shrake-Rupley algorithm[1].
+⚡ Ludicrously fast **Rust crate** for protein solvent accessible surface area (SASA) calculations - **63x faster** than Biopython, **5x faster** than FreeSASA. Pure Rust with Python bindings & CLI. Implements Shrake-Rupley algorithm [1].
 
 # Features:
 - 🦀 Written in Pure Rust.
-- ⚡️ Ludicrously fast. **46X Faster** than Biopython, **14X** faster than mdakit_sasa, and **7X faster** than Freesasa.
+- ⚡️ Ludicrously fast. **63X faster** than Biopython, **14X faster** than mdakit_sasa, and **5X faster** than Freesasa.
 - 🧪 Full test coverage.
 - 🐍 Python support.
 - 🤖 Command line interface.
@@ -26,6 +26,7 @@
 - [Validation](#validation-against-freesasa)
 - [Contributing](#contributing)
 - [License](#license)
+- [How to cite](#how-to-cite)
 
 # Installation
 
@@ -131,9 +132,9 @@ See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more 
 
 ## Results:
 
-- RustSasa: *8.071 s ±  0.361 s*
+- RustSasa: *5.237 s ± 0.049 s*
 
-- Freesasa: *54.914 s ±  0.455 s*
+- Freesasa: *28.042 s ± 2.269 s*
 
 - Biopython: *368.025 s ± 51.156 s*
 
@@ -154,24 +155,19 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 ## License
 MIT
 
-## Latest update (0.3.1)
+## Version 0.5.0 (Latest update)
 
-- ⚡️ Slightly faster due to memory allocation optimization
-- PGO Builds
-
-Also see [changelog](https://github.com/maxall41/rustsasa/blob/master/CHANGELOG.md).
+* Implemented new SIMD SASA calculation kernel and improved spatial grid data structure, thus improving performance by ~35% compared to v0.4.0.
+* Fixed benchmarking issue that exaggerated RustSASA's performance (see issue #40); paper and readme have been updated accordingly.
+* Added `--n-points` option to CLI to enable customization of the Shrake-Rupley algorithm.  
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests and open issues. As this is an actively developed library, I encourage sharing your thoughts, ideas, suggestions, and feedback.
 
-## 🗺️ Roadmap
+## How to cite
 
-- [ ] Use mimalloc V3: Once out of beta, if it provides better performances.
-- [ ] Automated MacOS PGO builds: See https://github.com/Kobzol/cargo-pgo/issues/68.
-- [ ] Automated BOLT for Linux builds.
-- [ ] Use minimal parser.
-- [ ] Implement PowerSasa algorithm. Faster?
+If you use the RustSASA library in your publication please cite it. To cite this reposity scroll up to the top of this page, and then click on the "Cite this repository" button in the right hand GitHub side bar. This will give you a citation in your desired format (i.e: BiBTeX, APA).
 
 # Citations:
 

@@ -1,27 +1,19 @@
 pub mod consts;
 pub mod io;
+use std::sync::LazyLock;
 
-const LANES: usize = 16;
-#[allow(clippy::needless_range_loop)]
+use pulp::Arch;
+
+static ARCH: LazyLock<Arch> = LazyLock::new(Arch::new);
+
 pub fn simd_sum(values: &[f32]) -> f32 {
-    let chunks = values.chunks_exact(LANES);
-    let remainder = chunks.remainder();
-
-    let sum = chunks.fold([0.0f32; LANES], |mut acc, chunk| {
-        let chunk: [f32; LANES] = chunk.try_into().unwrap();
-        for i in 0..LANES {
-            acc[i] += chunk[i];
+    let mut total = 0f32;
+    ARCH.dispatch(|| {
+        for x in values {
+            total += x;
         }
-        acc
     });
-
-    let remainder: f32 = remainder.iter().copied().sum();
-
-    let mut reduced = 0.0f32;
-    for i in 0..LANES {
-        reduced += sum[i];
-    }
-    reduced + remainder
+    total
 }
 
 pub(crate) fn serialize_chain_id(s: &str) -> isize {

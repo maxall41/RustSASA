@@ -1,2 +1,12 @@
 /target
 .DS_Store
+paper/eval/E_coli_RSASA
+paper/eval/E_coli_freesasa
+paper/eval/E_coli_biopython
+paper/eval/freesasa_dataset_proc=freesasa
+paper/eval/freesasa_dataset_proc=rustsasa
+paper/eval/temp_out/
+paper/eval/pdb_files/
+paper/eval/data/UP000000625_83333_ECOLI_v6/
+paper/eval/results/*
+paper/eval/data/*

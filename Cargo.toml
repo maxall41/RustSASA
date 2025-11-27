@@ -1,6 +1,6 @@
 [package]
 name = "rust-sasa"
-version = "0.3.4"
+version = "0.5.0"
 edition = "2024"
 description = "RustSASA is a Rust library for computing the absolute solvent accessible surface area (ASA/SASA) of each atom in a given protein structure using the Shrake-Rupley algorithm."
 readme = "README.md"
@@ -10,18 +10,22 @@ categories = ["science"]
 keywords = ["Rust", "Bioinformatics", "SASA"]
 documentation = "https://docs.rs/rust-sasa/latest/rust_sasa/"
 rust-version = "1.85.0"
+exclude = [
+    "paper/"
+]
 
 [dependencies]
 pdbtbx = { path = "pdbtbx", version = "0.12.0" }             # We have to use a git module because you cannot use a git+rev version in a published crate for some reason...
 nalgebra = "0.33.2"
-rayon = "1.10.0"
-snafu = "0.8.6"
-clap = { version = "4.5.41", features = ["derive"] }
-serde = "1.0.219"
-serde_json = "1.0.140"
-quick-xml = { version = "0.38.0", features = ["serialize"] }
-indicatif = "0.18.0"
-mimalloc = { version = "0.1.47", default-features = false }
+rayon = "1.11.0"
+snafu = "0.8.9"
+clap = { version = "4.5.52", features = ["derive"] }
+serde = "1.0.228"
+serde_json = "1.0.145"
+quick-xml = { version = "0.38.4", features = ["serialize"] }
+indicatif = "0.18.3"
+mimalloc = { version = "0.1.48", default-features = false }
+pulp = "0.22.2"
 
 [dev-dependencies]
 approx = "0.5.1"
