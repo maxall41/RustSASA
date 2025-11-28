@@ -21,7 +21,6 @@ use crate::utils::ARCH;
 
 use structures::spatial_grid::SpatialGrid;
 // Re-export io functions for use in the binary crate
-use pulp::Arch;
 use rayon::prelude::*;
 pub use utils::io::{sasa_result_to_json, sasa_result_to_protein_object, sasa_result_to_xml};
 

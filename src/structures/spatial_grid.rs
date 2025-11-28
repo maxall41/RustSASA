@@ -124,28 +124,24 @@ impl SpatialGrid {
         let radius = radius_squared.sqrt();
         let inv_cell_size = 1.0 / self.cell_size;
 
-        // Calculate index ranges
-        // Using min/max and clamping to grid dimensions
-        let min_x = (((point[0] - radius) - self.min_bounds[0]) * inv_cell_size).max(0.0) as usize;
-        let min_y = (((point[1] - radius) - self.min_bounds[1]) * inv_cell_size).max(0.0) as usize;
-        let min_z = (((point[2] - radius) - self.min_bounds[2]) * inv_cell_size).max(0.0) as usize;
+        // Global bounds for clamping
+        let max_grid_x = self.grid_dims[0] as isize - 1;
+        let max_grid_y = self.grid_dims[1] as isize - 1;
+        let max_grid_z = self.grid_dims[2] as isize - 1;
 
-        let max_x = (((point[0] + radius) - self.min_bounds[0]) * inv_cell_size)
-            .min(self.grid_dims[0] as f32 - 1.0) as usize;
-        let max_y = (((point[1] + radius) - self.min_bounds[1]) * inv_cell_size)
-            .min(self.grid_dims[1] as f32 - 1.0) as usize;
-        let max_z = (((point[2] + radius) - self.min_bounds[2]) * inv_cell_size)
-            .min(self.grid_dims[2] as f32 - 1.0) as usize;
+        // Initial Z range
+        let min_z = (((point[2] - radius) - self.min_bounds[2]) * inv_cell_size).floor() as isize;
+        let max_z = (((point[2] + radius) - self.min_bounds[2]) * inv_cell_size).floor() as isize;
+        let min_z = min_z.max(0) as usize;
+        let max_z = max_z.min(max_grid_z) as usize;
 
         let stride_y = self.strides[1];
         let stride_z = self.strides[2];
 
-        // Pre-calculate query point components for registers
         let px = point[0];
         let py = point[1];
         let pz = point[2];
 
-        // Iterate flat indices
         for z in min_z..=max_z {
             let cell_min_z = self.min_bounds[2] + (z as f32) * self.cell_size;
             let cell_max_z = cell_min_z + self.cell_size;
@@ -161,7 +157,18 @@ impl SpatialGrid {
                 continue;
             }
 
+            // Calculate remaining radius for XY plane
+            let r_xy_sq = radius_squared - dz_sq;
+            let r_xy = r_xy_sq.sqrt();
+
+            // Calculate Y range for this Z-slice
+            let min_y = (((py - r_xy) - self.min_bounds[1]) * inv_cell_size).floor() as isize;
+            let max_y = (((py + r_xy) - self.min_bounds[1]) * inv_cell_size).floor() as isize;
+            let min_y = min_y.max(0) as usize;
+            let max_y = max_y.min(max_grid_y) as usize;
+
             let z_offset = z * stride_z;
+
             for y in min_y..=max_y {
                 let cell_min_y = self.min_bounds[1] + (y as f32) * self.cell_size;
                 let cell_max_y = cell_min_y + self.cell_size;
@@ -173,29 +180,26 @@ impl SpatialGrid {
                     0.0
                 };
                 let dy_sq = dy * dy;
-                if dz_sq + dy_sq > radius_squared {
+
+                if dy_sq > r_xy_sq {
                     continue;
                 }
 
+                // Calculate remaining radius for X line
+                let r_x_sq = r_xy_sq - dy_sq;
+                let r_x = r_x_sq.sqrt();
+
+                // Calculate X range for this row
+                let min_x = (((px - r_x) - self.min_bounds[0]) * inv_cell_size).floor() as isize;
+                let max_x = (((px + r_x) - self.min_bounds[0]) * inv_cell_size).floor() as isize;
+                let min_x = min_x.max(0) as usize;
+                let max_x = max_x.min(max_grid_x) as usize;
+
                 let y_offset = z_offset + y * stride_y;
-                let row_start_idx = y_offset + min_x;
-                let row_end_idx = y_offset + max_x;
 
-                for (x, cell_idx) in (min_x..=max_x).zip(row_start_idx..=row_end_idx) {
-                    let cell_min_x = self.min_bounds[0] + (x as f32) * self.cell_size;
-                    let cell_max_x = cell_min_x + self.cell_size;
-                    let dx = if px < cell_min_x {
-                        cell_min_x - px
-                    } else if px > cell_max_x {
-                        px - cell_max_x
-                    } else {
-                        0.0
-                    };
-                    let dx_sq = dx * dx;
-                    if dz_sq + dy_sq + dx_sq > radius_squared {
-                        continue;
-                    }
-
+                // Iterate row cells
+                for x in min_x..=max_x {
+                    let cell_idx = y_offset + x;
                     let start = self.cell_starts[cell_idx] as usize;
                     let end = self.cell_starts[cell_idx + 1] as usize;
 
@@ -213,9 +217,7 @@ impl SpatialGrid {
                         let dy = py - ay;
                         let dz = pz - az;
 
-                        let dist_sq = dx * dx + dy * dy + dz * dz;
-
-                        if dist_sq <= radius_squared {
+                        if dx * dx + dy * dy + dz * dz <= radius_squared {
                             result.push(self.sorted_atom_indices[i]);
                         }
                     }
