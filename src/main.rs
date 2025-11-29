@@ -217,7 +217,6 @@ fn process_directory(
             .unwrap()
             .progress_chars("#>-"),
     );
-
     files.par_iter().for_each(|entry| match entry {
         Ok(entry) => {
             let path = entry.path();
