@@ -19,7 +19,7 @@ pdbtbx = { path = "pdbtbx", version = "0.12.0" }             # We have to use a 
 nalgebra = "0.33.2"
 rayon = "1.11.0"
 snafu = "0.8.9"
-clap = { version = "4.5.52", features = ["derive"] }
+clap = { version = "4.5.53", features = ["derive"] }
 serde = "1.0.228"
 serde_json = "1.0.145"
 quick-xml = { version = "0.38.4", features = ["serialize"] }
