@@ -10,3 +10,4 @@ paper/eval/pdb_files/
 paper/eval/data/UP000000625_83333_ECOLI_v6/
 paper/eval/results/*
 paper/eval/data/*
+node_modules/
