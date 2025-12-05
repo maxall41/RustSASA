@@ -80,7 +80,7 @@ fn precompute_neighbors(
         let xyz = atom.position.coords.xyz();
         grid.locate_within_distance([xyz[0], xyz[1], xyz[2]], sr_squared, &mut temp_candidates);
         // Sort the candidates so the closest neighbors appears first.
-        // This maximizes the chance of an early exit in is_accessible_precomputed
+        // This maximizes the chance of an early exit
         let center_pos = atom.position;
         temp_candidates.sort_unstable_by(|&a_idx, &b_idx| {
             let pos_a = atoms[a_idx].position;
