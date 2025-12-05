@@ -3,4 +3,4 @@
 
 mkdir $2
 # ../../target/aarch64-apple-darwin/release/rust-sasa $1 $2 --format json
-../../target/aarch64-apple-darwin/release/rust-sasa $1 $2 --format json
+../../target/release/rust-sasa $1 $2 --format json

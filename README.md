@@ -161,6 +161,19 @@ MIT
 * Fixed benchmarking issue that exaggerated RustSASA's performance (see issue #40); paper and readme have been updated accordingly.
 * Added `--n-points` option to CLI to enable customization of the Shrake-Rupley algorithm.  
 
+## Building from source
+
+First, make sure you have the Rust compiler installed. See https://rust-lang.org/tools/install/ for installation instructions.
+
+To build RustSASA from source start by initializing git submodules with the following command:
+```
+git submodule update --init
+```
+Then build the binary with:
+```
+cargo build --release
+```
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests and open issues. As this is an actively developed library, I encourage sharing your thoughts, ideas, suggestions, and feedback.
