@@ -55,6 +55,6 @@ RustSASA provides a significant advancement in SASA calculation performance whil
 
 # Acknowledgements
 
-We would like to thank Rodrigo Honorato and Niccolò Bruciaferri for their valuable contributions to this project.
+We would like to thank Rodrigo Honorato and Niccolò Bruciaferri for their valuable contributions to this project. We would also like to thank the reviewers for their insightful comments as well as Tsai et al. for creating the ProtOr radii used by RustSASA [@ProtOr].
 
 # References
