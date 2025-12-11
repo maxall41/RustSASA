@@ -81,7 +81,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   need for efficient SASA calculation tools has increased dramatically.
   RustSASA addresses this challenge by providing a high-performance
   implementation of the Shrake-Rupley algorithm written in pure Rust,
-  delivering a 7× speed improvement over Freesasa while maintaining
+  delivering a 5× speed improvement over Freesasa while maintaining
   calculation accuracy and providing interfaces for multiple programming
   languages and frameworks (i.e: MDAnalysis).</p>
 </sec>
@@ -92,18 +92,19 @@ a Creative Commons Attribution 4.0 International License (CC BY
   for molecular dynamics simulations and high-throughput analyses.
   Popular implementations such as those in Biopython and Freesasa, while
   accurate, become prohibitively slow when processing large protein
-  datasets.</p>
-  <p>RustSASA addresses this performance gap by leveraging Rust’s
-  zero-cost abstractions and memory safety guarantees to create a SASA
-  calculation crate that is significantly faster than Freesasa and
-  Biopython. Benchmarking on representative protein structures
-  demonstrates that RustSASA achieves a 5× improvement over Freesasa,
-  and a 46× performance improvement over Biopython. This performance
-  advantage reduces computational costs for high-throughput structural
-  analyses and makes large-scale comparative studies feasible.
-  Furthermore, RustSASA’s multi-language support (Rust and Python),
-  command-line interface, and MDAnalysis package ensure broad
-  accessibility across the computational biology community.</p>
+  datasets. RustSASA addresses this performance gap by leveraging Rust’s
+  efficient parallelization abstractions (via Rayon) and readily
+  available SIMD instructions (via Pulp). These optimizations enable
+  RustSASA’s performance advantage over the simpler C implementation of
+  the same algorithm in Freesasa.</p>
+  <p>Benchmarking on representative protein structures demonstrates that
+  RustSASA achieves a 5× improvement over Freesasa, and a 63×
+  performance improvement over Biopython. This performance advantage
+  reduces computational costs for high-throughput structural analyses
+  and makes large-scale comparative studies feasible. Furthermore,
+  RustSASA’s multi-language support (Rust and Python), command-line
+  interface, and MDAnalysis package ensure broad accessibility across
+  the computational biology community.</p>
 </sec>
 <sec id="results">
   <title>Results</title>
@@ -152,7 +153,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
     2011</xref>) was used to parallelize Freesasa and Biopython, while
     RustSASA utilized its internal parallelization. RustSASA processed
     the entire proteome in ~5 seconds compared to ~28 seconds for
-    Freesasa and ~368 seconds for Biopython, representing 5× and 46×
+    Freesasa and ~368 seconds for Biopython, representing 5× and 63×
     speed improvements, respectively.</p>
     <p>For the single protein benchmark, we used Hyperfine with 3 warmup
     iterations and 25 runs. RustSASA processed the protein in 4.3ms
@@ -179,7 +180,11 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <sec id="acknowledgements">
   <title>Acknowledgements</title>
   <p>We would like to thank Rodrigo Honorato and Niccolò Bruciaferri for
-  their valuable contributions to this project.</p>
+  their valuable contributions to this project. We would also like to
+  thank the reviewers for their valuable comments as well as Tsai et
+  al. for creating the ProtOr radii
+  (<xref alt="Tsai et al., 1999" rid="ref-ProtOr" ref-type="bibr">Tsai
+  et al., 1999</xref>).</p>
 </sec>
 </body>
 <back>
@@ -302,6 +307,26 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <uri>http://www.gnu.org/s/parallel</uri>
       <fpage>42</fpage>
       <lpage>47</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-ProtOr">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Tsai</surname><given-names>Jerry</given-names></name>
+        <name><surname>Taylor</surname><given-names>Robin</given-names></name>
+        <name><surname>Chothia</surname><given-names>Cyrus</given-names></name>
+        <name><surname>Gerstein</surname><given-names>Mark</given-names></name>
+      </person-group>
+      <article-title>The packing density in proteins: Standard radii and volumes11Edited by j. M. thornton</article-title>
+      <source>Journal of Molecular Biology</source>
+      <year iso-8601-date="1999">1999</year>
+      <volume>290</volume>
+      <issue>1</issue>
+      <issn>0022-2836</issn>
+      <uri>https://www.sciencedirect.com/science/article/pii/S0022283699928292</uri>
+      <pub-id pub-id-type="doi">https://doi.org/10.1006/jmbi.1999.2829</pub-id>
+      <fpage>253</fpage>
+      <lpage>266</lpage>
     </element-citation>
   </ref>
 </ref-list>
