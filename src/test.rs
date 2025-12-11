@@ -478,6 +478,8 @@ const FIXED_HIGH_RES_ATOMS: [f32; 2622] = [
 mod tests {
     use super::*;
     use crate::options::SASAOptions;
+    use crate::structures::spatial_grid::SpatialGrid;
+    use crate::utils::consts::{PROTOR_RADII, get_protor_radius};
     use crate::{Atom, AtomLevel, ChainLevel, ProteinLevel, ResidueLevel, calculate_sasa_internal};
     use approx::assert_abs_diff_eq;
     use nalgebra::Point3;
@@ -489,24 +491,21 @@ mod tests {
         let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
         let mut atoms = vec![];
         for atom in pdb.atoms() {
+            let element = atom.element().unwrap();
             atoms.push(Atom {
                 position: Point3::new(
                     atom.pos().0 as f32,
                     atom.pos().1 as f32,
                     atom.pos().2 as f32,
                 ),
-                radius: atom
-                    .element()
-                    .unwrap()
-                    .atomic_radius()
-                    .van_der_waals
-                    .unwrap() as f32,
+                radius: element.atomic_radius().van_der_waals.unwrap() as f32,
                 id: atom.serial_number(),
                 parent_id: None,
+                is_hydrogen: element == &pdbtbx::Element::H,
             })
         }
         let start = Instant::now();
-        let sasa = calculate_sasa_internal(&atoms, 1.4, 100, true);
+        let sasa = calculate_sasa_internal(&atoms, 1.4, 100, true, false);
         let duration = start.elapsed();
         // Compare element by element since Vec<f32> doesn't implement AbsDiffEq
         assert_eq!(sasa.len(), FIXED_LOW_RES_ATOMS.len());
@@ -588,11 +587,11 @@ mod tests {
         let duration = start.elapsed();
         println!("Time elapsed (ATOM): {duration:?}");
 
-        assert_abs_diff_eq!(protein_sasa.global_total, 20279.314, epsilon = 1500.0);
+        assert_abs_diff_eq!(protein_sasa.global_total, 21790.121, epsilon = 1500.0);
         assert_abs_diff_eq!(protein_sasa.polar_total, 4279.8906, epsilon = 1500.0);
         assert_abs_diff_eq!(protein_sasa.non_polar_total, 15999.43, epsilon = 1500.0);
 
-        assert_abs_diff_eq!(chain_sasa[0].value, 20279.314, epsilon = 1500.0);
+        assert_abs_diff_eq!(chain_sasa[0].value, 21790.121, epsilon = 1500.0);
         assert_eq!(chain_sasa[0].name, "A");
 
         // Compare element by element since Vec<f32> doesn't implement AbsDiffEq
@@ -604,8 +603,6 @@ mod tests {
 
     #[test]
     fn spatial_grid() {
-        use crate::structures::spatial_grid::SpatialGrid;
-
         // Create test atoms in a simple 2x2x2 grid pattern
         let atoms = vec![
             Atom {
@@ -613,29 +610,34 @@ mod tests {
                 radius: 1.0,
                 id: 1,
                 parent_id: None,
+                is_hydrogen: false,
             },
             Atom {
                 position: Point3::new(5.0, 0.0, 0.0),
                 radius: 1.0,
                 id: 2,
                 parent_id: None,
+                is_hydrogen: false,
             },
             Atom {
                 position: Point3::new(0.0, 5.0, 0.0),
                 radius: 1.0,
                 id: 3,
                 parent_id: None,
+                is_hydrogen: false,
             },
             Atom {
                 position: Point3::new(10.0, 10.0, 10.0),
                 radius: 1.0,
                 id: 4,
                 parent_id: None,
+                is_hydrogen: false,
             },
         ];
 
         // Create spatial grid with cell size of 3.0
-        let grid = SpatialGrid::new(&atoms, 3.0);
+        let active_indices: Vec<usize> = (0..atoms.len()).collect();
+        let grid = SpatialGrid::new(&atoms, &active_indices, 3.0);
 
         let mut result = Vec::new();
 
@@ -658,5 +660,138 @@ mod tests {
         // Test 4: Search in empty space - should find no atoms
         grid.locate_within_distance([100.0, 100.0, 100.0], 1.0, &mut result); // radius^2 = 1, so radius = 1
         assert_eq!(result.len(), 0);
+    }
+
+    #[test]
+    fn test_hydrogen_filtering() {
+        let atoms = vec![
+            Atom {
+                position: Point3::new(0.0, 0.0, 0.0),
+                radius: 1.7,
+                id: 1,
+                parent_id: None,
+                is_hydrogen: false, // Carbon
+            },
+            Atom {
+                position: Point3::new(10.0, 0.0, 0.0),
+                radius: 1.2,
+                id: 2,
+                parent_id: None,
+                is_hydrogen: true, // Hydrogen
+            },
+            Atom {
+                position: Point3::new(0.0, 10.0, 0.0),
+                radius: 1.7,
+                id: 3,
+                parent_id: None,
+                is_hydrogen: false, // Carbon
+            },
+            Atom {
+                position: Point3::new(0.0, 0.0, 10.0),
+                radius: 1.2,
+                id: 4,
+                parent_id: None,
+                is_hydrogen: true, // Hydrogen
+            },
+        ];
+
+        let sasa_no_hydrogens = calculate_sasa_internal(&atoms, 1.4, 100, false, false);
+        let sasa_with_hydrogens = calculate_sasa_internal(&atoms, 1.4, 100, false, true);
+
+        // Verify that all results have the correct length
+        assert_eq!(sasa_no_hydrogens.len(), atoms.len());
+        assert_eq!(sasa_with_hydrogens.len(), atoms.len());
+
+        // Verify that hydrogen atoms get 0.0 SASA when excluded
+        assert_eq!(sasa_no_hydrogens[1], 0.0);
+        assert_eq!(sasa_no_hydrogens[3], 0.0);
+
+        // Verify that non-hydrogen atoms get non zero SASA when excluded
+        assert!(sasa_no_hydrogens[0] > 0.0);
+        assert!(sasa_no_hydrogens[2] > 0.0);
+
+        // Verify that hydrogen atoms get non zero SASA when included
+        assert!(sasa_with_hydrogens[1] > 0.0);
+        assert!(sasa_with_hydrogens[3] > 0.0);
+
+        // Count total non-zero values
+        let non_zero_no_h = sasa_no_hydrogens.iter().filter(|&&x| x > 0.0).count();
+        let non_zero_with_h = sasa_with_hydrogens.iter().filter(|&&x| x > 0.0).count();
+
+        // Without hydrogens, only 2 atoms should have non-zero SASA
+        assert_eq!(non_zero_no_h, 2);
+        // With hydrogens, all 4 atoms should have non-zero SASA
+        assert_eq!(non_zero_with_h, 4);
+
+        println!("SASA without hydrogens: {:?}", sasa_no_hydrogens);
+        println!("SASA with hydrogens: {:?}", sasa_with_hydrogens);
+    }
+
+    #[test]
+    fn test_protor_radii_loading() {
+        assert_eq!(
+            get_protor_radius("ASN", "CA"),
+            Some(1.88),
+            "ASN CA should map to C4H1 with radius 1.88"
+        );
+        assert_eq!(
+            get_protor_radius("ASN", "N"),
+            Some(1.64),
+            "ASN N should map to N3H2 with radius 1.64"
+        );
+        assert_eq!(
+            get_protor_radius("ASN", "CB"),
+            Some(1.88),
+            "ASN CB should map to C4H2 with radius 1.88"
+        );
+        assert_eq!(
+            get_protor_radius("CYS", "SG"),
+            Some(1.77),
+            "CYS SG should map to S2H1 with radius 1.77"
+        );
+        assert_eq!(
+            get_protor_radius("XXX", "YY"),
+            None,
+            "Unknown combinations should return None"
+        );
+        assert_eq!(
+            get_protor_radius("ALA", "CA"),
+            Some(1.88),
+            "ALA CA should map to C4H1 with radius 1.88"
+        );
+        assert_eq!(
+            get_protor_radius("GLY", "CA"),
+            Some(1.88),
+            "GLY CA should map to C4H2 with radius 1.88"
+        );
+        assert_eq!(
+            get_protor_radius("TYR", "OH"),
+            Some(1.46),
+            "TYR OH should map to O2H1 with radius 1.46"
+        );
+        assert_eq!(
+            get_protor_radius("ASN", "CA"),
+            PROTOR_RADII
+                .get("ASN")
+                .and_then(|inner| inner.get("CA"))
+                .copied(),
+            "Helper function should match direct HashMap access"
+        );
+        assert_eq!(
+            get_protor_radius("CYS", "SG"),
+            PROTOR_RADII
+                .get("CYS")
+                .and_then(|inner| inner.get("SG"))
+                .copied(),
+            "Helper function should match direct HashMap access"
+        );
+        assert_eq!(
+            get_protor_radius("XXX", "YY"),
+            PROTOR_RADII
+                .get("XXX")
+                .and_then(|inner| inner.get("YY"))
+                .copied(),
+            "Helper function should return None for unknown combinations"
+        );
     }
 }

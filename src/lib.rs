@@ -18,7 +18,6 @@ mod utils;
 pub use crate::options::*;
 pub use crate::structures::atomic::*;
 use crate::utils::ARCH;
-
 use structures::spatial_grid::SpatialGrid;
 // Re-export io functions for use in the binary crate
 use rayon::prelude::*;
@@ -65,22 +64,24 @@ fn generate_sphere_points(n_points: usize) -> SpherePointsSoA {
 #[inline(never)]
 fn precompute_neighbors(
     atoms: &[Atom],
+    active_indices: &[usize],
     probe_radius: f32,
     max_radii: f32,
 ) -> Vec<Vec<NeighborData>> {
     let cell_size = probe_radius + max_radii;
-    let grid = SpatialGrid::new(atoms, cell_size);
+    let grid = SpatialGrid::new(atoms, active_indices, cell_size);
 
-    let mut neighbors = Vec::with_capacity(atoms.len());
-    let mut temp_candidates = Vec::with_capacity(64); // Reuse buffer to avoid allocations
+    let mut neighbors = Vec::with_capacity(active_indices.len());
+    let mut temp_candidates = Vec::with_capacity(64);
     let sr = probe_radius + (max_radii * 2.0);
     let sr_squared = sr * sr;
 
-    for atom in atoms.iter() {
+    for &orig_idx in active_indices {
+        let atom = &atoms[orig_idx];
         let xyz = atom.position.coords.xyz();
         grid.locate_within_distance([xyz[0], xyz[1], xyz[2]], sr_squared, &mut temp_candidates);
-        // Sort the candidates so the closest neighbors appears first.
-        // This maximizes the chance of an early exit
+
+        // Sort candidates by distance (closest first for early exit optimization)
         let center_pos = atom.position;
         temp_candidates.sort_unstable_by(|&a_idx, &b_idx| {
             let pos_a = atoms[a_idx].position;
@@ -236,6 +237,7 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
 /// For most users it is recommend that you use `calculate_sasa` instead. This method can be used directly if you do not want to use pdbtbx to load PDB/mmCIF files or want to load them from a different source.
 /// Probe Radius Default: 1.4
 /// Point Count Default: 100
+/// Include Hydrogens Default: false
 /// ## Example using pdbtbx:
 /// ```
 /// use nalgebra::{Point3, Vector3};
@@ -250,33 +252,42 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
 ///                 position: Point3::new(atom.pos().0 as f32, atom.pos().1 as f32, atom.pos().2 as f32),
 ///                 radius: atom.element().unwrap().atomic_radius().van_der_waals.unwrap() as f32,
 ///                 id: atom.serial_number(),
-///                 parent_id: None
+///                 parent_id: None,
+///                 is_hydrogen: atom.element() == Some(&pdbtbx::Element::H)
 ///     })
 ///  }
-///  let sasa = calculate_sasa_internal(&atoms, 1.4, 100,true);
+///  let sasa = calculate_sasa_internal(&atoms, 1.4, 100, true, false);
 /// ```
 pub fn calculate_sasa_internal(
     atoms: &[Atom],
     probe_radius: f32,
     n_points: usize,
     parallel: bool,
+    include_hydrogens: bool,
 ) -> Vec<f32> {
+    let active_indices: Vec<usize> = if include_hydrogens {
+        (0..atoms.len()).collect()
+    } else {
+        atoms
+            .iter()
+            .enumerate()
+            .filter_map(|(i, atom)| (!atom.is_hydrogen).then_some(i))
+            .collect()
+    };
+
     let sphere_points = generate_sphere_points(n_points);
 
-    let mut max_radii = 0.0;
-    for atom in atoms {
-        if atom.radius > max_radii {
-            max_radii = atom.radius;
-        }
-    }
+    let max_radii = active_indices
+        .iter()
+        .map(|&i| atoms[i].radius)
+        .fold(0.0f32, f32::max);
 
-    // Use precomputed neighbors
-    let neighbor_indices = precompute_neighbors(atoms, probe_radius, max_radii);
+    let neighbor_lists = precompute_neighbors(atoms, &active_indices, probe_radius, max_radii);
 
-    // Helper closure to wrap the kernel dispatch
-    let process_atom = |(i, neighbors): (usize, &Vec<NeighborData>)| {
+    let process_atom = |(list_idx, neighbors): (usize, &Vec<NeighborData>)| {
+        let orig_idx = active_indices[list_idx];
         ARCH.dispatch(AtomSasaKernel {
-            atom_index: i,
+            atom_index: orig_idx,
             atoms,
             neighbors,
             sphere_points: &sphere_points,
@@ -284,17 +295,24 @@ pub fn calculate_sasa_internal(
         })
     };
 
-    if parallel {
-        neighbor_indices
+    let active_results: Vec<f32> = if parallel {
+        neighbor_lists
             .par_iter()
             .enumerate()
             .map(process_atom)
             .collect()
     } else {
-        neighbor_indices
+        neighbor_lists
             .iter()
             .enumerate()
             .map(process_atom)
             .collect()
+    };
+
+    // Map results back to original indices (hydrogens get 0.0)
+    let mut results = vec![0.0; atoms.len()];
+    for (list_idx, &orig_idx) in active_indices.iter().enumerate() {
+        results[orig_idx] = active_results[list_idx];
     }
+    results
 }
