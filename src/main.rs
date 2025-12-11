@@ -111,6 +111,7 @@ pub enum CLIError {
     RadiiFileLoad { source: std::io::Error },
 }
 
+#[allow(clippy::too_many_arguments)]
 fn process(
     input_file: String,
     output_file: String,
@@ -256,6 +257,7 @@ fn ensure_output_directory(output_path: &str) -> Result<(), CLIError> {
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn process_directory(
     input_dir: &str,
     output_dir: &str,
