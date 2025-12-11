@@ -453,6 +453,12 @@ impl SASAOptions<ProteinLevel> {
     }
 }
 
+impl<T> Default for SASAOptions<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: SASAProcessor> SASAOptions<T> {
     /// This function calculates the SASA for a given protein. The output type is determined by the level type parameter.
     /// Probe radius and n_points can be customized, defaulting to 1.4 and 100 respectively.

@@ -64,6 +64,7 @@ pub(crate) fn parse_radii_config(content: &str) -> HashMap<String, HashMap<Strin
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 3 {
                 if let Some(&radius) = types.get(parts[2]) {
+                    #[allow(clippy::unwrap_or_default)]
                     atoms
                         .entry(parts[0].to_string())
                         .or_insert_with(HashMap::new)
