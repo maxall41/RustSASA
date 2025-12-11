@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## Version 0.5.0 (Latest update)
+## Version 0.6.0 (Latest update)
+
+* RustSASA now excludes hydrogens by default and uses ProtOr radii for improved accuracy. Hydrogens can be included by passing `--include-hydrogens` (or API equivalent). If you include hydrogen atoms, you should also provide a custom atomic radii file designed to work with the hydrogens you are including. See README and documentation for more information.
+* Improved error handling and reduced code duplication.
+* Expose probe radius in cli via `--probe-radius`.
+
+## Version 0.5.0
 
 * Implemented new SIMD SASA calculation kernel and improved spatial grid data structure, thus improving performance by ~35% compared to v0.4.0.
 * Fixed benchmarking issue that exaggerated RustSASA's performance (see issue #40); paper and readme have been updated accordingly.

@@ -155,11 +155,10 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 ## License
 MIT
 
-## Version 0.5.0 (Latest update)
+## Version 0.6.0 (Latest update)
 
-* Implemented new SIMD SASA calculation kernel and improved spatial grid data structure, thus improving performance by ~35% compared to v0.4.0.
-* Fixed benchmarking issue that exaggerated RustSASA's performance (see issue #40); paper and readme have been updated accordingly.
-* Added `--n-points` option to CLI to enable customization of the Shrake-Rupley algorithm.  
+* RustSASA now excludes hydrogens by default and uses ProtOr radii for improved accuracy. Hydrogens can be included by passing `--include-hydrogens` (or API equivalent). If you include hydrogen atoms, you should also provide a custom atomic radii file designed to work with the hydrogens you are including. See README and documentation for more information.
+* Improved error handling and reduced code duplication.
 
 ## Building from source
 
@@ -177,6 +176,10 @@ cargo build --release
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests and open issues. As this is an actively developed library, I encourage sharing your thoughts, ideas, suggestions, and feedback.
+
+## Hydrogen handling
+
+By default, RustSASA strips hydrogen atoms and uses the ProtOr radii config. If you want to include hydrogens, you can use the CLI argument `--include-hydrogens`. If you do so, you should provide your own atom radii config designed to work with hydrogens. Custom radii configs can be provided with `--radii-file`. `--radii-file` accepts a Freesasa style `.config` file see configs [here](https://github.com/mittinatten/freesasa/tree/master/share).
 
 ## How to cite
 

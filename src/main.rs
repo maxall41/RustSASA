@@ -64,6 +64,18 @@ struct Args {
     /// Number of Shrake Rupley points
     #[arg(short, long, default_value_t = 100)]
     n_points: usize,
+
+    /// Probe radius in Angstroms (default: 1.4)
+    #[arg(short, long, default_value_t = 1.4)]
+    probe_radius: f32,
+
+    /// Include hydrogen atoms in SASA calculation (default: hydrogens are excluded)
+    #[arg(short = 'H', long, default_value_t = false)]
+    include_hydrogens: bool,
+
+    /// Path to custom radii configuration file (default: uses embedded protor.config)
+    #[arg(short = 'r', long)]
+    radii_file: Option<String>,
 }
 
 #[derive(Debug, Snafu)]
@@ -94,6 +106,9 @@ pub enum CLIError {
 
     #[snafu(display("Failed to write output file"))]
     FileWrite { source: std::io::Error },
+
+    #[snafu(display("Failed to load radii file"))]
+    RadiiFileLoad { source: std::io::Error },
 }
 
 fn process(
@@ -102,14 +117,25 @@ fn process(
     output_depth: SASALevel,
     format: &OutputFormat,
     n_points: usize,
+    probe_radius: f32,
     parallel: bool,
+    include_hydrogens: bool,
+    radii_file: Option<&str>,
 ) -> Result<(), CLIError> {
     let (pdb, _) = ReadOptions::default()
         .set_level(pdbtbx::StrictnessLevel::Loose)
         .read(input_file)
         .map_err(|errors| CLIError::InputFileRead { errors })?;
-    let result = calculate_sasa_and_wrap(&pdb, &output_depth, n_points, parallel)
-        .context(SASACalculationSnafu)?;
+    let result = calculate_sasa_and_wrap(
+        &pdb,
+        &output_depth,
+        n_points,
+        probe_radius,
+        parallel,
+        include_hydrogens,
+        radii_file,
+    )
+    .context(SASACalculationSnafu)?;
 
     match format {
         OutputFormat::Xml => {
@@ -138,55 +164,95 @@ fn process(
     Ok(())
 }
 
-/// Backward compatibility helper function
+/// Macro to reduce duplication in calculate_sasa_and_wrap
+macro_rules! process_level {
+    ($level_constructor:ident, $result_variant:ident, $pdb:expr, $n_points:expr, $probe_radius:expr, $parallel:expr, $include_hydrogens:expr, $radii_file:expr) => {{
+        let mut options = SASAOptions::$level_constructor()
+            .with_parallel($parallel)
+            .with_n_points($n_points)
+            .with_probe_radius($probe_radius)
+            .with_include_hydrogens($include_hydrogens);
+        if let Some(path) = $radii_file {
+            options = options
+                .with_radii_file(path)
+                .map_err(|e| SASACalcError::RadiiFileLoad { source: e })?;
+        }
+        let result = options.process($pdb)?;
+        Ok(SASAResult::$result_variant(result))
+    }};
+}
+
 fn calculate_sasa_and_wrap(
     pdb: &pdbtbx::PDB,
     level: &SASALevel,
     n_points: usize,
+    probe_radius: f32,
     parallel: bool,
+    include_hydrogens: bool,
+    radii_file: Option<&str>,
 ) -> Result<SASAResult, SASACalcError> {
     match level {
-        SASALevel::Atom => {
-            let result = SASAOptions::atom_level()
-                .with_parallel(parallel)
-                .with_n_points(n_points)
-                .process(pdb)?;
-            Ok(SASAResult::Atom(result))
-        }
-        SASALevel::Residue => {
-            let result = SASAOptions::residue_level()
-                .with_parallel(parallel)
-                .with_n_points(n_points)
-                .process(pdb)?;
-            Ok(SASAResult::Residue(result))
-        }
-        SASALevel::Chain => {
-            let result = SASAOptions::chain_level()
-                .with_parallel(parallel)
-                .with_n_points(n_points)
-                .process(pdb)?;
-            Ok(SASAResult::Chain(result))
-        }
-        SASALevel::Protein => {
-            let result = SASAOptions::protein_level()
-                .with_parallel(parallel)
-                .with_n_points(n_points)
-                .process(pdb)?;
-            Ok(SASAResult::Protein(result))
-        }
+        SASALevel::Atom => process_level!(
+            atom_level,
+            Atom,
+            pdb,
+            n_points,
+            probe_radius,
+            parallel,
+            include_hydrogens,
+            radii_file
+        ),
+        SASALevel::Residue => process_level!(
+            residue_level,
+            Residue,
+            pdb,
+            n_points,
+            probe_radius,
+            parallel,
+            include_hydrogens,
+            radii_file
+        ),
+        SASALevel::Chain => process_level!(
+            chain_level,
+            Chain,
+            pdb,
+            n_points,
+            probe_radius,
+            parallel,
+            include_hydrogens,
+            radii_file
+        ),
+        SASALevel::Protein => process_level!(
+            protein_level,
+            Protein,
+            pdb,
+            n_points,
+            probe_radius,
+            parallel,
+            include_hydrogens,
+            radii_file
+        ),
     }
 }
 
-fn validate_output_directory(output_path: &str) -> Result<(), CLIError> {
+fn ensure_output_directory(output_path: &str) -> Result<(), CLIError> {
     let output_dir = std::path::Path::new(output_path);
-    if !output_dir.is_dir() {
+
+    // If path exists but is not a directory, return an error
+    if output_dir.exists() && !output_dir.is_dir() {
         return Err(CLIError::DirectoryRead {
             source: std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                "Output path is not a directory",
+                std::io::ErrorKind::AlreadyExists,
+                "Output path exists but is not a directory",
             ),
         });
     }
+
+    // Create directory if it doesn't exist
+    if !output_dir.exists() {
+        std::fs::create_dir_all(output_dir).map_err(|e| CLIError::DirectoryRead { source: e })?;
+    }
+
     Ok(())
 }
 
@@ -195,12 +261,15 @@ fn process_directory(
     output_dir: &str,
     output_depth: SASALevel,
     n_points: usize,
+    probe_radius: f32,
     format: &OutputFormat,
+    include_hydrogens: bool,
+    radii_file: Option<&str>,
 ) -> Result<(), CLIError> {
     use rayon::prelude::*;
     use std::sync::Mutex;
 
-    validate_output_directory(output_dir)?;
+    ensure_output_directory(output_dir)?;
 
     let errors = Mutex::new(Vec::new());
     let files: Vec<_> = std::fs::read_dir(input_dir)
@@ -214,32 +283,82 @@ fn process_directory(
             .template(
                 "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} ({eta})",
             )
-            .unwrap()
+            .expect("Progress bar template should be valid")
             .progress_chars("#>-"),
     );
     files.par_iter().for_each(|entry| match entry {
         Ok(entry) => {
             let path = entry.path();
             if path.is_file() {
-                let input_path = path.to_str().unwrap().to_string();
-                let filename = path.file_stem().unwrap().to_str().unwrap();
+                // Convert path to string, skip if non-UTF8
+                let Some(input_path) = path.to_str() else {
+                    errors
+                        .lock()
+                        .expect("Mutex should not be poisoned")
+                        .push(format!(
+                            "Skipping file with non-UTF8 path: {}",
+                            path.display()
+                        ));
+                    pb.inc(1);
+                    return;
+                };
+
+                // Extract filename, skip if missing
+                let Some(filename_os) = path.file_stem() else {
+                    errors
+                        .lock()
+                        .expect("Mutex should not be poisoned")
+                        .push(format!("Skipping file without name: {}", path.display()));
+                    pb.inc(1);
+                    return;
+                };
+
+                let Some(filename) = filename_os.to_str() else {
+                    errors
+                        .lock()
+                        .expect("Mutex should not be poisoned")
+                        .push(format!(
+                            "Skipping file with non-UTF8 name: {}",
+                            path.display()
+                        ));
+                    pb.inc(1);
+                    return;
+                };
+
                 let extension = format.file_extension();
-                let output_path = format!("{output_dir}/{filename}.{extension}");
+                let output_path =
+                    std::path::Path::new(output_dir).join(format!("{filename}.{extension}"));
+
+                // Convert output path to string, skip if non-UTF8
+                let Some(output_path_str) = output_path.to_str() else {
+                    errors
+                        .lock()
+                        .expect("Mutex should not be poisoned")
+                        .push(format!(
+                            "Skipping file. Output path is non-UTF8: {}",
+                            output_path.display()
+                        ));
+                    pb.inc(1);
+                    return;
+                };
 
                 pb.set_message(format!("Processing {filename}"));
                 match process(
-                    input_path,
-                    output_path,
+                    input_path.to_string(),
+                    output_path_str.to_string(),
                     output_depth.clone(),
                     format,
                     n_points,
+                    probe_radius,
                     false,
+                    include_hydrogens,
+                    radii_file,
                 ) {
                     Ok(_) => pb.inc(1),
                     Err(e) => {
                         errors
                             .lock()
-                            .unwrap()
+                            .expect("Mutex should not be poisoned")
                             .push(format!("Error processing {filename}: {e}"));
                         pb.inc(1);
                     }
@@ -249,7 +368,7 @@ fn process_directory(
         Err(e) => {
             errors
                 .lock()
-                .unwrap()
+                .expect("Mutex should not be poisoned")
                 .push(format!("Error reading directory entry: {e}"));
         }
     });
@@ -257,7 +376,7 @@ fn process_directory(
     pb.finish_with_message("Processing complete!");
 
     // Report errors at the end
-    let errors = errors.into_inner().unwrap();
+    let errors = errors.into_inner().expect("Mutex should not be poisoned");
     if !errors.is_empty() {
         eprintln!("\nThe following errors occurred during processing:");
         for error in &errors {
@@ -276,8 +395,18 @@ fn process_single_file(
     output_file: String,
     output_depth: SASALevel,
     n_points: usize,
+    probe_radius: f32,
+    include_hydrogens: bool,
+    radii_file: Option<&str>,
 ) -> Result<(), CLIError> {
     println!("Processing single file...");
+
+    // Create parent directory for output file if it doesn't exist
+    if let Some(parent) = std::path::Path::new(&output_file).parent() {
+        if !parent.as_os_str().is_empty() && !parent.exists() {
+            std::fs::create_dir_all(parent).map_err(|e| CLIError::FileWrite { source: e })?;
+        }
+    }
 
     let format = OutputFormat::from_file_extension(&output_file);
 
@@ -287,7 +416,10 @@ fn process_single_file(
         output_depth,
         &format,
         n_points,
+        probe_radius,
         true,
+        include_hydrogens,
+        radii_file,
     )?;
     println!("Finished!");
     Ok(())
@@ -295,6 +427,8 @@ fn process_single_file(
 
 fn main() -> Result<(), CLIError> {
     let args = Args::parse();
+
+    let radii_file = args.radii_file.as_deref();
 
     if std::path::Path::new(&args.input).is_dir() {
         let format = args.format.ok_or_else(|| CLIError::DirectoryRead {
@@ -308,9 +442,20 @@ fn main() -> Result<(), CLIError> {
             &args.output,
             args.output_depth,
             args.n_points,
+            args.probe_radius,
             &format,
+            args.include_hydrogens,
+            radii_file,
         )
     } else {
-        process_single_file(args.input, args.output, args.output_depth, args.n_points)
+        process_single_file(
+            args.input,
+            args.output,
+            args.output_depth,
+            args.n_points,
+            args.probe_radius,
+            args.include_hydrogens,
+            radii_file,
+        )
     }
 }

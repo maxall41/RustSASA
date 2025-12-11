@@ -19,6 +19,8 @@ pub struct Atom {
     pub id: usize,
     /// Parent Id (8 bytes)
     pub parent_id: Option<isize>,
+    /// Whether this atom is a hydrogen atom (1 byte + padding)
+    pub is_hydrogen: bool,
 }
 
 /// Can be used to specify output resolution of SASA computation for convenience.
@@ -47,7 +49,7 @@ pub struct ResidueResult {
     pub value: f32,
     //// The name of the residue
     pub name: String,
-    /// Wether the residue is polar
+    /// Whether the residue is polar
     pub is_polar: bool,
     /// Chain ID
     pub chain_id: String,

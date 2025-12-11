@@ -20,13 +20,13 @@ pub(crate) struct SpatialGrid {
 }
 
 impl SpatialGrid {
-    pub(crate) fn new(atoms: &[Atom], cell_size: f32) -> Self {
-        // Calculate Bounds
+    pub(crate) fn new(atoms: &[Atom], active_indices: &[usize], cell_size: f32) -> Self {
+        // Calculate Bounds from active atoms only
         let mut min_bounds = [f32::INFINITY; 3];
         let mut max_bounds = [f32::NEG_INFINITY; 3];
 
-        for atom in atoms {
-            let pos = atom.position.coords.xyz();
+        for &idx in active_indices {
+            let pos = atoms[idx].position.coords.xyz();
             for i in 0..3 {
                 min_bounds[i] = min_bounds[i].min(pos[i]);
                 max_bounds[i] = max_bounds[i].max(pos[i]);
@@ -62,10 +62,11 @@ impl SpatialGrid {
             x * strides[0] + y * strides[1] + z * strides[2]
         };
 
-        for atom in atoms {
+        for &idx in active_indices {
+            let atom = &atoms[idx];
             let pos = [atom.position.x, atom.position.y, atom.position.z];
-            let idx = get_cell_idx(&pos);
-            cell_counts[idx] += 1
+            let cell_idx = get_cell_idx(&pos);
+            cell_counts[cell_idx] += 1
         }
 
         // Create cell start index using cell_counts
@@ -78,21 +79,22 @@ impl SpatialGrid {
         cell_starts[num_cells] = current_offset;
 
         // Fill sorted_positions and sorted_atom_indices
-        let mut sorted_atom_indices = vec![0usize; atoms.len()];
-        let mut sorted_positions = vec![0.0f32; atoms.len() * 3];
+        let n_active = active_indices.len();
+        let mut sorted_atom_indices = vec![0usize; n_active];
+        let mut sorted_positions = vec![0.0f32; n_active * 3];
         let mut write_heads = cell_starts.clone();
 
-        for (atom_idx, atom) in atoms.iter().enumerate() {
+        for &orig_idx in active_indices {
+            let atom = &atoms[orig_idx];
             let pos = [atom.position.x, atom.position.y, atom.position.z];
             let cell_idx = get_cell_idx(&pos);
 
             let write_pos = write_heads[cell_idx] as usize;
 
-            // Store original index
-            sorted_atom_indices[write_pos] = atom_idx;
+            // Store ORIGINAL index (not filtered index)
+            sorted_atom_indices[write_pos] = orig_idx;
 
-            // Store position contiguously (Structure of Arrays-ish)
-            // Storing as flat floats [x,y,z, x,y,z] improves prefetching
+            // Store position contiguously
             let pos_offset = write_pos * 3;
             sorted_positions[pos_offset] = pos[0];
             sorted_positions[pos_offset + 1] = pos[1];
