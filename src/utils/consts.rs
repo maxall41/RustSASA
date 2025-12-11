@@ -64,7 +64,8 @@ pub(crate) fn parse_radii_config(content: &str) -> HashMap<String, HashMap<Strin
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 3 {
                 if let Some(&radius) = types.get(parts[2]) {
-                    atoms.entry(parts[0].to_string())
+                    atoms
+                        .entry(parts[0].to_string())
                         .or_insert_with(HashMap::new)
                         .insert(parts[1].to_string(), radius);
                 }
@@ -82,11 +83,9 @@ pub(crate) fn load_radii_from_file(
     Ok(parse_radii_config(&content))
 }
 
-pub(crate) static PROTOR_RADII: LazyLock<HashMap<String, HashMap<String, f32>>> = load_protor_radii!();
+pub(crate) static PROTOR_RADII: LazyLock<HashMap<String, HashMap<String, f32>>> =
+    load_protor_radii!();
 
 pub(crate) fn get_protor_radius(residue: &str, atom: &str) -> Option<f32> {
-    PROTOR_RADII
-        .get(residue)?
-        .get(atom)
-        .copied()
+    PROTOR_RADII.get(residue)?.get(atom).copied()
 }
