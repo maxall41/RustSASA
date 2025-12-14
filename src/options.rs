@@ -30,6 +30,8 @@ use std::marker::PhantomData;
 /// * `threads` - Number of threads to use for parallel processing (default: -1 for all cores)
 /// * `include_hydrogens` - Whether to include hydrogen atoms in calculations (default: false)
 /// * `radii_config` - Optional custom radii configuration (default: uses embedded protor.config)
+/// * `allow_vdw_fallback` - Allow fallback to PDBTBX van der Waals radii when radius is not found in radii file (default: false)
+/// * `include_hetatms` - Whether to include HETATM records (e.g. non-standard amino acids) in calculations (default: false)
 ///
 /// # Examples
 ///
@@ -45,7 +47,9 @@ use std::marker::PhantomData;
 ///     .with_probe_radius(1.2)
 ///     .with_n_points(200)
 ///     .with_threads(-1)
-///     .with_include_hydrogens(false);
+///     .with_include_hydrogens(false)
+///     .with_allow_vdw_fallback(true)
+///     .with_include_hetatms(false);
 ///
 /// // Process a PDB structure
 /// # let pdb = PDB::new();
