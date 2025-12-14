@@ -483,13 +483,13 @@ impl<T> SASAOptions<T> {
         self
     }
 
-    /// Load custom radii configuration from a file
+    /// Load custom radii configuration from a file (default: uses embedded protor.config)
     pub fn with_radii_file(mut self, path: &str) -> Result<Self, std::io::Error> {
         self.radii_config = Some(load_radii_from_file(path)?);
         Ok(self)
     }
 
-    /// Allow fallback to van der Waals radii when custom radius is not found (default: false)
+    /// Allow fallback to PDBTBX van der Waals radii when radius is not found in radii config file (default: false)
     pub fn with_allow_vdw_fallback(mut self, allow: bool) -> Self {
         self.allow_vdw_fallback = allow;
         self
