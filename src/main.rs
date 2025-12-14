@@ -1,4 +1,5 @@
-use clap::Parser;
+use clap::error::ErrorKind;
+use clap::{CommandFactory, Parser};
 use indicatif::{ProgressBar, ProgressStyle};
 use pdbtbx::{PDBError, ReadOptions};
 use quick_xml::SeError as XmlError;
@@ -6,6 +7,7 @@ use rust_sasa::options::SASACalcError;
 use rust_sasa::options::SASAOptions;
 use rust_sasa::structures::atomic::SASALevel;
 use rust_sasa::structures::atomic::SASAResult;
+use rust_sasa::utils::configure_thread_pool;
 use rust_sasa::{sasa_result_to_json, sasa_result_to_protein_object, sasa_result_to_xml};
 use snafu::{ResultExt, Snafu};
 
@@ -76,23 +78,38 @@ struct Args {
     /// Path to custom radii configuration file (default: uses embedded protor.config)
     #[arg(short = 'r', long)]
     radii_file: Option<String>,
+
+    /// Allow fallback to van der Waals radii when custom radius is not found (default: false, strict mode)
+    #[arg(long, default_value_t = false)]
+    allow_vdw_fallback: bool,
+
+    /// Include HETATM records. Defaults to false as ProtOr config does not contain records for non-standard amino acids. (default: false)
+    #[arg(long, default_value_t = false)]
+    include_hetatms: bool,
+
+    /// Configure number of threads used to parallelize SASA computation. Mode: -1 uses all CPU cores. (default: -1)
+    #[arg(long, default_value_t = -1)]
+    threads: isize,
 }
 
 #[derive(Debug, Snafu)]
 pub enum CLIError {
-    #[snafu(display("Element missing for atom"))]
+    #[snafu(display("SASA calculation failed: {source}"))]
     SASACalculation { source: SASACalcError },
+
+    #[snafu(display("Failed to create thread pool: {source}"))]
+    ThreadPool { source: std::io::Error },
 
     #[snafu(display("Failed to read from input file"))]
     InputFileRead { errors: Vec<PDBError> },
 
-    #[snafu(display("Failed to serialize to XML"))]
+    #[snafu(display("Failed to serialize to XML: {source}"))]
     XMLSerialization { source: XmlError },
 
-    #[snafu(display("Failed to serialize to JSON"))]
+    #[snafu(display("Failed to serialize to JSON: {source}"))]
     JSONSerialization { source: serde_json::Error },
 
-    #[snafu(display("Failed to serialize to Protein Object"))]
+    #[snafu(display("Failed to serialize to Protein Object: {message}"))]
     ProteinSerialization { message: String },
 
     #[snafu(display("Failed to write PDB"))]
@@ -101,14 +118,40 @@ pub enum CLIError {
     #[snafu(display("Failed to write MMCIF"))]
     MMCIFWrite { errors: Vec<PDBError> },
 
-    #[snafu(display("Failed to read directory"))]
+    #[snafu(display("Failed to read directory: {source}"))]
     DirectoryRead { source: std::io::Error },
 
-    #[snafu(display("Failed to write output file"))]
+    #[snafu(display("Failed to write output file: {source}"))]
     FileWrite { source: std::io::Error },
 
-    #[snafu(display("Failed to load radii file"))]
+    #[snafu(display("Failed to load radii file: {source}"))]
     RadiiFileLoad { source: std::io::Error },
+
+    #[snafu(display("Input path does not exist: {path}"))]
+    InputPathNotFound { path: String },
+
+    #[snafu(display("Input path appears to be a directory but does not exist: {path}"))]
+    InputDirectoryNotFound { path: String },
+}
+
+impl CLIError {
+    fn to_clap_error(&self) -> clap::Error {
+        let msg = match self {
+            Self::InputFileRead { errors }
+            | Self::PDBWrite { errors }
+            | Self::MMCIFWrite { errors } => {
+                let error_details = errors
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>()
+                    .join("; ");
+                format!("{self}: {error_details}")
+            }
+            _ => self.to_string(),
+        };
+
+        Args::command().error(ErrorKind::Format, msg)
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -119,9 +162,11 @@ fn process(
     format: &OutputFormat,
     n_points: usize,
     probe_radius: f32,
-    parallel: bool,
+    threads: isize,
     include_hydrogens: bool,
     radii_file: Option<&str>,
+    allow_vdw_fallback: bool,
+    include_hetatms: bool,
 ) -> Result<(), CLIError> {
     let (pdb, _) = ReadOptions::default()
         .set_level(pdbtbx::StrictnessLevel::Loose)
@@ -132,9 +177,11 @@ fn process(
         &output_depth,
         n_points,
         probe_radius,
-        parallel,
+        threads,
         include_hydrogens,
         radii_file,
+        allow_vdw_fallback,
+        include_hetatms,
     )
     .context(SASACalculationSnafu)?;
 
@@ -167,12 +214,14 @@ fn process(
 
 /// Macro to reduce duplication in calculate_sasa_and_wrap
 macro_rules! process_level {
-    ($level_constructor:ident, $result_variant:ident, $pdb:expr, $n_points:expr, $probe_radius:expr, $parallel:expr, $include_hydrogens:expr, $radii_file:expr) => {{
+    ($level_constructor:ident, $result_variant:ident, $pdb:expr, $n_points:expr, $probe_radius:expr, $threads:expr, $include_hydrogens:expr, $radii_file:expr, $allow_vdw_fallback:expr, $include_hetatms:expr) => {{
         let mut options = SASAOptions::$level_constructor()
-            .with_parallel($parallel)
+            .with_threads($threads)
             .with_n_points($n_points)
             .with_probe_radius($probe_radius)
-            .with_include_hydrogens($include_hydrogens);
+            .with_include_hydrogens($include_hydrogens)
+            .with_allow_vdw_fallback($allow_vdw_fallback)
+            .with_include_hetatms($include_hetatms);
         if let Some(path) = $radii_file {
             options = options
                 .with_radii_file(path)
@@ -188,9 +237,11 @@ fn calculate_sasa_and_wrap(
     level: &SASALevel,
     n_points: usize,
     probe_radius: f32,
-    parallel: bool,
+    threads: isize,
     include_hydrogens: bool,
     radii_file: Option<&str>,
+    allow_vdw_fallback: bool,
+    include_hetatms: bool,
 ) -> Result<SASAResult, SASACalcError> {
     match level {
         SASALevel::Atom => process_level!(
@@ -199,9 +250,11 @@ fn calculate_sasa_and_wrap(
             pdb,
             n_points,
             probe_radius,
-            parallel,
+            threads,
             include_hydrogens,
-            radii_file
+            radii_file,
+            allow_vdw_fallback,
+            include_hetatms
         ),
         SASALevel::Residue => process_level!(
             residue_level,
@@ -209,9 +262,11 @@ fn calculate_sasa_and_wrap(
             pdb,
             n_points,
             probe_radius,
-            parallel,
+            threads,
             include_hydrogens,
-            radii_file
+            radii_file,
+            allow_vdw_fallback,
+            include_hetatms
         ),
         SASALevel::Chain => process_level!(
             chain_level,
@@ -219,9 +274,11 @@ fn calculate_sasa_and_wrap(
             pdb,
             n_points,
             probe_radius,
-            parallel,
+            threads,
             include_hydrogens,
-            radii_file
+            radii_file,
+            allow_vdw_fallback,
+            include_hetatms
         ),
         SASALevel::Protein => process_level!(
             protein_level,
@@ -229,9 +286,11 @@ fn calculate_sasa_and_wrap(
             pdb,
             n_points,
             probe_radius,
-            parallel,
+            threads,
             include_hydrogens,
-            radii_file
+            radii_file,
+            allow_vdw_fallback,
+            include_hetatms
         ),
     }
 }
@@ -267,6 +326,8 @@ fn process_directory(
     format: &OutputFormat,
     include_hydrogens: bool,
     radii_file: Option<&str>,
+    allow_vdw_fallback: bool,
+    include_hetatms: bool,
 ) -> Result<(), CLIError> {
     use rayon::prelude::*;
     use std::sync::Mutex;
@@ -352,9 +413,11 @@ fn process_directory(
                     format,
                     n_points,
                     probe_radius,
-                    false,
+                    1, // Single-threaded for individual files (directory parallelism handled by rayon)
                     include_hydrogens,
                     radii_file,
+                    allow_vdw_fallback,
+                    include_hetatms,
                 ) {
                     Ok(_) => pb.inc(1),
                     Err(e) => {
@@ -400,6 +463,9 @@ fn process_single_file(
     probe_radius: f32,
     include_hydrogens: bool,
     radii_file: Option<&str>,
+    allow_vdw_fallback: bool,
+    include_hetatms: bool,
+    threads: isize,
 ) -> Result<(), CLIError> {
     println!("Processing single file...");
 
@@ -419,20 +485,45 @@ fn process_single_file(
         &format,
         n_points,
         probe_radius,
-        true,
+        threads,
         include_hydrogens,
         radii_file,
+        allow_vdw_fallback,
+        include_hetatms,
     )?;
     println!("Finished!");
     Ok(())
 }
 
-fn main() -> Result<(), CLIError> {
+fn main() {
     let args = Args::parse();
 
+    if let Err(e) = run(args) {
+        e.to_clap_error().exit();
+    }
+}
+
+fn run(args: Args) -> Result<(), CLIError> {
+    let input_path = std::path::Path::new(&args.input);
     let radii_file = args.radii_file.as_deref();
 
-    if std::path::Path::new(&args.input).is_dir() {
+    // Configure thread pool based on user preference
+    configure_thread_pool(args.threads).map_err(|e| CLIError::ThreadPool { source: e })?;
+
+    if !input_path.exists() {
+        // If path ends with '/' or '\' it is probably meant to be a directory
+        if args.input.ends_with('/') || args.input.ends_with('\\') {
+            return Err(CLIError::InputDirectoryNotFound {
+                path: args.input.clone(),
+            });
+        }
+        // Otherwise throw generic "not found" error
+        return Err(CLIError::InputPathNotFound {
+            path: args.input.clone(),
+        });
+    }
+
+    if input_path.is_dir() {
         let format = args.format.ok_or_else(|| CLIError::DirectoryRead {
             source: std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
@@ -448,6 +539,8 @@ fn main() -> Result<(), CLIError> {
             &format,
             args.include_hydrogens,
             radii_file,
+            args.allow_vdw_fallback,
+            args.include_hetatms,
         )
     } else {
         process_single_file(
@@ -458,6 +551,9 @@ fn main() -> Result<(), CLIError> {
             args.probe_radius,
             args.include_hydrogens,
             radii_file,
+            args.allow_vdw_fallback,
+            args.include_hetatms,
+            args.threads,
         )
     }
 }

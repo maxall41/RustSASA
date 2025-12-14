@@ -1,12 +1,3 @@
-#!/usr/bin/env python3
-"""Script to create scatter plot with Pearson correlation comparing
-E_coli_freesasa and E_coli_RSASA SASA values.
-
-FreeSASA files contain aggregate chain-level data, while RSASA files
-contain individual residue data. This script aggregates RSASA data
-by chain to compare with FreeSASA chain totals.
-"""
-
 import json
 import os
 from collections import defaultdict

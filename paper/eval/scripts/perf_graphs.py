@@ -4,18 +4,23 @@ import os
 import matplotlib.pyplot as plt
 
 multi_data_fiiles = [
-    "results/bench_rustsasa.json",
-    "results/bench_freesasa.json",
-    "results/bench_biopython.json",
+    "results/benches/bench_rustsasa.json",
+    "results/benches/bench_freesasa.json",
+    "results/benches/bench_biopython.json",
 ]
 single_data_fiiles = [
-    "results/bench_rustsasa_single.json",
-    "results/bench_freesasa_single.json",
-    "results/bench_biopython_single.json",
+    "results/benches/bench_rustsasa_single.json",
+    "results/benches/bench_freesasa_single.json",
+    "results/benches/bench_biopython_single.json",
+]
+singlethread_data_files = [
+    "results/benches/bench_rustsasa_singlethread.json",
+    "results/benches/bench_freesasa_singlethread_cpp.json",
+    # "results/benches/bench_biopython_singlethread.json",
 ]
 
 
-def create_graph(json_files, output_file, title):
+def create_panel(ax, json_files, title):
     data_entries = []
     for json_file in json_files:
         if not os.path.exists(json_file):
@@ -30,7 +35,7 @@ def create_graph(json_files, output_file, title):
             label = "Unknown"
             if "rustsasa" in command or "rust-sasa" in command:
                 label = "rust-sasa"
-            elif "freesasa" in command:
+            elif "freesasa" in command or "sasa_batch" in command:
                 label = "freesasa"
             elif "biopython" in command:
                 label = "biopython"
@@ -64,11 +69,10 @@ def create_graph(json_files, output_file, title):
         time_suffix = "s"
         decimal_places = 1
 
-    fontsize = 18
-    linewidth = 2.5
+    fontsize = 14
+    linewidth = 2.0
     bar_colors = ["#33BBEE", "#EE7733", "#EE3377"]  # Paul Tol color-blind-safe palette
 
-    fig, ax = plt.subplots(figsize=(10, 6))
     ax.spines["right"].set_visible(False)
     ax.spines["top"].set_visible(False)
     ax.spines["left"].set_linewidth(linewidth)
@@ -84,7 +88,7 @@ def create_graph(json_files, output_file, title):
     )
 
     ax.set_ylabel(f"Time ({time_unit})", fontsize=fontsize + 2)
-    ax.set_title(title, fontsize=fontsize + 4, pad=15)
+    ax.set_title(title, fontsize=fontsize + 2, pad=10)
     ax.tick_params(axis="x", labelsize=fontsize)
     ax.tick_params(axis="y", labelsize=fontsize)
 
@@ -103,17 +107,33 @@ def create_graph(json_files, output_file, title):
     ax.set_ylim(0, max_height * 1.15)
     ax.grid(True, axis="y", linestyle="--", alpha=0.3)
 
-    plt.tight_layout()
-    plt.savefig(f"figures/{output_file}", bbox_inches="tight", dpi=300)
 
+# Create a three-panel figure
+fig = plt.figure(figsize=(16, 12))
+gs = fig.add_gridspec(2, 2, hspace=0.3, wspace=0.3)
 
-create_graph(
+# Top left: multi_data_fiiles
+ax1 = fig.add_subplot(gs[0, 0])
+create_panel(
+    ax1,
     multi_data_fiiles,
-    "performance_comparison_multi.pdf",
-    "Performance Comparison of SASA Libraries on E. coli Proteome",
+    r"$\mathbf{A.}$ Performance Comparison on E. coli Proteome",
 )
-create_graph(
+
+# Top right: single_data_fiiles
+ax2 = fig.add_subplot(gs[0, 1])
+create_panel(
+    ax2,
     single_data_fiiles,
-    "performance_comparison_single.pdf",
-    "Performance Comparison of SASA Libraries on A0A385XJ53",
+    r"$\mathbf{B.}$ Performance Comparison on A0A385XJ53",
 )
+
+# Bottom: singlethread_data_files (spanning both columns)
+ax3 = fig.add_subplot(gs[1, :])
+create_panel(
+    ax3,
+    singlethread_data_files,
+    r"$\mathbf{C.}$ Single-Threaded Performance on E. coli Proteome",
+)
+
+plt.savefig("figures/performance_comparison_combined.pdf", bbox_inches="tight", dpi=300)

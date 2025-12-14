@@ -2,7 +2,11 @@ pub mod consts;
 pub mod io;
 use std::sync::LazyLock;
 
+use fnv::FnvHashMap;
 use pulp::Arch;
+use rayon::ThreadPoolBuilder;
+
+use crate::utils::consts::get_protor_radius;
 
 pub(crate) static ARCH: LazyLock<Arch> = LazyLock::new(Arch::new);
 
@@ -25,4 +29,53 @@ pub(crate) fn serialize_chain_id(s: &str) -> isize {
         }
     }
     result
+}
+
+/// Helper function to get atomic radius from custom config or default protor config
+pub fn get_radius(
+    residue_name: &str,
+    atom_name: &str,
+    radii_config: Option<&FnvHashMap<String, FnvHashMap<String, f32>>>,
+) -> Option<f32> {
+    // Check custom config first
+    if let Some(config) = radii_config {
+        if let Some(radius) = config
+            .get(residue_name)
+            .and_then(|inner| inner.get(atom_name))
+        {
+            return Some(*radius);
+        }
+    }
+    // Fall back to default protor config
+    get_protor_radius(residue_name, atom_name)
+}
+
+/// Configure the global rayon thread pool based on the threads argument
+///   - `-1`: Use all available CPU cores (default rayon behavior)
+///   - `1`: Single-threaded execution
+///   - `> 1`: Use specified number of threads
+///   - `0`: Invalid returns error
+pub fn configure_thread_pool(threads: isize) -> Result<(), std::io::Error> {
+    if threads == 0 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Thread count must be -1 (all cores) or a positive number",
+        ));
+    }
+
+    // Configures global thread pool
+    if threads > 0 {
+        ThreadPoolBuilder::new()
+            .num_threads(threads as usize)
+            .build_global()
+            .map_err(|e| {
+                std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Failed to configure thread pool: {e}"),
+                )
+            })?;
+    }
+    // If threads == -1, use default rayon behavior (all cores)
+
+    Ok(())
 }

@@ -1,5 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::sync::LazyLock;
+
+use fnv::FnvHashMap;
 
 pub(crate) static POLAR_AMINO_ACIDS: LazyLock<HashSet<String>> = LazyLock::new(|| {
     let mut m = HashSet::new();
@@ -25,9 +27,9 @@ macro_rules! load_protor_radii {
     };
 }
 
-pub(crate) fn parse_radii_config(content: &str) -> HashMap<String, HashMap<String, f32>> {
-    let mut types: HashMap<String, f32> = HashMap::new();
-    let mut atoms: HashMap<String, HashMap<String, f32>> = HashMap::new();
+pub(crate) fn parse_radii_config(content: &str) -> FnvHashMap<String, FnvHashMap<String, f32>> {
+    let mut types: FnvHashMap<String, f32> = FnvHashMap::default();
+    let mut atoms: FnvHashMap<String, FnvHashMap<String, f32>> = FnvHashMap::default();
 
     let mut in_types = false;
     let mut in_atoms = false;
@@ -67,7 +69,7 @@ pub(crate) fn parse_radii_config(content: &str) -> HashMap<String, HashMap<Strin
                     #[allow(clippy::unwrap_or_default)]
                     atoms
                         .entry(parts[0].to_string())
-                        .or_insert_with(HashMap::new)
+                        .or_insert_with(FnvHashMap::default)
                         .insert(parts[1].to_string(), radius);
                 }
             }
@@ -79,12 +81,12 @@ pub(crate) fn parse_radii_config(content: &str) -> HashMap<String, HashMap<Strin
 
 pub(crate) fn load_radii_from_file(
     path: &str,
-) -> Result<HashMap<String, HashMap<String, f32>>, std::io::Error> {
+) -> Result<FnvHashMap<String, FnvHashMap<String, f32>>, std::io::Error> {
     let content = std::fs::read_to_string(path)?;
     Ok(parse_radii_config(&content))
 }
 
-pub(crate) static PROTOR_RADII: LazyLock<HashMap<String, HashMap<String, f32>>> =
+pub(crate) static PROTOR_RADII: LazyLock<FnvHashMap<String, FnvHashMap<String, f32>>> =
     load_protor_radii!();
 
 pub(crate) fn get_protor_radius(residue: &str, atom: &str) -> Option<f32> {

@@ -107,3 +107,60 @@ author = {Jerry Tsai and Robin Taylor and Cyrus Chothia and Mark Gerstein},
 keywords = {atomic group radii and volumes, Voronoi polyhedra, packing efficiency, protein interior},
 abstract = {The sizes of atomic groups are a fundamental aspect of protein structure. They are usually expressed in terms of standard sets of radii for atomic groups and of volumes for both these groups and whole residues. Atomic groups, which subsume a heavy-atom and its covalently attached hydrogen atoms into one moiety, are used because the positions of hydrogen atoms in protein structures are generally not known. We have calculated new values for the radii of atomic groups and for the volumes of atomic groups. These values should prove useful in the analysis of protein packing, protein recognition and ligand design. Our radii for atomic groups were derived from intermolecular distance calculations on a large number (∼30,000) of crystal structures of small organic compounds that contain the same atomic groups to those found in proteins. Our radii show significant differences to previously reported values. We also use this new radii set to determine the packing efficiency in different regions of the protein interior. This analysis shows that, if the surface water molecules are included in the calculations, the overall packing efficiency throughout the protein interior is high and fairly uniform. However, if the water structure is removed, the packing efficiency in peripheral regions of the protein interior is underestimated, by ∼3.5%.}
 }
+
+
+@article{ShrakeRupley,
+title = {Environment and exposure to solvent of protein atoms. Lysozyme and insulin},
+journal = {Journal of Molecular Biology},
+volume = {79},
+number = {2},
+pages = {351-371},
+year = {1973},
+issn = {0022-2836},
+doi = {https://doi.org/10.1016/0022-2836(73)90011-9},
+url = {https://www.sciencedirect.com/science/article/pii/0022283673900119},
+author = {A. Shrake and J.A. Rupley},
+abstract = {A computer program is described for calculating the environment and the exposure to solvent of atoms of a protein. The computation is based on the atomic co-ordinates of the protein and on assumptions like those of Lee & Richards (1971). Results for lysozyme and insulin are presented. Changes in exposure to solvent and in the nature of contacts that develop through folding, association reactions and crystallization are described numerically. The computations suggest several generalizations. (a) Lattice contacts within the protein crystal are characterized by a significantly smaller involvement of non-polar side chains and a proportionately greater involvement of ionizable side chains than is found for protein folding or for protein association reactions important for biological function, (b) In helical regions the carbonyl oxygen of the first residue in the helix has high probability of being shielded from solvent, (c) Glycine is among the residues having exposure least affected by folding; this accords with the expectation that it lies at bends of the peptide chain on the surface of the molecule.}
+}
+
+
+@article{AlphaFoldDB,
+    author = {Varadi, Mihaly and Anyango, Stephen and Deshpande, Mandar and Nair, Sreenath and Natassia, Cindy and Yordanova, Galabina and Yuan, David and Stroe, Oana and Wood, Gemma and Laydon, Agata and Žídek, Augustin and Green, Tim and Tunyasuvunakool, Kathryn and Petersen, Stig and Jumper, John and Clancy, Ellen and Green, Richard and Vora, Ankur and Lutfi, Mira and Figurnov, Michael and Cowie, Andrew and Hobbs, Nicole and Kohli, Pushmeet and Kleywegt, Gerard and Birney, Ewan and Hassabis, Demis and Velankar, Sameer},
+    title = {AlphaFold Protein Structure Database: massively expanding the structural coverage of protein-sequence space with high-accuracy models},
+    journal = {Nucleic Acids Research},
+    volume = {50},
+    number = {D1},
+    pages = {D439-D444},
+    year = {2021},
+    month = {11},
+    abstract = {The AlphaFold Protein Structure Database (AlphaFold DB, https://alphafold.ebi.ac.uk) is an openly accessible, extensive database of high-accuracy protein-structure predictions. Powered by AlphaFold v2.0 of DeepMind, it has enabled an unprecedented expansion of the structural coverage of the known protein-sequence space. AlphaFold DB provides programmatic access to and interactive visualization of predicted atomic coordinates, per-residue and pairwise model-confidence estimates and predicted aligned errors. The initial release of AlphaFold DB contains over 360,000 predicted structures across 21 model-organism proteomes, which will soon be expanded to cover most of the (over 100 million) representative sequences from the UniRef90 data set.The AlphaFold Protein Structure Database (AlphaFold DB, https://alphafold.ebi.ac.uk) is an extensive, public database of highly accurate protein structure models. The models are the products of AlphaFold2, an Artificial Intelligence algorithm developed by DeepMind. AlphaFold enabled scientists to investigate an unprecedented number of protein structures. The database we describe here provides access to these predicted models and information on their accuracy. The first version of AlphaFold DB contains over 360,000 models of 21 biologically essential species.},
+    issn = {0305-1048},
+    doi = {10.1093/nar/gkab1061},
+    url = {https://doi.org/10.1093/nar/gkab1061},
+    eprint = {https://academic.oup.com/nar/article-pdf/50/D1/D439/43502749/gkab1061.pdf},
+}
+
+
+@article{gowers2016,
+  author = {Gowers, Richard J. and Linke, Max and Barnoud, Jonathan and Reddy, Tyler J. E. and Melo, Manuel N. and Seyler, Sean L. and Domański, Jan and Dotson, David L. and Buchoux, Sébastien and Kenney, Ian M. and Beckstein, Oliver},
+  title = {MDAnalysis: A Python Package for the Rapid Analysis of Molecular Dynamics Simulations},
+  journal = {SciPy 2016},
+  year = {2016},
+  doi = {10.25080/Majora-629e541a-00e},
+  url = {https://doi.org/10.25080/Majora-629e541a-00e}
+}
+
+@article{Agrawal2011,
+author = {Michaud-Agrawal, Naveen and Denning, Elizabeth J. and Woolf, Thomas B. and Beckstein, Oliver},
+title = {MDAnalysis: A toolkit for the analysis of molecular dynamics simulations},
+journal = {Journal of Computational Chemistry},
+volume = {32},
+number = {10},
+pages = {2319-2327},
+keywords = {molecular dynamics simulations, analysis, proteins, object-oriented design, software, membrane systems, Python programming language},
+doi = {https://doi.org/10.1002/jcc.21787},
+url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21787},
+eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1002/jcc.21787},
+abstract = {Abstract MDAnalysis is an object-oriented library for structural and temporal analysis of molecular dynamics (MD) simulation trajectories and individual protein structures. It is written in the Python language with some performance-critical code in C. It uses the powerful NumPy package to expose trajectory data as fast and efficient NumPy arrays. It has been tested on systems of millions of particles. Many common file formats of simulation packages including CHARMM, Gromacs, Amber, and NAMD and the Protein Data Bank format can be read and written. Atoms can be selected with a syntax similar to CHARMM's powerful selection commands. MDAnalysis enables both novice and experienced programmers to rapidly write their own analytical tools and access data stored in trajectories in an easily accessible manner that facilitates interactive explorative analysis. MDAnalysis has been tested on and works for most Unix-based platforms such as Linux and Mac OS X. It is freely available under the GNU General Public License from http://mdanalysis.googlecode.com. © 2011 Wiley Periodicals, Inc. J Comput Chem 2011},
+year = {2011}
+}

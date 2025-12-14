@@ -501,11 +501,10 @@ mod tests {
                 radius: element.atomic_radius().van_der_waals.unwrap() as f32,
                 id: atom.serial_number(),
                 parent_id: None,
-                is_hydrogen: element == &pdbtbx::Element::H,
             })
         }
         let start = Instant::now();
-        let sasa = calculate_sasa_internal(&atoms, 1.4, 100, true, false);
+        let sasa = calculate_sasa_internal(&atoms, 1.4, 100, -1);
         let duration = start.elapsed();
         // Compare element by element since Vec<f32> doesn't implement AbsDiffEq
         assert_eq!(sasa.len(), FIXED_LOW_RES_ATOMS.len());
@@ -610,28 +609,24 @@ mod tests {
                 radius: 1.0,
                 id: 1,
                 parent_id: None,
-                is_hydrogen: false,
             },
             Atom {
                 position: Point3::new(5.0, 0.0, 0.0),
                 radius: 1.0,
                 id: 2,
                 parent_id: None,
-                is_hydrogen: false,
             },
             Atom {
                 position: Point3::new(0.0, 5.0, 0.0),
                 radius: 1.0,
                 id: 3,
                 parent_id: None,
-                is_hydrogen: false,
             },
             Atom {
                 position: Point3::new(10.0, 10.0, 10.0),
                 radius: 1.0,
                 id: 4,
                 parent_id: None,
-                is_hydrogen: false,
             },
         ];
 
@@ -660,71 +655,6 @@ mod tests {
         // Test 4: Search in empty space - should find no atoms
         grid.locate_within_distance([100.0, 100.0, 100.0], 1.0, &mut result); // radius^2 = 1, so radius = 1
         assert_eq!(result.len(), 0);
-    }
-
-    #[test]
-    fn test_hydrogen_filtering() {
-        let atoms = vec![
-            Atom {
-                position: Point3::new(0.0, 0.0, 0.0),
-                radius: 1.7,
-                id: 1,
-                parent_id: None,
-                is_hydrogen: false, // Carbon
-            },
-            Atom {
-                position: Point3::new(10.0, 0.0, 0.0),
-                radius: 1.2,
-                id: 2,
-                parent_id: None,
-                is_hydrogen: true, // Hydrogen
-            },
-            Atom {
-                position: Point3::new(0.0, 10.0, 0.0),
-                radius: 1.7,
-                id: 3,
-                parent_id: None,
-                is_hydrogen: false, // Carbon
-            },
-            Atom {
-                position: Point3::new(0.0, 0.0, 10.0),
-                radius: 1.2,
-                id: 4,
-                parent_id: None,
-                is_hydrogen: true, // Hydrogen
-            },
-        ];
-
-        let sasa_no_hydrogens = calculate_sasa_internal(&atoms, 1.4, 100, false, false);
-        let sasa_with_hydrogens = calculate_sasa_internal(&atoms, 1.4, 100, false, true);
-
-        // Verify that all results have the correct length
-        assert_eq!(sasa_no_hydrogens.len(), atoms.len());
-        assert_eq!(sasa_with_hydrogens.len(), atoms.len());
-
-        // Verify that hydrogen atoms get 0.0 SASA when excluded
-        assert_eq!(sasa_no_hydrogens[1], 0.0);
-        assert_eq!(sasa_no_hydrogens[3], 0.0);
-
-        // Verify that non-hydrogen atoms get non zero SASA when excluded
-        assert!(sasa_no_hydrogens[0] > 0.0);
-        assert!(sasa_no_hydrogens[2] > 0.0);
-
-        // Verify that hydrogen atoms get non zero SASA when included
-        assert!(sasa_with_hydrogens[1] > 0.0);
-        assert!(sasa_with_hydrogens[3] > 0.0);
-
-        // Count total non-zero values
-        let non_zero_no_h = sasa_no_hydrogens.iter().filter(|&&x| x > 0.0).count();
-        let non_zero_with_h = sasa_with_hydrogens.iter().filter(|&&x| x > 0.0).count();
-
-        // Without hydrogens, only 2 atoms should have non-zero SASA
-        assert_eq!(non_zero_no_h, 2);
-        // With hydrogens, all 4 atoms should have non-zero SASA
-        assert_eq!(non_zero_with_h, 4);
-
-        println!("SASA without hydrogens: {:?}", sasa_no_hydrogens);
-        println!("SASA with hydrogens: {:?}", sasa_with_hydrogens);
     }
 
     #[test]

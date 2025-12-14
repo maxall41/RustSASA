@@ -26,6 +26,12 @@ quick-xml = { version = "0.38.4", features = ["serialize"] }
 indicatif = "0.18.3"
 mimalloc = { version = "0.1.48", default-features = false }
 pulp = "0.22.2"
+fnv = "1.0.3"
 
 [dev-dependencies]
 approx = "0.5.1"
+criterion = "0.5"
+
+[[bench]]
+name = "sasa_benchmarks"
+harness = false
