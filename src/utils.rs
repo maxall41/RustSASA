@@ -68,12 +68,7 @@ pub fn configure_thread_pool(threads: isize) -> Result<(), std::io::Error> {
         ThreadPoolBuilder::new()
             .num_threads(threads as usize)
             .build_global()
-            .map_err(|e| {
-                std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("Failed to configure thread pool: {e}"),
-                )
-            })?;
+            .map_err(|e| std::io::Error::other(format!("Failed to configure thread pool: {e}")))?;
     }
     // If threads == -1, use default rayon behavior (all cores)
 
