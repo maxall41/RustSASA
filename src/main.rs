@@ -232,6 +232,7 @@ macro_rules! process_level {
     }};
 }
 
+#[allow(clippy::too_many_arguments)]
 fn calculate_sasa_and_wrap(
     pdb: &pdbtbx::PDB,
     level: &SASALevel,
@@ -455,6 +456,7 @@ fn process_directory(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn process_single_file(
     input_file: String,
     output_file: String,
