@@ -1,12 +1,12 @@
 use crate::structures::atomic::{ChainResult, ProteinResult, ResidueResult};
-use crate::utils::consts::{POLAR_AMINO_ACIDS, get_protor_radius, load_radii_from_file};
-use crate::utils::{serialize_chain_id, simd_sum};
+use crate::utils::consts::{POLAR_AMINO_ACIDS, load_radii_from_file};
+use crate::utils::{get_radius, serialize_chain_id, simd_sum};
 use crate::{Atom, calculate_sasa_internal};
+use fnv::FnvHashMap;
 use nalgebra::Point3;
 use pdbtbx::PDB;
 use snafu::OptionExt;
 use snafu::prelude::*;
-use std::collections::HashMap;
 use std::marker::PhantomData;
 
 /// Options for configuring SASA (Solvent Accessible Surface Area) calculations.
@@ -27,7 +27,7 @@ use std::marker::PhantomData;
 ///
 /// * `probe_radius` - Radius of the solvent probe sphere in Angstroms (default: 1.4)
 /// * `n_points` - Number of points on the sphere surface for sampling (default: 100)
-/// * `parallel` - Whether to use parallel processing (default: true)
+/// * `threads` - Number of threads to use for parallel processing (default: -1 for all cores)
 /// * `include_hydrogens` - Whether to include hydrogen atoms in calculations (default: false)
 /// * `radii_config` - Optional custom radii configuration (default: uses embedded protor.config)
 ///
@@ -44,7 +44,7 @@ use std::marker::PhantomData;
 /// let custom_options = SASAOptions::<ResidueLevel>::new()
 ///     .with_probe_radius(1.2)
 ///     .with_n_points(200)
-///     .with_parallel(true)
+///     .with_threads(-1)
 ///     .with_include_hydrogens(false);
 ///
 /// // Process a PDB structure
@@ -56,9 +56,11 @@ use std::marker::PhantomData;
 pub struct SASAOptions<T> {
     probe_radius: f32,
     n_points: usize,
-    parallel: bool,
+    threads: isize,
     include_hydrogens: bool,
-    radii_config: Option<HashMap<String, HashMap<String, f32>>>,
+    radii_config: Option<FnvHashMap<String, FnvHashMap<String, f32>>>,
+    allow_vdw_fallback: bool,
+    include_hetatms: bool,
     _marker: PhantomData<T>,
 }
 
@@ -68,36 +70,27 @@ pub struct ResidueLevel;
 pub struct ChainLevel;
 pub struct ProteinLevel;
 
-pub type AtomsMappingResult = Result<(Vec<Atom>, HashMap<isize, Vec<usize>>), SASACalcError>;
-
-/// Helper function to get atomic radius from custom config or default protor config
-fn get_radius(
-    residue_name: &str,
-    atom_name: &str,
-    radii_config: Option<&HashMap<String, HashMap<String, f32>>>,
-) -> Option<f32> {
-    // Check custom config first
-    if let Some(config) = radii_config {
-        if let Some(radius) = config
-            .get(residue_name)
-            .and_then(|inner| inner.get(atom_name))
-        {
-            return Some(*radius);
-        }
-    }
-    // Fall back to default protor config
-    get_protor_radius(residue_name, atom_name)
-}
+pub type AtomsMappingResult = Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError>;
 
 /// Macro to reduce duplication in atom building logic
 macro_rules! build_atom {
-    ($atoms:expr, $atom:expr, $element:expr, $residue_name:expr, $atom_name:expr, $parent_id:expr, $radii_config:expr) => {{
+    ($atoms:expr, $atom:expr, $element:expr, $residue_name:expr, $atom_name:expr, $parent_id:expr, $radii_config:expr, $allow_vdw_fallback:expr) => {{
         let radius = match get_radius($residue_name, $atom_name, $radii_config) {
             Some(r) => r,
-            None => $element
-                .atomic_radius()
-                .van_der_waals
-                .context(VanDerWaalsMissingSnafu)? as f32,
+            None => {
+                if $allow_vdw_fallback {
+                    $element
+                        .atomic_radius()
+                        .van_der_waals
+                        .context(VanDerWaalsMissingSnafu)? as f32
+                } else {
+                    return Err(SASACalcError::RadiusMissing {
+                        residue_name: $residue_name.to_string(),
+                        atom_name: $atom_name.to_string(),
+                        element: $element.to_string(),
+                    });
+                }
+            }
         };
 
         $atoms.push(Atom {
@@ -109,7 +102,6 @@ macro_rules! build_atom {
             radius,
             id: $atom.serial_number(),
             parent_id: $parent_id,
-            is_hydrogen: $element == &pdbtbx::Element::H,
         });
     }};
 }
@@ -122,12 +114,15 @@ pub trait SASAProcessor {
         atoms: &[Atom],
         atom_sasa: &[f32],
         pdb: &PDB,
-        parent_to_atoms: &HashMap<isize, Vec<usize>>,
+        parent_to_atoms: &FnvHashMap<isize, Vec<usize>>,
     ) -> Result<Self::Output, SASACalcError>;
 
     fn build_atoms_and_mapping(
         pdb: &PDB,
-        radii_config: Option<&HashMap<String, HashMap<String, f32>>>,
+        radii_config: Option<&FnvHashMap<String, FnvHashMap<String, f32>>>,
+        allow_vdw_fallback: bool,
+        include_hydrogens: bool,
+        include_hetatms: bool,
     ) -> AtomsMappingResult;
 }
 
@@ -138,21 +133,30 @@ impl SASAProcessor for AtomLevel {
         _atoms: &[Atom],
         atom_sasa: &[f32],
         _pdb: &PDB,
-        _parent_to_atoms: &HashMap<isize, Vec<usize>>,
+        _parent_to_atoms: &FnvHashMap<isize, Vec<usize>>,
     ) -> Result<Self::Output, SASACalcError> {
         Ok(atom_sasa.to_vec())
     }
 
     fn build_atoms_and_mapping(
         pdb: &PDB,
-        radii_config: Option<&HashMap<String, HashMap<String, f32>>>,
-    ) -> Result<(Vec<Atom>, HashMap<isize, Vec<usize>>), SASACalcError> {
+        radii_config: Option<&FnvHashMap<String, FnvHashMap<String, f32>>>,
+        allow_vdw_fallback: bool,
+        include_hydrogens: bool,
+        include_hetatms: bool,
+    ) -> Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError> {
         let mut atoms = vec![];
         for residue in pdb.residues() {
             let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
             for atom in residue.atoms() {
                 let element = atom.element().context(ElementMissingSnafu)?;
                 let atom_name = atom.name();
+                if element == &pdbtbx::Element::H && !include_hydrogens {
+                    continue;
+                };
+                if atom.hetero() && !include_hetatms {
+                    continue;
+                }
                 build_atom!(
                     atoms,
                     atom,
@@ -160,11 +164,12 @@ impl SASAProcessor for AtomLevel {
                     residue_name,
                     atom_name,
                     None,
-                    radii_config
+                    radii_config,
+                    allow_vdw_fallback
                 );
             }
         }
-        Ok((atoms, HashMap::new()))
+        Ok((atoms, FnvHashMap::default()))
     }
 }
 
@@ -175,7 +180,7 @@ impl SASAProcessor for ResidueLevel {
         _atoms: &[Atom],
         atom_sasa: &[f32],
         pdb: &PDB,
-        parent_to_atoms: &HashMap<isize, Vec<usize>>,
+        parent_to_atoms: &FnvHashMap<isize, Vec<usize>>,
     ) -> Result<Self::Output, SASACalcError> {
         let mut residue_sasa = vec![];
         for chain in pdb.chains() {
@@ -206,10 +211,13 @@ impl SASAProcessor for ResidueLevel {
 
     fn build_atoms_and_mapping(
         pdb: &PDB,
-        radii_config: Option<&HashMap<String, HashMap<String, f32>>>,
-    ) -> Result<(Vec<Atom>, HashMap<isize, Vec<usize>>), SASACalcError> {
+        radii_config: Option<&FnvHashMap<String, FnvHashMap<String, f32>>>,
+        allow_vdw_fallback: bool,
+        include_hydrogens: bool,
+        include_hetatms: bool,
+    ) -> Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError> {
         let mut atoms = vec![];
-        let mut parent_to_atoms = HashMap::new();
+        let mut parent_to_atoms = FnvHashMap::default();
         let mut i = 0;
         for residue in pdb.residues() {
             let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
@@ -217,6 +225,12 @@ impl SASAProcessor for ResidueLevel {
             for atom in residue.atoms() {
                 let element = atom.element().context(ElementMissingSnafu)?;
                 let atom_name = atom.name();
+                if element == &pdbtbx::Element::H && !include_hydrogens {
+                    continue;
+                };
+                if atom.hetero() && !include_hetatms {
+                    continue;
+                }
                 build_atom!(
                     atoms,
                     atom,
@@ -224,7 +238,8 @@ impl SASAProcessor for ResidueLevel {
                     residue_name,
                     atom_name,
                     Some(residue.serial_number()),
-                    radii_config
+                    radii_config,
+                    allow_vdw_fallback
                 );
                 temp.push(i);
                 i += 1;
@@ -242,7 +257,7 @@ impl SASAProcessor for ChainLevel {
         _atoms: &[Atom],
         atom_sasa: &[f32],
         pdb: &PDB,
-        parent_to_atoms: &HashMap<isize, Vec<usize>>,
+        parent_to_atoms: &FnvHashMap<isize, Vec<usize>>,
     ) -> Result<Self::Output, SASACalcError> {
         let mut chain_sasa = vec![];
         for chain in pdb.chains() {
@@ -265,10 +280,13 @@ impl SASAProcessor for ChainLevel {
 
     fn build_atoms_and_mapping(
         pdb: &PDB,
-        radii_config: Option<&HashMap<String, HashMap<String, f32>>>,
-    ) -> Result<(Vec<Atom>, HashMap<isize, Vec<usize>>), SASACalcError> {
+        radii_config: Option<&FnvHashMap<String, FnvHashMap<String, f32>>>,
+        allow_vdw_fallback: bool,
+        include_hydrogens: bool,
+        include_hetatms: bool,
+    ) -> Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError> {
         let mut atoms = vec![];
-        let mut parent_to_atoms = HashMap::new();
+        let mut parent_to_atoms = FnvHashMap::default();
         let mut i = 0;
         for chain in pdb.chains() {
             let mut temp = vec![];
@@ -278,6 +296,12 @@ impl SASAProcessor for ChainLevel {
                 for atom in residue.atoms() {
                     let element = atom.element().context(ElementMissingSnafu)?;
                     let atom_name = atom.name();
+                    if element == &pdbtbx::Element::H && !include_hydrogens {
+                        continue;
+                    };
+                    if atom.hetero() && !include_hetatms {
+                        continue;
+                    }
                     build_atom!(
                         atoms,
                         atom,
@@ -285,7 +309,8 @@ impl SASAProcessor for ChainLevel {
                         residue_name,
                         atom_name,
                         Some(chain_id),
-                        radii_config
+                        radii_config,
+                        allow_vdw_fallback
                     );
                     temp.push(i);
                     i += 1
@@ -304,7 +329,7 @@ impl SASAProcessor for ProteinLevel {
         _atoms: &[Atom],
         atom_sasa: &[f32],
         pdb: &PDB,
-        parent_to_atoms: &HashMap<isize, Vec<usize>>,
+        parent_to_atoms: &FnvHashMap<isize, Vec<usize>>,
     ) -> Result<Self::Output, SASACalcError> {
         let mut polar_total: f32 = 0.0;
         let mut non_polar_total: f32 = 0.0;
@@ -337,10 +362,13 @@ impl SASAProcessor for ProteinLevel {
 
     fn build_atoms_and_mapping(
         pdb: &PDB,
-        radii_config: Option<&HashMap<String, HashMap<String, f32>>>,
-    ) -> Result<(Vec<Atom>, HashMap<isize, Vec<usize>>), SASACalcError> {
+        radii_config: Option<&FnvHashMap<String, FnvHashMap<String, f32>>>,
+        allow_vdw_fallback: bool,
+        include_hydrogens: bool,
+        include_hetatms: bool,
+    ) -> Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError> {
         let mut atoms = vec![];
-        let mut parent_to_atoms = HashMap::new();
+        let mut parent_to_atoms = FnvHashMap::default();
         let mut i = 0;
         for residue in pdb.residues() {
             let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
@@ -348,6 +376,12 @@ impl SASAProcessor for ProteinLevel {
             for atom in residue.atoms() {
                 let element = atom.element().context(ElementMissingSnafu)?;
                 let atom_name = atom.name();
+                if element == &pdbtbx::Element::H && !include_hydrogens {
+                    continue;
+                };
+                if atom.hetero() && !include_hetatms {
+                    continue;
+                }
                 build_atom!(
                     atoms,
                     atom,
@@ -355,7 +389,8 @@ impl SASAProcessor for ProteinLevel {
                     residue_name,
                     atom_name,
                     Some(residue.serial_number()),
-                    radii_config
+                    radii_config,
+                    allow_vdw_fallback
                 );
                 temp.push(i);
                 i += 1;
@@ -374,6 +409,18 @@ pub enum SASACalcError {
     #[snafu(display("Van der Waals radius missing for element"))]
     VanDerWaalsMissing,
 
+    #[snafu(display(
+        "Radius not found for residue '{}' atom '{}' of type '{}'. This error can can be ignored, if you are using the CLI pass --allow-vdw-fallback or use with_allow_vdw_fallback if you are using the API.",
+        residue_name,
+        atom_name,
+        element
+    ))]
+    RadiusMissing {
+        residue_name: String,
+        atom_name: String,
+        element: String,
+    },
+
     #[snafu(display("Failed to map atoms back to level element"))]
     AtomMapToLevelElementFailed,
 
@@ -390,9 +437,11 @@ impl<T> SASAOptions<T> {
         SASAOptions {
             probe_radius: 1.4,
             n_points: 100,
-            parallel: true,
+            threads: -1,
             include_hydrogens: false,
             radii_config: None,
+            allow_vdw_fallback: false,
+            include_hetatms: false,
             _marker: PhantomData,
         }
     }
@@ -403,15 +452,24 @@ impl<T> SASAOptions<T> {
         self
     }
 
+    /// Include or exclude HETATM records in protein.
+    pub fn with_include_hetatms(mut self, include_hetatms: bool) -> Self {
+        self.include_hetatms = include_hetatms;
+        self
+    }
+
     /// Set the number of points on the sphere for sampling (default: 100)
     pub fn with_n_points(mut self, points: usize) -> Self {
         self.n_points = points;
         self
     }
 
-    /// Enable or disable parallel processing (default: true)
-    pub fn with_parallel(mut self, parallel: bool) -> Self {
-        self.parallel = parallel;
+    /// Configure the number of threads to use for parallel processing
+    ///   - `-1`: Use all available CPU cores (default)
+    ///   - `1`: Single-threaded execution (disables parallelism)
+    ///   - `> 1`: Use specified number of threads
+    pub fn with_threads(mut self, threads: isize) -> Self {
+        self.threads = threads;
         self
     }
 
@@ -425,6 +483,12 @@ impl<T> SASAOptions<T> {
     pub fn with_radii_file(mut self, path: &str) -> Result<Self, std::io::Error> {
         self.radii_config = Some(load_radii_from_file(path)?);
         Ok(self)
+    }
+
+    /// Allow fallback to van der Waals radii when custom radius is not found (default: false)
+    pub fn with_allow_vdw_fallback(mut self, allow: bool) -> Self {
+        self.allow_vdw_fallback = allow;
+        self
     }
 }
 
@@ -471,14 +535,15 @@ impl<T: SASAProcessor> SASAOptions<T> {
     /// let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
     /// ```
     pub fn process(&self, pdb: &PDB) -> Result<T::Output, SASACalcError> {
-        let (atoms, parent_to_atoms) = T::build_atoms_and_mapping(pdb, self.radii_config.as_ref())?;
-        let atom_sasa = calculate_sasa_internal(
-            &atoms,
-            self.probe_radius,
-            self.n_points,
-            self.parallel,
+        let (atoms, parent_to_atoms) = T::build_atoms_and_mapping(
+            pdb,
+            self.radii_config.as_ref(),
+            self.allow_vdw_fallback,
             self.include_hydrogens,
-        );
+            self.include_hetatms,
+        )?;
+        let atom_sasa =
+            calculate_sasa_internal(&atoms, self.probe_radius, self.n_points, self.threads);
         T::process_atoms(&atoms, &atom_sasa, pdb, &parent_to_atoms)
     }
 }

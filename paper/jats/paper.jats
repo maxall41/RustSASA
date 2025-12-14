@@ -77,13 +77,13 @@ a Creative Commons Attribution 4.0 International License (CC BY
   calculations since 1973, but existing implementations often become
   computational bottlenecks when analyzing large protein datasets. As
   proteomics datasets continue to grow with initiatives like AlphaFold
-  producing hundreds of millions of predicted protein structures the
+  producing hundreds of millions of predicted protein structures, the
   need for efficient SASA calculation tools has increased dramatically.
   RustSASA addresses this challenge by providing a high-performance
   implementation of the Shrake-Rupley algorithm written in pure Rust,
   delivering a 5× speed improvement over Freesasa while maintaining
   calculation accuracy and providing interfaces for multiple programming
-  languages and frameworks (i.e: MDAnalysis).</p>
+  languages and frameworks (i.e. MDAnalysis).</p>
 </sec>
 <sec id="statement-of-need">
   <title>Statement of need</title>
@@ -103,8 +103,12 @@ a Creative Commons Attribution 4.0 International License (CC BY
   reduces computational costs for high-throughput structural analyses
   and makes large-scale comparative studies feasible. Furthermore,
   RustSASA’s multi-language support (Rust and Python), command-line
-  interface, and MDAnalysis package ensure broad accessibility across
-  the computational biology community.</p>
+  interface, and MDAnalysis package
+  (<xref alt="Gowers et al., 2016" rid="ref-gowers2016" ref-type="bibr">Gowers
+  et al., 2016</xref>;
+  <xref alt="Michaud-Agrawal et al., 2011" rid="ref-Agrawal2011" ref-type="bibr">Michaud-Agrawal
+  et al., 2011</xref>) ensure broad accessibility across the
+  computational biology community.</p>
 </sec>
 <sec id="results">
   <title>Results</title>
@@ -122,30 +126,39 @@ a Creative Commons Attribution 4.0 International License (CC BY
     results to Freesasa
     (<xref alt="Mitternacht, 2016" rid="ref-Mitternacht_2016" ref-type="bibr">Mitternacht,
     2016</xref>) on both the predicted E. coli proteome from AlphaFold
+    DB
     (<xref alt="Jumper et al., 2021" rid="ref-Jumper2021" ref-type="bibr">Jumper
+    et al., 2021</xref>;
+    <xref alt="Varadi et al., 2021" rid="ref-AlphaFoldDB" ref-type="bibr">Varadi
     et al., 2021</xref>) and the Freesasa evaluation dataset. RustSASA
     produces SASA values that closely match those from Freesasa,
-    achieving Pearson correlation coefficients &gt; 0.98 on both
+    achieving Pearson correlation coefficients &gt; 0.99 on both
     datasets.</p>
   </sec>
   <sec id="performance">
     <title>Performance</title>
-    <p><inline-graphic mimetype="application" mime-subtype="pdf" xlink:href="performance_comparison_multi.pdf">
-      <alt-text>Comparing Freesasa, RustSasa, and Biopython performance
-      on E. coli proteome</alt-text>
-    </inline-graphic>
-    <inline-graphic mimetype="application" mime-subtype="pdf" xlink:href="performance_comparison_single.pdf">
-      <alt-text>Comparing Freesasa, RustSasa, and Biopython performance
-      on E. coli proteome</alt-text>
-    </inline-graphic></p>
+    <fig>
+      <caption><p><bold>A.</bold> Comparing the multi-threaded
+      performance of RustSASA, Freesasa, and Biopython the full
+      AlphaFold E. coli proteome <bold>B.</bold> Comparing the
+      multi-threaded performance of RustSASA, Freesasa, and Biopython on
+      A0A385XJ53, a protein randomly selected from the AlphaFold E. coli
+      proteome <bold>C.</bold> Comparing the single-threaded performance
+      of RustSASA, and Freesasa on the full AlphaFold E. coli proteome
+      <styled-content id="figU003Aexample"></styled-content></p></caption>
+      <graphic mimetype="application" mime-subtype="pdf" xlink:href="performance_comparison_combined.pdf" />
+    </fig>
     <p>We evaluated the performance of Freesasa, RustSASA, and Biopython
     (<xref alt="Cock et al., 2009" rid="ref-biopython" ref-type="bibr">Cock
-    et al., 2009</xref>) in two common use cases. First, we performed
-    SASA calculations for all proteins in the E. coli proteome. Second,
-    we evaluated the performance of these methods on a single randomly
-    selected protein (A0A385XJ53) from the AlphaFold E. coli
-    proteome.</p>
-    <p>For the full proteome benchmark we used Hyperfine
+    et al., 2009</xref>) across three evaluations. First, we performed
+    multi-threaded SASA calculations for all proteins in the E. coli
+    proteome. Second, we evaluated the performance of these methods on a
+    single randomly selected protein (A0A385XJ53) from the AlphaFold E.
+    coli proteome. Third, we evaluated the single-threaded performance
+    of RustSASA and Freesasa on the E. coli proteome, Biopython was
+    excluded from this benchmark due to its poor performance hindering
+    timely evaluation.</p>
+    <p>For the full proteome benchmarks we used Hyperfine
     (<xref alt="Peter, 2023" rid="ref-Hyperfine" ref-type="bibr">Peter,
     2023</xref>) with 3 runs and 3 warmup iterations. All methods
     utilized parallel processing across eight cores. GNU parallel
@@ -158,9 +171,48 @@ a Creative Commons Attribution 4.0 International License (CC BY
     <p>For the single protein benchmark, we used Hyperfine with 3 warmup
     iterations and 25 runs. RustSASA processed the protein in 4.3ms
     (±0.5), Freesasa processed the protein in 4.0ms (±0.2), and
-    Biopython processed the protein in 250.8ms (±2.0).</p>
-    <p>All runs were conducted on a 2024 Apple MacBook Air with an M3
-    processor and 24GB of unified memory.</p>
+    Biopython processed the protein in 250.8ms (±2.0). In the single
+    threaded benchmark, RustSASA outperforms Freesasa by ~6.7x
+    demonstrating that RustSASA’s performance advantage is not solely
+    due to multi-threading.</p>
+  </sec>
+  <sec id="methods">
+    <title>Methods</title>
+    <p>SASA calculation RustSASA computes solvent-accessible surface
+    areas (SASA) using the Shrake–Rupley algorithm
+    (<xref alt="Shrake &amp; Rupley, 1973" rid="ref-ShrakeRupley" ref-type="bibr">Shrake
+    &amp; Rupley, 1973</xref>). In this algorithm each atom is
+    represented as a sphere with a radius equal to its atomic van der
+    Waals radius plus the radius of a spherical solvent probe; the
+    sphere surface is sampled with a dense quasi-uniform distribution of
+    test points and a point is considered solvent accessible if it is
+    not occluded by any neighboring atom sphere. For all calculations
+    reported here a solvent probe radius of 1.4 Å (the approximate
+    radius of a water molecule) was used.</p>
+    <p>Atomic radii were assigned according to the ProtOr parameter set
+    introduced by Tsai et al.
+    (<xref alt="Tsai et al., 1999" rid="ref-ProtOr" ref-type="bibr">Tsai
+    et al., 1999</xref>). These radii were applied to all non-hydrogen
+    heavy atoms present in the structures; hydrogen atoms, when present
+    in input files, were ignored for the SASA computations to maintain
+    consistency with common practice for protein SASA estimation. Any
+    non-standard residues or ligands were ignored following the Freesasa
+    methodology
+    (<xref alt="Mitternacht, 2016" rid="ref-Mitternacht_2016" ref-type="bibr">Mitternacht,
+    2016</xref>).</p>
+    <p>To ensure a fair comparison of RustSASA and Freesasa in the
+    single-threaded benchmark, we wrote a C++ script that utilizes the
+    Freesasa C API to compute the SASA for input proteins in a given
+    folder. This approach ensures that command-line overhead is not
+    responsible for RustSASA’s performance advantage. Furthermore, in
+    all experiments, Freesasa was configured to use the Shrake-Rupley
+    algorithm over its default algorithm, Lee &amp; Richards, to ensure
+    an accurate comparison between the methods. Proteome-scale structure
+    models for Escherichia coli were obtained from the AlphaFold DB
+    (entry UP000000625_83333_ECOLI_v6, available at
+    https://alphafold.ebi.ac.uk/download). All experiments were
+    conducted on a 2024 Apple MacBook Air with an M3 processor and 24GB
+    of unified memory.</p>
   </sec>
 </sec>
 <sec id="conclusion">
@@ -181,10 +233,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <title>Acknowledgements</title>
   <p>We would like to thank Rodrigo Honorato and Niccolò Bruciaferri for
   their valuable contributions to this project. We would also like to
-  thank the reviewers for their valuable comments as well as Tsai et
-  al. for creating the ProtOr radii
-  (<xref alt="Tsai et al., 1999" rid="ref-ProtOr" ref-type="bibr">Tsai
-  et al., 1999</xref>).</p>
+  thank the reviewers for their insightful comments.</p>
 </sec>
 </body>
 <back>
@@ -327,6 +376,108 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <pub-id pub-id-type="doi">https://doi.org/10.1006/jmbi.1999.2829</pub-id>
       <fpage>253</fpage>
       <lpage>266</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-ShrakeRupley">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Shrake</surname><given-names>A.</given-names></name>
+        <name><surname>Rupley</surname><given-names>J. A.</given-names></name>
+      </person-group>
+      <article-title>Environment and exposure to solvent of protein atoms. Lysozyme and insulin</article-title>
+      <source>Journal of Molecular Biology</source>
+      <year iso-8601-date="1973">1973</year>
+      <volume>79</volume>
+      <issue>2</issue>
+      <issn>0022-2836</issn>
+      <uri>https://www.sciencedirect.com/science/article/pii/0022283673900119</uri>
+      <pub-id pub-id-type="doi">https://doi.org/10.1016/0022-2836(73)90011-9</pub-id>
+      <fpage>351</fpage>
+      <lpage>371</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-AlphaFoldDB">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Varadi</surname><given-names>Mihaly</given-names></name>
+        <name><surname>Anyango</surname><given-names>Stephen</given-names></name>
+        <name><surname>Deshpande</surname><given-names>Mandar</given-names></name>
+        <name><surname>Nair</surname><given-names>Sreenath</given-names></name>
+        <name><surname>Natassia</surname><given-names>Cindy</given-names></name>
+        <name><surname>Yordanova</surname><given-names>Galabina</given-names></name>
+        <name><surname>Yuan</surname><given-names>David</given-names></name>
+        <name><surname>Stroe</surname><given-names>Oana</given-names></name>
+        <name><surname>Wood</surname><given-names>Gemma</given-names></name>
+        <name><surname>Laydon</surname><given-names>Agata</given-names></name>
+        <name><surname>Žídek</surname><given-names>Augustin</given-names></name>
+        <name><surname>Green</surname><given-names>Tim</given-names></name>
+        <name><surname>Tunyasuvunakool</surname><given-names>Kathryn</given-names></name>
+        <name><surname>Petersen</surname><given-names>Stig</given-names></name>
+        <name><surname>Jumper</surname><given-names>John</given-names></name>
+        <name><surname>Clancy</surname><given-names>Ellen</given-names></name>
+        <name><surname>Green</surname><given-names>Richard</given-names></name>
+        <name><surname>Vora</surname><given-names>Ankur</given-names></name>
+        <name><surname>Lutfi</surname><given-names>Mira</given-names></name>
+        <name><surname>Figurnov</surname><given-names>Michael</given-names></name>
+        <name><surname>Cowie</surname><given-names>Andrew</given-names></name>
+        <name><surname>Hobbs</surname><given-names>Nicole</given-names></name>
+        <name><surname>Kohli</surname><given-names>Pushmeet</given-names></name>
+        <name><surname>Kleywegt</surname><given-names>Gerard</given-names></name>
+        <name><surname>Birney</surname><given-names>Ewan</given-names></name>
+        <name><surname>Hassabis</surname><given-names>Demis</given-names></name>
+        <name><surname>Velankar</surname><given-names>Sameer</given-names></name>
+      </person-group>
+      <article-title>AlphaFold protein structure database: Massively expanding the structural coverage of protein-sequence space with high-accuracy models</article-title>
+      <source>Nucleic Acids Research</source>
+      <year iso-8601-date="2021-11">2021</year><month>11</month>
+      <volume>50</volume>
+      <issue>D1</issue>
+      <issn>0305-1048</issn>
+      <uri>https://doi.org/10.1093/nar/gkab1061</uri>
+      <pub-id pub-id-type="doi">10.1093/nar/gkab1061</pub-id>
+      <fpage>D439</fpage>
+      <lpage>D444</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-gowers2016">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Gowers</surname><given-names>Richard J.</given-names></name>
+        <name><surname>Linke</surname><given-names>Max</given-names></name>
+        <name><surname>Barnoud</surname><given-names>Jonathan</given-names></name>
+        <name><surname>Reddy</surname><given-names>Tyler J. E.</given-names></name>
+        <name><surname>Melo</surname><given-names>Manuel N.</given-names></name>
+        <name><surname>Seyler</surname><given-names>Sean L.</given-names></name>
+        <name><surname>Domański</surname><given-names>Jan</given-names></name>
+        <name><surname>Dotson</surname><given-names>David L.</given-names></name>
+        <name><surname>Buchoux</surname><given-names>Sébastien</given-names></name>
+        <name><surname>Kenney</surname><given-names>Ian M.</given-names></name>
+        <name><surname>Beckstein</surname><given-names>Oliver</given-names></name>
+      </person-group>
+      <article-title>MDAnalysis: A python package for the rapid analysis of molecular dynamics simulations</article-title>
+      <source>SciPy 2016</source>
+      <year iso-8601-date="2016">2016</year>
+      <uri>https://doi.org/10.25080/Majora-629e541a-00e</uri>
+      <pub-id pub-id-type="doi">10.25080/Majora-629e541a-00e</pub-id>
+    </element-citation>
+  </ref>
+  <ref id="ref-Agrawal2011">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Michaud-Agrawal</surname><given-names>Naveen</given-names></name>
+        <name><surname>Denning</surname><given-names>Elizabeth J.</given-names></name>
+        <name><surname>Woolf</surname><given-names>Thomas B.</given-names></name>
+        <name><surname>Beckstein</surname><given-names>Oliver</given-names></name>
+      </person-group>
+      <article-title>MDAnalysis: A toolkit for the analysis of molecular dynamics simulations</article-title>
+      <source>Journal of Computational Chemistry</source>
+      <year iso-8601-date="2011">2011</year>
+      <volume>32</volume>
+      <issue>10</issue>
+      <uri>https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21787</uri>
+      <pub-id pub-id-type="doi">https://doi.org/10.1002/jcc.21787</pub-id>
+      <fpage>2319</fpage>
+      <lpage>2327</lpage>
     </element-citation>
   </ref>
 </ref-list>

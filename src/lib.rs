@@ -13,7 +13,7 @@ pub use options::{AtomLevel, ChainLevel, ProteinLevel, ResidueLevel, SASAProcess
 use utils::consts::ANGLE_INCREMENT;
 pub mod structures;
 mod test;
-mod utils;
+pub mod utils;
 
 pub use crate::options::*;
 pub use crate::structures::atomic::*;
@@ -237,7 +237,7 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
 /// For most users it is recommend that you use `calculate_sasa` instead. This method can be used directly if you do not want to use pdbtbx to load PDB/mmCIF files or want to load them from a different source.
 /// Probe Radius Default: 1.4
 /// Point Count Default: 100
-/// Include Hydrogens Default: false
+/// Threads Default: -1 (use all cores)
 /// ## Example using pdbtbx:
 /// ```
 /// use nalgebra::{Point3, Vector3};
@@ -256,24 +256,15 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
 ///                 is_hydrogen: atom.element() == Some(&pdbtbx::Element::H)
 ///     })
 ///  }
-///  let sasa = calculate_sasa_internal(&atoms, 1.4, 100, true, false);
+///  let sasa = calculate_sasa_internal(&atoms, 1.4, 100, -1);
 /// ```
 pub fn calculate_sasa_internal(
     atoms: &[Atom],
     probe_radius: f32,
     n_points: usize,
-    parallel: bool,
-    include_hydrogens: bool,
+    threads: isize,
 ) -> Vec<f32> {
-    let active_indices: Vec<usize> = if include_hydrogens {
-        (0..atoms.len()).collect()
-    } else {
-        atoms
-            .iter()
-            .enumerate()
-            .filter_map(|(i, atom)| (!atom.is_hydrogen).then_some(i))
-            .collect()
-    };
+    let active_indices: Vec<usize> = (0..atoms.len()).collect();
 
     let sphere_points = generate_sphere_points(n_points);
 
@@ -295,15 +286,16 @@ pub fn calculate_sasa_internal(
         })
     };
 
-    let active_results: Vec<f32> = if parallel {
+    // Use sequential iteration when threads == 1 to avoid thread pool overhead
+    let active_results: Vec<f32> = if threads == 1 {
         neighbor_lists
-            .par_iter()
+            .iter()
             .enumerate()
             .map(process_atom)
             .collect()
     } else {
         neighbor_lists
-            .iter()
+            .par_iter()
             .enumerate()
             .map(process_atom)
             .collect()
