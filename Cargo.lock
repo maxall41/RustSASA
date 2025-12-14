@@ -813,7 +813,7 @@ dependencies = [
 
 [[package]]
 name = "rust-sasa"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "approx",
  "clap",

@@ -155,10 +155,13 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 ## License
 MIT
 
-## Version 0.6.0 (Latest update)
+## Version 0.7.0 (Latest update)
 
-* RustSASA now excludes hydrogens by default and uses ProtOr radii for improved accuracy. Hydrogens can be included by passing `--include-hydrogens` (or API equivalent). If you include hydrogen atoms, you should also provide a custom atomic radii file designed to work with the hydrogens you are including. See README and documentation for more information.
-* Improved error handling and reduced code duplication.
+* RustSASA now excludes HETATM records (non-standard amino acids and ligands) by default. This can be overridden by passing `--include-hetatoms` (or API equivalent).
+* Improved CLI error reporting and handling.
+* Added support for customizing number of threads used for parallelization. This can be done via `--threads` (or API equivalent).
+* RustSASA now throws an error if an atom is not found in the provided/default radii config. This error can be ignored via `--allow-vdw-fallback`  (or API equivalent).
+* Paper updated to include single-threaded RustSASA benchmark among other changes.
 
 ## Building from source
 
@@ -177,9 +180,11 @@ cargo build --release
 
 Contributions are welcome! Please feel free to submit pull requests and open issues. As this is an actively developed library, I encourage sharing your thoughts, ideas, suggestions, and feedback.
 
-## Hydrogen handling
+## Hydrogen & Non-standard amino acid handling 
 
 By default, RustSASA strips hydrogen atoms and uses the ProtOr radii config. If you want to include hydrogens, you can use the CLI argument `--include-hydrogens`. If you do so, you should provide your own atom radii config designed to work with hydrogens. Custom radii configs can be provided with `--radii-file`. `--radii-file` accepts a Freesasa style `.config` file see configs [here](https://github.com/mittinatten/freesasa/tree/master/share).
+
+Additionally, RustSASA filters HETATM records by default. If you want to include HETATM records, you can use the CLI argument `--include-hetatoms` or the API equivalent (see docs). If you include HETATMs you will need to provide a custom radii file that specifies radii for the non-standard amino acids/ligands in your input. 
 
 ## How to cite
 
