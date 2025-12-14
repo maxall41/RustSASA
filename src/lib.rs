@@ -253,7 +253,6 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
 ///                 radius: atom.element().unwrap().atomic_radius().van_der_waals.unwrap() as f32,
 ///                 id: atom.serial_number(),
 ///                 parent_id: None,
-///                 is_hydrogen: atom.element() == Some(&pdbtbx::Element::H)
 ///     })
 ///  }
 ///  let sasa = calculate_sasa_internal(&atoms, 1.4, 100, -1);

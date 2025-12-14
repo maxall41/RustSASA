@@ -1,6 +1,14 @@
 # CHANGELOG
 
-## Version 0.6.0 (Latest update)
+## Version 0.7.0 (Latest update)
+
+* RustSASA now excludes HETATM records (non-standard amino acids and ligands) by default. This can be overridden by passing `--include-hetatoms` (or API equivalent).
+* Improved CLI error reporting and handling.
+* Added support for customizing number of threads used for parallelization. This can be done via `--threads` (or API equivalent).
+* RustSASA now throws an error if an atom is not found in the provided/default radii config. This error can be ignored via `--allow-vdw-fallback`  (or API equivalent).
+* Paper updated to include single-threaded RustSASA benchmark among other changes.
+
+## Version 0.6.0
 
 * RustSASA now excludes hydrogens by default and uses ProtOr radii for improved accuracy. Hydrogens can be included by passing `--include-hydrogens` (or API equivalent). If you include hydrogen atoms, you should also provide a custom atomic radii file designed to work with the hydrogens you are including. See README and documentation for more information.
 * Improved error handling and reduced code duplication.
