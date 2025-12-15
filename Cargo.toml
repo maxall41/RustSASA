@@ -30,7 +30,7 @@ fnv = "1.0.3"
 
 [dev-dependencies]
 approx = "0.5.1"
-criterion = "0.5"
+criterion = "0.7"
 
 [[bench]]
 name = "sasa_benchmarks"
