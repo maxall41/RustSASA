@@ -6,7 +6,7 @@ use fnv::FnvHashMap;
 use pulp::Arch;
 use rayon::ThreadPoolBuilder;
 
-use crate::utils::consts::get_protor_radius;
+use crate::utils::consts::PROTOR_RADII;
 
 pub(crate) static ARCH: LazyLock<Arch> = LazyLock::new(Arch::new);
 
@@ -29,6 +29,10 @@ pub(crate) fn serialize_chain_id(s: &str) -> isize {
         }
     }
     result
+}
+
+pub(crate) fn get_protor_radius(residue: &str, atom: &str) -> Option<f32> {
+    PROTOR_RADII.get(residue)?.get(atom).copied()
 }
 
 /// Helper function to get atomic radius from custom config or default protor config

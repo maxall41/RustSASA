@@ -3,7 +3,6 @@ use crate::utils::consts::{POLAR_AMINO_ACIDS, load_radii_from_file};
 use crate::utils::{get_radius, serialize_chain_id, simd_sum};
 use crate::{Atom, calculate_sasa_internal};
 use fnv::FnvHashMap;
-use nalgebra::Point3;
 use pdbtbx::PDB;
 use snafu::OptionExt;
 use snafu::prelude::*;
@@ -98,11 +97,11 @@ macro_rules! build_atom {
         };
 
         $atoms.push(Atom {
-            position: Point3::new(
+            position: [
                 $atom.pos().0 as f32,
                 $atom.pos().1 as f32,
                 $atom.pos().2 as f32,
-            ),
+            ],
             radius,
             id: $atom.serial_number(),
             parent_id: $parent_id,

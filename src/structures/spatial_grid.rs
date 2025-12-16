@@ -26,7 +26,7 @@ impl SpatialGrid {
         let mut max_bounds = [f32::NEG_INFINITY; 3];
 
         for &idx in active_indices {
-            let pos = atoms[idx].position.coords.xyz();
+            let pos = atoms[idx].position;
             for i in 0..3 {
                 min_bounds[i] = min_bounds[i].min(pos[i]);
                 max_bounds[i] = max_bounds[i].max(pos[i]);
@@ -64,7 +64,7 @@ impl SpatialGrid {
 
         for &idx in active_indices {
             let atom = &atoms[idx];
-            let pos = [atom.position.x, atom.position.y, atom.position.z];
+            let pos = [atom.position[0], atom.position[1], atom.position[2]];
             let cell_idx = get_cell_idx(&pos);
             cell_counts[cell_idx] += 1
         }
@@ -86,7 +86,7 @@ impl SpatialGrid {
 
         for &orig_idx in active_indices {
             let atom = &atoms[orig_idx];
-            let pos = [atom.position.x, atom.position.y, atom.position.z];
+            let pos = [atom.position[0], atom.position[1], atom.position[2]];
             let cell_idx = get_cell_idx(&pos);
 
             let write_pos = write_heads[cell_idx] as usize;

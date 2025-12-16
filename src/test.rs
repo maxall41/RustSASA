@@ -479,10 +479,10 @@ mod tests {
     use super::*;
     use crate::options::SASAOptions;
     use crate::structures::spatial_grid::SpatialGrid;
-    use crate::utils::consts::{PROTOR_RADII, get_protor_radius};
+    use crate::utils::consts::PROTOR_RADII;
+    use crate::utils::get_protor_radius;
     use crate::{Atom, AtomLevel, ChainLevel, ProteinLevel, ResidueLevel, calculate_sasa_internal};
     use approx::assert_abs_diff_eq;
-    use nalgebra::Point3;
 
     use std::time::Instant;
 
@@ -493,11 +493,11 @@ mod tests {
         for atom in pdb.atoms() {
             let element = atom.element().unwrap();
             atoms.push(Atom {
-                position: Point3::new(
+                position: [
                     atom.pos().0 as f32,
                     atom.pos().1 as f32,
                     atom.pos().2 as f32,
-                ),
+                ],
                 radius: element.atomic_radius().van_der_waals.unwrap() as f32,
                 id: atom.serial_number(),
                 parent_id: None,
@@ -605,25 +605,25 @@ mod tests {
         // Create test atoms in a simple 2x2x2 grid pattern
         let atoms = vec![
             Atom {
-                position: Point3::new(0.0, 0.0, 0.0),
+                position: [0.0, 0.0, 0.0],
                 radius: 1.0,
                 id: 1,
                 parent_id: None,
             },
             Atom {
-                position: Point3::new(5.0, 0.0, 0.0),
+                position: [5.0, 0.0, 0.0],
                 radius: 1.0,
                 id: 2,
                 parent_id: None,
             },
             Atom {
-                position: Point3::new(0.0, 5.0, 0.0),
+                position: [0.0, 5.0, 0.0],
                 radius: 1.0,
                 id: 3,
                 parent_id: None,
             },
             Atom {
-                position: Point3::new(10.0, 10.0, 10.0),
+                position: [10.0, 10.0, 10.0],
                 radius: 1.0,
                 id: 4,
                 parent_id: None,

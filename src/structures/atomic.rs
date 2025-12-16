@@ -1,4 +1,4 @@
-use nalgebra::Point3;
+#[cfg(feature = "serde")]
 use serde::Serialize;
 
 #[repr(C)]
@@ -12,7 +12,7 @@ pub(crate) struct NeighborData {
 #[repr(C)]
 pub struct Atom {
     /// The 3D position of the atom (12 bytes)
-    pub position: Point3<f32>,
+    pub position: [f32; 3],
     /// The Van Der Walls radius of the atom (4 bytes)
     pub radius: f32,
     /// A unique Id for the atom (8 bytes)
@@ -21,17 +21,8 @@ pub struct Atom {
     pub parent_id: Option<isize>,
 }
 
-/// Can be used to specify output resolution of SASA computation for convenience.
-#[derive(clap::ValueEnum, Clone, Default, Debug)]
-pub enum SASALevel {
-    Atom,
-    #[default]
-    Residue,
-    Chain,
-    Protein,
-}
-
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct ChainResult {
     /// Chain name
     pub name: String,
@@ -39,7 +30,8 @@ pub struct ChainResult {
     pub value: f32,
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct ResidueResult {
     /// Residue serial number
     pub serial_number: isize,
@@ -53,7 +45,8 @@ pub struct ResidueResult {
     pub chain_id: String,
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct ProteinResult {
     /// The total SASA value for the entire protein
     pub global_total: f32,
@@ -63,7 +56,8 @@ pub struct ProteinResult {
     pub non_polar_total: f32,
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum SASAResult {
     Atom(Vec<f32>),
     Residue(Vec<ResidueResult>),

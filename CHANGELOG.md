@@ -1,6 +1,13 @@
 # CHANGELOG
 
-## Version 0.7.0 (Latest update)
+## Version 0.8.0 (Latest update)
+
+* Removed `nalgebra` dependancy.
+* Updated `criterion` to version 0.7.0.
+* Paper updated
+* CLI dependencies gated behind `cli` feature to make library more lightweight. Library dependencies removed: clap, serde, serde_json, quick-xml, indicatif, and mimalloc.
+
+## Version 0.7.0 
 
 * RustSASA now excludes HETATM records (non-standard amino acids and ligands) by default. This can be overridden by passing `--include-hetatoms` (or API equivalent).
 * Improved CLI error reporting and handling.

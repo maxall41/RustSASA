@@ -21,7 +21,11 @@ use crate::utils::ARCH;
 use structures::spatial_grid::SpatialGrid;
 // Re-export io functions for use in the binary crate
 use rayon::prelude::*;
-pub use utils::io::{sasa_result_to_json, sasa_result_to_protein_object, sasa_result_to_xml};
+#[cfg(feature = "serde_json")]
+pub use utils::io::sasa_result_to_json;
+pub use utils::io::sasa_result_to_protein_object;
+#[cfg(feature = "quick-xml")]
+pub use utils::io::sasa_result_to_xml;
 
 struct SpherePointsSoA {
     x: Vec<f32>,
@@ -78,7 +82,7 @@ fn precompute_neighbors(
 
     for &orig_idx in active_indices {
         let atom = &atoms[orig_idx];
-        let xyz = atom.position.coords.xyz();
+        let xyz = atom.position;
         grid.locate_within_distance([xyz[0], xyz[1], xyz[2]], sr_squared, &mut temp_candidates);
 
         // Sort candidates by distance (closest first for early exit optimization)
@@ -87,14 +91,14 @@ fn precompute_neighbors(
             let pos_a = atoms[a_idx].position;
             let pos_b = atoms[b_idx].position;
 
-            let dx_a = center_pos.x - pos_a.x;
-            let dy_a = center_pos.y - pos_a.y;
-            let dz_a = center_pos.z - pos_a.z;
+            let dx_a = center_pos[0] - pos_a[0];
+            let dy_a = center_pos[1] - pos_a[1];
+            let dz_a = center_pos[2] - pos_a[2];
             let dist_sq_a = dx_a * dx_a + dy_a * dy_a + dz_a * dz_a;
 
-            let dx_b = center_pos.x - pos_b.x;
-            let dy_b = center_pos.y - pos_b.y;
-            let dz_b = center_pos.z - pos_b.z;
+            let dx_b = center_pos[0] - pos_b[0];
+            let dy_b = center_pos[1] - pos_b[1];
+            let dz_b = center_pos[2] - pos_b[2];
             let dist_sq_b = dx_b * dx_b + dy_b * dy_b + dz_b * dz_b;
 
             dist_sq_a
@@ -162,9 +166,9 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
                 }
 
                 let neighbor_pos = self.atoms[neighbor.idx as usize].position;
-                let vx_scalar = center_pos.x - neighbor_pos.x;
-                let vy_scalar = center_pos.y - neighbor_pos.y;
-                let vz_scalar = center_pos.z - neighbor_pos.z;
+                let vx_scalar = center_pos[0] - neighbor_pos[0];
+                let vy_scalar = center_pos[1] - neighbor_pos[1];
+                let vz_scalar = center_pos[2] - neighbor_pos[2];
                 let v_mag_sq =
                     vx_scalar * vx_scalar + vy_scalar * vy_scalar + vz_scalar * vz_scalar;
 
@@ -207,9 +211,9 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
                     continue;
                 }
                 let n_pos = self.atoms[neighbor.idx as usize].position;
-                let vx = center_pos.x - n_pos.x;
-                let vy = center_pos.y - n_pos.y;
-                let vz = center_pos.z - n_pos.z;
+                let vx = center_pos[0] - n_pos[0];
+                let vy = center_pos[1] - n_pos[1];
+                let vz = center_pos[2] - n_pos[2];
                 let v_mag_sq = vx * vx + vy * vy + vz * vz;
 
                 let t = neighbor.threshold_squared;
@@ -234,7 +238,7 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
 }
 
 /// Takes the probe radius and number of points to use along with a list of Atoms as inputs and returns a Vec with SASA values for each atom.
-/// For most users it is recommend that you use `calculate_sasa` instead. This method can be used directly if you do not want to use pdbtbx to load PDB/mmCIF files or want to load them from a different source.
+/// For most users it is recommend that you use the SASAOptions interface instead. This method can be used directly if you do not want to use pdbtbx to load PDB/mmCIF files or want to load them from a different source.
 /// Probe Radius Default: 1.4
 /// Point Count Default: 100
 /// Threads Default: -1 (use all cores)
