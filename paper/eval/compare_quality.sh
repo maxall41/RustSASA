@@ -15,6 +15,5 @@ for f in *.pdb.json; do mv "$f" "${f/.pdb.json/.json}"; done
 cd ../../
 # create figures
 mkdir figures/
-uv run scripts/quality_scatter.py ./results/E_coli_freesasa/ ./results/E_coli_RSASA/ "AlphaFold E. coli proteome" figures/sasa_chain_comparison_E_coli.pdf
-uv run scripts/quality_scatter.py ./results/freesasa_dataset_proc=freesasa/ ./results/freesasa_dataset_proc=rustsasa/ "Freesasa dataset" figures/sasa_chain_comparison_freesasa_ds.pdf
+uv run scripts/quality_scatter.py ./results/E_coli_freesasa/ ./results/E_coli_RSASA/ ./results/freesasa_dataset_proc=freesasa/ ./results/freesasa_dataset_proc=rustsasa/ figures/sasa_chain_comparison_combined.pdf
 uv run scripts/perf_graphs.py

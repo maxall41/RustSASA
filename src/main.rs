@@ -5,7 +5,6 @@ use pdbtbx::{PDBError, ReadOptions};
 use quick_xml::SeError as XmlError;
 use rust_sasa::options::SASACalcError;
 use rust_sasa::options::SASAOptions;
-use rust_sasa::structures::atomic::SASALevel;
 use rust_sasa::structures::atomic::SASAResult;
 use rust_sasa::utils::configure_thread_pool;
 use rust_sasa::{sasa_result_to_json, sasa_result_to_protein_object, sasa_result_to_xml};
@@ -13,6 +12,15 @@ use snafu::{ResultExt, Snafu};
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
+#[derive(clap::ValueEnum, Clone, Default, Debug)]
+pub enum SASALevel {
+    Atom,
+    #[default]
+    Residue,
+    Chain,
+    Protein,
+}
 
 #[derive(clap::ValueEnum, Clone, Default, Debug)]
 enum OutputFormat {

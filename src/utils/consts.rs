@@ -88,7 +88,3 @@ pub(crate) fn load_radii_from_file(
 
 pub(crate) static PROTOR_RADII: LazyLock<FnvHashMap<String, FnvHashMap<String, f32>>> =
     load_protor_radii!();
-
-pub(crate) fn get_protor_radius(residue: &str, atom: &str) -> Option<f32> {
-    PROTOR_RADII.get(residue)?.get(atom).copied()
-}

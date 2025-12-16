@@ -66,6 +66,13 @@ a Creative Commons Attribution 4.0 International License (CC BY
 </article-meta>
 </front>
 <body>
+<disp-quote>
+  <p>I suspect part of the remaining overhead for FreeSASA is starting a
+  new process for each structure instead of running the whole folder
+  analysis in one process. I think that is one of the major strengths of
+  RustSASA because it’s a feature missing in FreeSASA, potentially you
+  could advertise that in the paper too.</p>
+</disp-quote>
 <sec id="summary">
   <title>Summary</title>
   <p>Solvent accessible surface area (SASA) calculations are fundamental
@@ -115,14 +122,14 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <title>Results</title>
   <sec id="calculation-quality">
     <title>Calculation Quality</title>
-    <p><inline-graphic mimetype="application" mime-subtype="pdf" xlink:href="sasa_chain_comparison_E_coli.pdf">
-      <alt-text>Comparing Freesasa and RustSasa on E. coli
-      proteome</alt-text>
-    </inline-graphic>
-    <inline-graphic mimetype="application" mime-subtype="pdf" xlink:href="sasa_chain_comparison_freesasa_ds.pdf">
-      <alt-text>Comparing Freesasa and RustSasa on Freesasa comparison
-      dataset</alt-text>
-    </inline-graphic></p>
+    <fig>
+      <caption><p><bold>A.</bold> Comparing RustSASA against Freesasa on
+      E. coli proteome at the chain level. <bold>B.</bold> Comparing
+      RustSASA against Freesasa on Freesasa comparison dataset at the
+      chain level.
+      <styled-content id="figU003Acalcquality"></styled-content></p></caption>
+      <graphic mimetype="application" mime-subtype="pdf" xlink:href="sasa_chain_comparison_combined.pdf" />
+    </fig>
     <p>To evaluate the accuracy of RustSASA calculations, we compared
     results to Freesasa
     (<xref alt="Mitternacht, 2016" rid="ref-Mitternacht_2016" ref-type="bibr">Mitternacht,
@@ -134,19 +141,20 @@ a Creative Commons Attribution 4.0 International License (CC BY
     et al., 2021</xref>) and the Freesasa evaluation dataset. RustSASA
     produces SASA values that closely match those from Freesasa,
     achieving Pearson correlation coefficients &gt; 0.99 on both
-    datasets.</p>
+    datasets (Figure 1).</p>
   </sec>
   <sec id="performance">
     <title>Performance</title>
     <fig>
       <caption><p><bold>A.</bold> Comparing the multi-threaded
       performance of RustSASA, Freesasa, and Biopython the full
-      AlphaFold E. coli proteome <bold>B.</bold> Comparing the
+      AlphaFold E. coli proteome. <bold>B.</bold> Comparing the
       multi-threaded performance of RustSASA, Freesasa, and Biopython on
       A0A385XJ53, a protein randomly selected from the AlphaFold E. coli
-      proteome <bold>C.</bold> Comparing the single-threaded performance
-      of RustSASA, and Freesasa on the full AlphaFold E. coli proteome
-      <styled-content id="figU003Aexample"></styled-content></p></caption>
+      proteome. <bold>C.</bold> Comparing the single-threaded
+      performance of RustSASA, and Freesasa on the full AlphaFold E.
+      coli proteome.
+      <styled-content id="figU003Aperformance"></styled-content></p></caption>
       <graphic mimetype="application" mime-subtype="pdf" xlink:href="performance_comparison_combined.pdf" />
     </fig>
     <p>We evaluated the performance of Freesasa, RustSASA, and Biopython
@@ -159,7 +167,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
     of RustSASA and Freesasa on the E. coli proteome, Biopython was
     excluded from this benchmark due to its poor performance hindering
     timely evaluation.</p>
-    <p>For the full proteome benchmarks (Fig 1A) we used Hyperfine
+    <p>For the full proteome benchmarks (Figure 2A) we used Hyperfine
     (<xref alt="Peter, 2023" rid="ref-Hyperfine" ref-type="bibr">Peter,
     2023</xref>) with 3 runs and 3 warmup iterations. All methods
     utilized parallel processing across eight cores. GNU parallel
@@ -169,11 +177,11 @@ a Creative Commons Attribution 4.0 International License (CC BY
     the entire proteome in ~5 seconds compared to ~28 seconds for
     Freesasa and ~328 seconds for Biopython, representing 5× and 63×
     speed improvements, respectively.</p>
-    <p>For the single protein benchmark (Fig 1B), we used Hyperfine with
-    3 warmup iterations and 25 runs. RustSASA processed the protein in
-    4.3ms (±0.5), Freesasa processed the protein in 4.0ms (±0.2), and
+    <p>For the single protein benchmark (Figure 2B), we used Hyperfine
+    with 3 warmup iterations and 25 runs. RustSASA processed the protein
+    in 4.3ms (±0.5), Freesasa processed the protein in 4.0ms (±0.2), and
     Biopython processed the protein in 250.8ms (±2.0). On the single
-    threaded benchmark (Fig 1C), RustSASA processed the proteome in
+    threaded benchmark (Figure 2C), RustSASA processed the proteome in
     26.4s compared to 46.2 seconds for Freesasa, representing a ~42%
     performance improvement, demonstrating that RustSASA’s performance
     advantage is not solely due to multi-threading.</p>
@@ -197,17 +205,15 @@ a Creative Commons Attribution 4.0 International License (CC BY
     et al., 1999</xref>). These radii were applied to all non-hydrogen
     heavy atoms present in the structures; hydrogen atoms, when present
     in input files, were ignored for the SASA computations to maintain
-    consistency with common practice for protein SASA estimation. Any
-    non-standard residues or ligands were ignored following the Freesasa
-    methodology
-    (<xref alt="Mitternacht, 2016" rid="ref-Mitternacht_2016" ref-type="bibr">Mitternacht,
-    2016</xref>).</p>
+    consistency with common practice for protein SASA estimation.
+    Additionally, all HETATM records in the input—non-standard amino
+    acids and ligands—were ignored.</p>
     <p>To ensure a fair comparison of RustSASA and Freesasa in the
-    single-threaded benchmark, we wrote a C++ script that utilizes the
-    Freesasa C API to compute the SASA for input proteins in a given
-    folder. This approach ensures that command-line overhead is not
-    responsible for RustSASA’s performance advantage. Furthermore, in
-    all experiments, Freesasa was configured to use the Shrake-Rupley
+    single-threaded benchmark, a C++ script was utilized to call the
+    Freesasa C API for all input proteins in a given folder. This
+    approach ensures that the command-line overhead is not responsible
+    for RustSASA’s performance advantage. Furthermore, in all
+    experiments, Freesasa was configured to use the Shrake-Rupley
     algorithm over its default algorithm, Lee &amp; Richards, to ensure
     an accurate comparison between the methods. Proteome-scale structure
     models for Escherichia coli were obtained from the AlphaFold DB
