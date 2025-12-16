@@ -1,4 +1,0 @@
-[submodule "pdbtbx"]
-	path = pdbtbx
-	url = https://github.com/maxall41/pdbtbx.git
-	branch = "master"

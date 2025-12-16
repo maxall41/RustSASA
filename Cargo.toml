@@ -15,7 +15,7 @@ exclude = [
 ]
 
 [dependencies]
-pdbtbx = { path = "pdbtbx", version = "0.12.0" }             # We have to use a git module because you cannot use a git+rev version in a published crate for some reason...
+pdbtbx = { git = "https://github.com/douweschulte/pdbtbx.git", rev = "332d29a232755e28c20d12929f9fea72be958e4c" }
 nalgebra = "0.33.2"
 rayon = "1.11.0"
 snafu = "0.8.9"
