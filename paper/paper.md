@@ -17,7 +17,9 @@ bibliography: paper.bib
 
 ---
 
-TODO: Include molecular dynamics results in performance section.
+TODO: Include molecular dynamics results in performance section and update summary.
+
+TODO: Implement all TODOs.
 
 # Summary
 
