@@ -4,7 +4,7 @@
 //! use pdbtbx::StrictnessLevel;
 //! use rust_sasa::{SASAOptions, ResidueLevel};
 //!
-//! let (mut pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
+//! let (mut pdb, _errors) = pdbtbx::open("./tests/data/pdbs/example.cif").unwrap();
 //! let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
 //! ```
 pub mod options;
@@ -232,7 +232,7 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
 /// use pdbtbx::StrictnessLevel;
 /// use rust_sasa::{Atom, calculate_sasa_internal};
 /// let (mut pdb, _errors) = pdbtbx::open(
-///             "./pdbs/example.cif",
+///             "./tests/data/pdbs/example.cif",
 ///         ).unwrap();
 /// let mut atoms = vec![];
 /// for atom in pdb.atoms() {

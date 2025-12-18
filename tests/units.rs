@@ -15,7 +15,7 @@ mod tests {
 
     #[test]
     fn internal_test() {
-        let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./tests/data/pdbs/example.cif").unwrap();
         let mut atoms = vec![];
         for atom in pdb.atoms() {
             let element = atom.element().unwrap();
@@ -43,7 +43,7 @@ mod tests {
 
     #[test]
     fn external_test() {
-        let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./tests/data/pdbs/example.cif").unwrap();
         let protein_sasa = SASAOptions::<ProteinLevel>::new().process(&pdb).unwrap();
         let chain_sasa = SASAOptions::<ChainLevel>::new().process(&pdb).unwrap();
 
@@ -65,7 +65,7 @@ mod tests {
 
     #[test]
     fn check_pdb_w_bad_seqadv_record() {
-        let (pdb, _errors) = pdbtbx::open("./pdbs/bad_seqadv_1A06.pdb").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./tests/data/pdbs/bad_seqadv_1A06.pdb").unwrap();
         let protein_sasa = SASAOptions::<ProteinLevel>::new().process(&pdb).unwrap();
 
         let start = Instant::now();
@@ -78,7 +78,7 @@ mod tests {
 
     #[test]
     fn check_pdb_w_atypical_spacegroup() {
-        let (pdb, _errors) = pdbtbx::open("./pdbs/151L_H3.pdb").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./tests/data/pdbs/151L_H3.pdb").unwrap();
         let protein_sasa = SASAOptions::<ProteinLevel>::new().process(&pdb).unwrap();
 
         let start = Instant::now();
@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn external_test_high_res() {
-        let (pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
+        let (pdb, _errors) = pdbtbx::open("./tests/data/pdbs/example.cif").unwrap();
         let protein_sasa = SASAOptions::<ProteinLevel>::new()
             .with_n_points(960)
             .process(&pdb)
