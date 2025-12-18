@@ -1,13 +1,11 @@
 use crate::structures::atomic::{ChainResult, ProteinResult, ResidueResult};
 use crate::utils::consts::{POLAR_AMINO_ACIDS, load_radii_from_file};
-use crate::utils::{get_radius, serialize_chain_id, simd_sum};
+use crate::utils::{combine_hash, get_radius, serialize_chain_id, simd_sum};
 use crate::{Atom, calculate_sasa_internal};
-use fnv::{FnvHashMap, FnvHasher};
-use pdbtbx::Atom as PDBTBXAtom;
+use fnv::FnvHashMap;
 use pdbtbx::PDB;
 use snafu::OptionExt;
 use snafu::prelude::*;
-use std::collections::HashSet;
 use std::hash::Hasher;
 use std::hash::{DefaultHasher, Hash};
 use std::marker::PhantomData;
@@ -78,15 +76,6 @@ pub struct ChainLevel;
 pub struct ProteinLevel;
 
 pub type AtomsMappingResult = Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError>;
-
-fn combine_hash(s: &str, n: usize) -> usize {
-    let mut hasher = DefaultHasher::new();
-
-    // Hash a tuple containing both values
-    (s, n).hash(&mut hasher);
-
-    hasher.finish() as usize
-}
 
 /// Macro to reduce duplication in atom building logic
 macro_rules! build_atom {

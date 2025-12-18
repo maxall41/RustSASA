@@ -2,11 +2,11 @@ pub mod consts;
 pub mod io;
 use std::sync::LazyLock;
 
-use fnv::FnvHashMap;
+use crate::utils::consts::PROTOR_RADII;
+use fnv::{FnvHashMap, FnvHasher};
 use pulp::Arch;
 use rayon::ThreadPoolBuilder;
-
-use crate::utils::consts::PROTOR_RADII;
+use std::hash::{Hash, Hasher};
 
 pub(crate) static ARCH: LazyLock<Arch> = LazyLock::new(Arch::new);
 
@@ -59,7 +59,7 @@ pub fn get_radius(
 ///   - `1`: Single-threaded execution
 ///   - `> 1`: Use specified number of threads
 ///   - `0`: Invalid returns error
-pub fn configure_thread_pool(threads: isize) -> Result<(), std::io::Error> {
+pub(crate) fn configure_thread_pool(threads: isize) -> Result<(), std::io::Error> {
     if threads == 0 {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
@@ -77,4 +77,13 @@ pub fn configure_thread_pool(threads: isize) -> Result<(), std::io::Error> {
     // If threads == -1, use default rayon behavior (all cores)
 
     Ok(())
+}
+
+pub(crate) fn combine_hash(s: &str, n: usize) -> usize {
+    let mut hasher = FnvHasher::default();
+
+    // Hash a tuple containing both values
+    (s, n).hash(&mut hasher);
+
+    hasher.finish() as usize
 }
