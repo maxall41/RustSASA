@@ -15,7 +15,7 @@ mod tests {
         dir.push("out.cif");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--output-depth")
             .arg("atom");
@@ -36,7 +36,7 @@ mod tests {
         dir.push("out.pdb");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--output-depth")
             .arg("atom");
@@ -58,7 +58,7 @@ mod tests {
         dir.push("out.json");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--output-depth")
             .arg("atom");
@@ -83,7 +83,7 @@ mod tests {
         dir.push("out.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--output-depth")
             .arg("atom");
@@ -109,7 +109,7 @@ mod tests {
         dir.push("out.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--probe-radius")
             .arg("1.5")
@@ -130,7 +130,7 @@ mod tests {
         dir.push("out.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--probe-radius")
             .arg("1.5")
@@ -151,7 +151,7 @@ mod tests {
         dir.push("out.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--threads")
             .arg("1")
@@ -169,7 +169,7 @@ mod tests {
         dir.push("out.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--output-depth")
             .arg("atom");
@@ -183,7 +183,7 @@ mod tests {
         let dir = env::temp_dir();
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/")
+            .arg("./tests/data/pdbs/")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--format")
             .arg("xml");
@@ -197,7 +197,7 @@ mod tests {
         let dir = env::temp_dir();
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/")
+            .arg("./tests/data/pdbs/")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--format")
             .arg("json");
@@ -211,7 +211,7 @@ mod tests {
         let dir = env::temp_dir();
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/")
+            .arg("./tests/data/pdbs/")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--format")
             .arg("pdb");
@@ -225,7 +225,7 @@ mod tests {
         let dir = env::temp_dir();
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/")
+            .arg("./tests/data/pdbs/")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--format")
             .arg("cif");
@@ -239,7 +239,7 @@ mod tests {
         let dir = env::temp_dir();
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/")
+            .arg("./tests/data/pdbs/")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--format")
             .arg("xml")
@@ -262,7 +262,7 @@ mod tests {
         dir.push("out_chain.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--output-depth")
             .arg("chain");
@@ -278,7 +278,7 @@ mod tests {
         dir.push("out_protein.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.clone().into_os_string().into_string().unwrap())
             .arg("--output-depth")
             .arg("protein");
@@ -293,7 +293,7 @@ mod tests {
         dir.push("out_fail.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/non_existent.cif")
+            .arg("./tests/data/pdbs/non_existent.cif")
             .arg(dir.into_os_string().into_string().unwrap());
         cmd.assert().failure();
         Ok(())
@@ -305,7 +305,7 @@ mod tests {
         dir.push("out_fail_dir.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/non_existent_dir/")
+            .arg("./tests/data/pdbs/non_existent_dir/")
             .arg(dir.into_os_string().into_string().unwrap())
             .arg("--format")
             .arg("xml");
@@ -319,7 +319,7 @@ mod tests {
         dir.push("out_fail_format.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/")
+            .arg("./tests/data/pdbs/")
             .arg(dir.into_os_string().into_string().unwrap());
         cmd.assert().failure();
         Ok(())
@@ -331,7 +331,7 @@ mod tests {
         dir.push("out_fail_radii.xml");
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.into_os_string().into_string().unwrap())
             .arg("--radii-file")
             .arg("./radii/non_existent.config");
@@ -345,7 +345,7 @@ mod tests {
         // Use the temp dir itself as the output file path, which is a directory
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
-            .arg("./pdbs/example.cif")
+            .arg("./tests/data/pdbs/example.cif")
             .arg(dir.into_os_string().into_string().unwrap());
         cmd.assert().failure();
         Ok(())

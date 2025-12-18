@@ -8,7 +8,7 @@ use rust_sasa::utils::get_radius;
 fn load_pdb() -> pdbtbx::PDB {
     let (pdb, _) = ReadOptions::default()
         .set_level(pdbtbx::StrictnessLevel::Loose)
-        .read("pdbs/example.cif")
+        .read("./tests/data/pdbs/example.cif")
         .expect("Failed to load PDB file");
     pdb
 }

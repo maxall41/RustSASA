@@ -541,7 +541,7 @@ impl<T: SASAProcessor> SASAOptions<T> {
     /// ```
     /// use pdbtbx::StrictnessLevel;
     /// use rust_sasa::options::{SASAOptions, ResidueLevel};
-    /// let (mut pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
+    /// let (mut pdb, _errors) = pdbtbx::open("./tests/data/pdbs/example.cif").unwrap();
     /// let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
     /// ```
     pub fn process(&self, pdb: &PDB) -> Result<T::Output, SASACalcError> {
