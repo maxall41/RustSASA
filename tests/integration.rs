@@ -3,8 +3,13 @@ mod common;
 
 #[cfg(test)]
 mod tests {
+    use super::common::data::FIXED_LOW_RES_ATOMS;
+    use super::common::io::read_json_result;
+    use approx::assert_abs_diff_eq;
     use assert_cmd::{Command, cargo::*};
+    use rust_sasa::SASAResult;
     use std::env;
+
     #[test]
     fn test_cli_sasa_calc_output_cif() -> Result<(), Box<dyn std::error::Error>> {
         let mut dir = env::temp_dir();
@@ -12,9 +17,18 @@ mod tests {
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
             .arg("./pdbs/example.cif")
-            .arg(dir.clone().into_os_string().into_string().unwrap());
+            .arg(dir.clone().into_os_string().into_string().unwrap())
+            .arg("--output-depth")
+            .arg("atom");
         cmd.assert().success();
         assert!(dir.exists());
+
+        let (pdb, _) = pdbtbx::open(dir.to_str().unwrap()).unwrap();
+        let atoms: Vec<_> = pdb.atoms().collect();
+        assert_eq!(atoms.len(), FIXED_LOW_RES_ATOMS.len());
+        for (atom, expected) in atoms.iter().zip(FIXED_LOW_RES_ATOMS.iter()) {
+            assert_abs_diff_eq!(atom.b_factor() as f32, expected, epsilon = 25.0);
+        }
         Ok(())
     }
     #[test]
@@ -24,9 +38,18 @@ mod tests {
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
             .arg("./pdbs/example.cif")
-            .arg(dir.clone().into_os_string().into_string().unwrap());
+            .arg(dir.clone().into_os_string().into_string().unwrap())
+            .arg("--output-depth")
+            .arg("atom");
         cmd.assert().success();
         assert!(dir.exists());
+
+        let (pdb, _) = pdbtbx::open(dir.to_str().unwrap()).unwrap();
+        let atoms: Vec<_> = pdb.atoms().collect();
+        assert_eq!(atoms.len(), FIXED_LOW_RES_ATOMS.len());
+        for (atom, expected) in atoms.iter().zip(FIXED_LOW_RES_ATOMS.iter()) {
+            assert_abs_diff_eq!(atom.b_factor() as f32, expected, epsilon = 25.0);
+        }
         Ok(())
     }
 
@@ -37,9 +60,21 @@ mod tests {
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
             .arg("./pdbs/example.cif")
-            .arg(dir.clone().into_os_string().into_string().unwrap());
+            .arg(dir.clone().into_os_string().into_string().unwrap())
+            .arg("--output-depth")
+            .arg("atom");
         cmd.assert().success();
         assert!(dir.exists());
+
+        let result = read_json_result(&dir);
+        if let SASAResult::Atom(sasa) = result {
+            assert_eq!(sasa.len(), FIXED_LOW_RES_ATOMS.len());
+            for (actual, expected) in sasa.iter().zip(FIXED_LOW_RES_ATOMS.iter()) {
+                assert_abs_diff_eq!(actual, expected, epsilon = 25.0);
+            }
+        } else {
+            panic!("Expected SASAResult::Atom");
+        }
         Ok(())
     }
 

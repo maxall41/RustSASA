@@ -59,7 +59,7 @@ pub fn get_radius(
 ///   - `1`: Single-threaded execution
 ///   - `> 1`: Use specified number of threads
 ///   - `0`: Invalid returns error
-pub(crate) fn configure_thread_pool(threads: isize) -> Result<(), std::io::Error> {
+pub fn configure_thread_pool(threads: isize) -> Result<(), std::io::Error> {
     if threads == 0 {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
