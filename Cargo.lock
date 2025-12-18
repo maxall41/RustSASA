@@ -804,6 +804,7 @@ dependencies = [
  "pulp",
  "quick-xml",
  "rayon",
+ "rust-sasa",
  "serde",
  "serde_json",
  "snafu",

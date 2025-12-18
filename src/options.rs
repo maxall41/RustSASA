@@ -6,8 +6,6 @@ use fnv::FnvHashMap;
 use pdbtbx::PDB;
 use snafu::OptionExt;
 use snafu::prelude::*;
-use std::hash::Hasher;
-use std::hash::{DefaultHasher, Hash};
 use std::marker::PhantomData;
 
 /// Options for configuring SASA (Solvent Accessible Surface Area) calculations.

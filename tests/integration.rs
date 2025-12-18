@@ -1,10 +1,9 @@
-//TODO: Snapshots
 mod common;
 
 #[cfg(test)]
 mod tests {
     use super::common::data::FIXED_LOW_RES_ATOMS;
-    use super::common::io::read_json_result;
+    use super::common::io::{read_json_result, read_xml_result};
     use approx::assert_abs_diff_eq;
     use assert_cmd::{Command, cargo::*};
     use rust_sasa::SASAResult;
@@ -85,9 +84,22 @@ mod tests {
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         let cmd = cmd
             .arg("./pdbs/example.cif")
-            .arg(dir.clone().into_os_string().into_string().unwrap());
+            .arg(dir.clone().into_os_string().into_string().unwrap())
+            .arg("--output-depth")
+            .arg("atom");
         cmd.assert().success();
         assert!(dir.exists());
+
+        let result = read_xml_result(&dir);
+        if let SASAResult::Atom(sasa) = result {
+            assert_eq!(sasa.len(), FIXED_LOW_RES_ATOMS.len());
+            for (actual, expected) in sasa.iter().zip(FIXED_LOW_RES_ATOMS.iter()) {
+                assert_abs_diff_eq!(actual, expected, epsilon = 25.0);
+            }
+        } else {
+            panic!("Expected SASAResult::Atom");
+        }
+
         Ok(())
     }
 
