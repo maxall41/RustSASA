@@ -6,6 +6,8 @@
 * Updated `criterion` to version 0.7.0.
 * Paper updated
 * CLI dependencies gated behind `cli` feature to make library more lightweight. Library dependencies removed: clap, serde, serde_json, quick-xml, indicatif, and mimalloc.
+* Improved SASA calculation accuracy by expanding neighbor search radius.
+* Improved performance of SpatialGrid data structure (using Verlet lists) to compensate for performance penalty of increased neighbor search radius.
 
 ## Version 0.7.0 
 

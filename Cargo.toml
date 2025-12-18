@@ -39,6 +39,10 @@ required-features = ["cli"]
 [dev-dependencies]
 approx = "0.5.1"
 criterion = "0.7.0"
+assert_cmd = "2.0.14"
+escargot = "0.5.15"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 [[bench]]
 name = "sasa_benchmarks"
