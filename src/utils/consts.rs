@@ -79,12 +79,12 @@ pub(crate) fn parse_radii_config(content: &str) -> FnvHashMap<String, FnvHashMap
     atoms
 }
 
-pub(crate) fn load_radii_from_file(
+pub fn load_radii_from_file(
     path: &str,
 ) -> Result<FnvHashMap<String, FnvHashMap<String, f32>>, std::io::Error> {
     let content = std::fs::read_to_string(path)?;
     Ok(parse_radii_config(&content))
 }
 
-pub(crate) static PROTOR_RADII: LazyLock<FnvHashMap<String, FnvHashMap<String, f32>>> =
+pub static PROTOR_RADII: LazyLock<FnvHashMap<String, FnvHashMap<String, f32>>> =
     load_protor_radii!();

@@ -1,10 +1,11 @@
 #[cfg(feature = "serde")]
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Copy)]
 #[repr(C)]
-pub(crate) struct NeighborData {
-    pub(crate) threshold_squared: f32,
-    pub(crate) idx: u32,
+pub struct NeighborData {
+    pub threshold_squared: f32,
+    pub idx: u32,
 }
 
 /// This struct represents an individual Atom
@@ -22,7 +23,7 @@ pub struct Atom {
 }
 
 #[derive(Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ChainResult {
     /// Chain name
     pub name: String,
@@ -31,7 +32,7 @@ pub struct ChainResult {
 }
 
 #[derive(Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ResidueResult {
     /// Residue serial number
     pub serial_number: isize,
@@ -46,7 +47,7 @@ pub struct ResidueResult {
 }
 
 #[derive(Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ProteinResult {
     /// The total SASA value for the entire protein
     pub global_total: f32,
@@ -57,7 +58,7 @@ pub struct ProteinResult {
 }
 
 #[derive(Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum SASAResult {
     Atom(Vec<f32>),
     Residue(Vec<ResidueResult>),

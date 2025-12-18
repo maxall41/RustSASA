@@ -1,2 +1,2 @@
 pub mod atomic;
-pub(crate) mod spatial_grid;
+pub mod spatial_grid;

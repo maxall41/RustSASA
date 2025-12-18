@@ -80,6 +80,7 @@ def process_dataset(freesasa_dir, rsasa_dir):
     # Collect all values from all files
     all_freesasa_values = []
     all_rsasa_values = []
+    map_back = []
 
     for filename in matching_files:
         freesasa_path = os.path.join(freesasa_dir, filename)
@@ -96,6 +97,7 @@ def process_dataset(freesasa_dir, rsasa_dir):
 
             all_freesasa_values.extend(values1)
             all_rsasa_values.extend(values2)
+            map_back.append((len(all_freesasa_values), filename))
 
             print(f"Processed {filename}: {len(values1)} matching chains")
 
@@ -108,6 +110,17 @@ def process_dataset(freesasa_dir, rsasa_dir):
         return None, None
 
     print(f"Total matching chains: {len(all_freesasa_values)}")
+
+    dist = 0
+    new_dist_id = None
+    for i in range(len(all_freesasa_values)):
+        new_dist = abs(all_rsasa_values[i] - all_freesasa_values[i])
+        if new_dist > dist:
+            dist = new_dist
+            new_dist_id = i
+    if new_dist_id is not None:
+        print(map_back)
+        print(f"Highest diff: {dist}: {new_dist_id}")
 
     # Convert to numpy arrays
     freesasa_values = np.array(all_freesasa_values)
@@ -186,9 +199,7 @@ def main(
     ecoli_freesasa, ecoli_rsasa = process_dataset(freesasa_dir_ecoli, rsasa_dir_ecoli)
 
     print("\nProcessing Freesasa dataset...")
-    freesasa_freesasa, freesasa_rsasa = process_dataset(
-        freesasa_dir_freesasa, rsasa_dir_freesasa
-    )
+    freesasa_freesasa, freesasa_rsasa = process_dataset(freesasa_dir_freesasa, rsasa_dir_freesasa)
 
     if ecoli_freesasa is None or freesasa_freesasa is None:
         print("Error: Could not process one or both datasets")
@@ -209,9 +220,7 @@ def main(
 
     # Panel B: Freesasa dataset
     ax2 = fig.add_subplot(gs[0, 1])
-    corr2, pval2, rmse2 = create_panel(
-        ax2, freesasa_freesasa, freesasa_rsasa, r"$\mathbf{B.}$ Freesasa dataset"
-    )
+    corr2, pval2, rmse2 = create_panel(ax2, freesasa_freesasa, freesasa_rsasa, r"$\mathbf{B.}$ Freesasa dataset")
 
     plt.savefig(output_file, bbox_inches="tight", dpi=300)
 

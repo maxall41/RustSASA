@@ -20,7 +20,7 @@ pub(crate) fn simd_sum(values: &[f32]) -> f32 {
     total
 }
 
-pub(crate) fn serialize_chain_id(s: &str) -> isize {
+pub fn serialize_chain_id(s: &str) -> isize {
     let mut result = 0;
     for c in s.chars() {
         if c.is_ascii_alphabetic() {
@@ -31,7 +31,7 @@ pub(crate) fn serialize_chain_id(s: &str) -> isize {
     result
 }
 
-pub(crate) fn get_protor_radius(residue: &str, atom: &str) -> Option<f32> {
+pub fn get_protor_radius(residue: &str, atom: &str) -> Option<f32> {
     PROTOR_RADII.get(residue)?.get(atom).copied()
 }
 
