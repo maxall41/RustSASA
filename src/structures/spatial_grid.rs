@@ -278,6 +278,7 @@ impl SpatialGrid {
     }
 
     #[inline(always)]
+    #[allow(clippy::too_many_arguments)]
     fn process_self_cell(
         &self,
         atoms: &[Atom],
@@ -355,6 +356,7 @@ impl SpatialGrid {
     }
 
     #[inline(always)]
+    #[allow(clippy::too_many_arguments)]
     fn process_neighbor_cells(
         &self,
         atoms: &[Atom],
