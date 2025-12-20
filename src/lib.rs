@@ -7,6 +7,7 @@
 //! let (mut pdb, _errors) = pdbtbx::open("./tests/data/pdbs/example.cif").unwrap();
 //! let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
 //! ```
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 pub mod options;
 // Re-export the new level types and processor trait
 pub use options::{AtomLevel, ChainLevel, ProteinLevel, ResidueLevel, SASAProcessor};

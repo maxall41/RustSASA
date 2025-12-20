@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 use std::collections::HashSet;
 use std::sync::LazyLock;
 

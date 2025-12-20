@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 use crate::structures::atomic::{ChainResult, ProteinResult, ResidueResult};
 use crate::utils::consts::{POLAR_AMINO_ACIDS, load_radii_from_file};
 use crate::utils::{combine_hash, get_radius, serialize_chain_id, simd_sum};
