@@ -18,6 +18,10 @@ singlethread_data_files = [
     "results/benches/bench_freesasa_singlethread_cpp.json",
     # "results/benches/bench_biopython_singlethread.json",
 ]
+md_data_files = [
+    "results/benches/bench_md_mdakit.json",
+    "results/benches/bench_md_rustsasa.json",
+]
 
 
 def create_panel(ax, json_files, title):
@@ -39,6 +43,8 @@ def create_panel(ax, json_files, title):
                 label = "freesasa"
             elif "biopython" in command:
                 label = "biopython"
+            elif "mdakit" in command:
+                label = "mdakit-sasa"
             data_entries.append(
                 {
                     "label": label,
@@ -47,8 +53,8 @@ def create_panel(ax, json_files, title):
                 },
             )
 
-    # Sort order: rust-sasa, freesasa, biopython
-    order = {"rust-sasa": 0, "freesasa": 1, "biopython": 2}
+    # Sort order: rust-sasa, freesasa, biopython, mdakit
+    order = {"rust-sasa": 0, "freesasa": 1, "biopython": 2, "mdakit-sasa": 3}
     data_entries.sort(key=lambda x: order.get(x["label"], 999))
 
     libraries = [d["label"] for d in data_entries]
@@ -128,12 +134,20 @@ create_panel(
     r"$\mathbf{B.}$ Performance Comparison on A0A385XJ53",
 )
 
-# Bottom: singlethread_data_files (spanning both columns)
-ax3 = fig.add_subplot(gs[1, :])
+# Bottom left: singlethread_data_files
+ax3 = fig.add_subplot(gs[1, 0])
 create_panel(
     ax3,
     singlethread_data_files,
     r"$\mathbf{C.}$ Single-Threaded Performance on E. coli Proteome",
+)
+
+# Bottom right: md_data_files
+ax4 = fig.add_subplot(gs[1, 1])
+create_panel(
+    ax4,
+    md_data_files,
+    r"$\mathbf{D.}$ Performance Comparison on Molecular Dynamics",
 )
 
 plt.savefig("figures/performance_comparison_combined.pdf", bbox_inches="tight", dpi=300)
