@@ -11,7 +11,8 @@ keywords = ["Rust", "Bioinformatics", "SASA"]
 documentation = "https://docs.rs/rust-sasa/latest/rust_sasa/"
 rust-version = "1.85.0"
 exclude = [
-    "paper/"
+    "paper/",
+    "tests/data"
 ]
 
 [dependencies]
