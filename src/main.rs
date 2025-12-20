@@ -93,7 +93,7 @@ struct Args {
     allow_vdw_fallback: bool,
 
     /// Include HETATM records. Defaults to false as ProtOr config does not contain records for non-standard amino acids. (default: false)
-    #[arg(short = 'n', long, default_value_t = false)]
+    #[arg(short = 'e', long, default_value_t = false)]
     include_hetatms: bool,
 
     /// Configure number of threads used to parallelize SASA computation. Mode: -1 uses all CPU cores. (default: -1)

@@ -16,20 +16,41 @@ mod tests {
 
     const RMSE_BASELINE: f64 = 614.26; //RustSASA RMSE as of v0.8.0
     const TOLERANCE: f64 = 0.01; // 1%
-    const MAX_RMSE: f64 = RMSE_BASELINE * (1.0 + TOLERANCE);
 
-    /// Load FreeSASA reference data and extract chain totals
+    /// Load FreeSASA reference data and extract chain totals or file-level total
+    /// For use_file_total=true, sums all chains and returns a single value keyed by filename
+    /// For use_file_total=false, returns individual chain totals keyed by chain label
     fn load_freesasa_chains(
         file_path: &Path,
+        use_file_total: bool,
     ) -> Result<HashMap<String, f64>, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(file_path)?;
         let data: FreeSASAOutput = serde_json::from_str(&content)?;
 
         let mut chain_totals = HashMap::new();
-        for result in data.results {
-            for structure in result.structure {
-                for chain in structure.chains {
-                    chain_totals.insert(chain.label, chain.area.total);
+
+        if use_file_total {
+            // Sum all chains for file-level comparison (atom/protein depths)
+            let mut total = 0.0;
+            for result in data.results {
+                for structure in result.structure {
+                    for chain in structure.chains {
+                        total += chain.area.total;
+                    }
+                }
+            }
+            let filename = file_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown");
+            chain_totals.insert(filename.to_string(), total);
+        } else {
+            // Extract individual chain totals (residue/chain depths)
+            for result in data.results {
+                for structure in result.structure {
+                    for chain in structure.chains {
+                        chain_totals.insert(chain.label, chain.area.total);
+                    }
                 }
             }
         }
@@ -37,7 +58,8 @@ mod tests {
         Ok(chain_totals)
     }
 
-    /// Load RustSASA output and aggregate by chain
+    /// Load RustSASA output and aggregate for comparison (handles all output depths)
+    /// Returns either chain-level totals or file-level total depending on output depth
     fn load_rustsasa_chains(
         file_path: &Path,
     ) -> Result<HashMap<String, f64>, Box<dyn std::error::Error>> {
@@ -45,12 +67,37 @@ mod tests {
         let data: SASAResult = serde_json::from_str(&content)?;
 
         let mut chain_totals: HashMap<String, f64> = HashMap::new();
-        if let SASAResult::Residue(residues) = data {
-            for residue in residues {
-                *chain_totals.entry(residue.chain_id).or_insert(0.0) += residue.value as f64;
+
+        match data {
+            SASAResult::Atom(atoms) => {
+                // Atom level has no chain information, so we sum all atoms
+                // and use filename as key for comparison
+                let total: f64 = atoms.iter().map(|&v| v as f64).sum();
+                let filename = file_path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown");
+                chain_totals.insert(filename.to_string(), total);
             }
-        } else {
-            return Err("Expected Residue level SASAResult".into());
+            SASAResult::Residue(residues) => {
+                for residue in residues {
+                    *chain_totals.entry(residue.chain_id.clone()).or_insert(0.0) +=
+                        residue.value as f64;
+                }
+            }
+            SASAResult::Chain(chains) => {
+                for chain in chains {
+                    chain_totals.insert(chain.name.clone(), chain.value as f64);
+                }
+            }
+            SASAResult::Protein(protein) => {
+                // Protein level returns a single total, use filename as key
+                let filename = file_path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown");
+                chain_totals.insert(filename.to_string(), protein.global_total as f64);
+            }
         }
 
         Ok(chain_totals)
@@ -87,12 +134,15 @@ mod tests {
         (sum_squared_diff / values1.len() as f64).sqrt()
     }
 
-    #[test]
-    fn test_quality_against_freesasa() {
+    /// Generic quality test that runs RustSASA with specified output depth and validates RMSE
+    fn run_quality_test(output_depth: &str) {
+        // Determine if we should use file-level totals (for atom/protein) or chain-level (for residue/chain)
+        let use_file_total = matches!(output_depth, "atom" | "protein");
+
         // Setup directories
         let reference_dir = PathBuf::from("./tests/data/freesasa_reference/");
         let pdb_dir = PathBuf::from("./tests/data/freesasa_pdbs/");
-        let output_dir = env::temp_dir().join("rustsasa_quality_test");
+        let output_dir = env::temp_dir().join(format!("rustsasa_quality_test_{}", output_depth));
 
         // Clean and create output directory
         if output_dir.exists() {
@@ -100,14 +150,14 @@ mod tests {
         }
         fs::create_dir_all(&output_dir).expect("Failed to create output directory");
 
-        // Run RustSASA on the PDB directory
+        // Run RustSASA on the PDB directory with specified output depth
         let mut cmd = Command::new(cargo_bin!("rust-sasa"));
         cmd.arg(pdb_dir.to_str().unwrap())
             .arg(output_dir.to_str().unwrap())
             .arg("--format")
             .arg("json")
             .arg("--output-depth")
-            .arg("residue");
+            .arg(output_depth);
 
         cmd.assert().success();
 
@@ -146,7 +196,7 @@ mod tests {
             let output_path = output_dir.join(filename);
 
             match (
-                load_freesasa_chains(&reference_path),
+                load_freesasa_chains(&reference_path, use_file_total),
                 load_rustsasa_chains(&output_path),
             ) {
                 (Ok(freesasa_chains), Ok(rustsasa_chains)) => {
@@ -172,13 +222,38 @@ mod tests {
 
         // Calculate RMSE
         let rmse = calculate_rmse(&all_freesasa_values, &all_rustsasa_values);
+        let max_rmse = RMSE_BASELINE * (1.0 + TOLERANCE);
 
         assert!(
-            rmse <= MAX_RMSE,
-            "RMSE ({:.2}) exceeds maximum threshold ({:.2})",
+            rmse <= max_rmse,
+            "[{}] RMSE ({:.2}) exceeds maximum threshold ({:.2})",
+            output_depth,
             rmse,
-            MAX_RMSE
+            max_rmse
         );
-        println!("Quality test passed! RMSE within acceptable threshold.");
+        println!(
+            "[{}] Quality test passed! RMSE: {:.2} (threshold: {:.2})",
+            output_depth, rmse, max_rmse
+        );
+    }
+
+    #[test]
+    fn test_quality_atom_depth() {
+        run_quality_test("atom");
+    }
+
+    #[test]
+    fn test_quality_residue_depth() {
+        run_quality_test("residue");
+    }
+
+    #[test]
+    fn test_quality_chain_depth() {
+        run_quality_test("chain");
+    }
+
+    #[test]
+    fn test_quality_protein_depth() {
+        run_quality_test("protein");
     }
 }
