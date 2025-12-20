@@ -97,7 +97,7 @@ jobs:
 
       - name: Build initial binary for PGO
         if: matrix.os == 'windows-2025' || matrix.os == 'ubuntu-24.04'
-        run: cargo pgo build -- --target ${{ matrix.target }}
+        run: cargo pgo build -- --target ${{ matrix.target }} --features="cli"
 
       - name: Create temp output directory
         run: mkdir temp_out
@@ -132,7 +132,7 @@ jobs:
           cargo pgo run -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
       - name: Optimize with PGO
         run: |
-          cargo pgo optimize build -- --target ${{ matrix.target }}
+          cargo pgo optimize build -- --target ${{ matrix.target }} --features="cli"
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-2025'
         run: |
