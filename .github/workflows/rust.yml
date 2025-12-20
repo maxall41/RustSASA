@@ -97,7 +97,7 @@ jobs:
 
       - name: Build initial binary for PGO
         if: matrix.os == 'windows-2025' || matrix.os == 'ubuntu-24.04'
-        run: cargo pgo build --target ${{ matrix.target }} -- --features="cli"
+        run: cargo pgo build -- --target ${{ matrix.target }}
 
       - name: Create temp output directory
         run: mkdir temp_out
@@ -116,7 +116,7 @@ jobs:
           tar -xf UP000000625_83333_ECOLI_v4.tar -C UP000000625_83333_ECOLI_v4/
           rm -rf UP000000625_83333_ECOLI_v4/*.cif
           gunzip UP000000625_83333_ECOLI_v4/*.gz
-          cargo pgo run --target ${{ matrix.target }} -- --features="cli" -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          cargo pgo run -- --features="cli" UP000000625_83333_ECOLI_v4/ temp_out/ --format json
 
       - name: Run PGO profiling (Windows)
         if: matrix.os == 'windows-2025'
@@ -129,10 +129,10 @@ jobs:
               & "C:\Program Files\7-Zip\7z.exe" x $_.FullName -o"$(Split-Path $_.FullName -Parent)" -y | Out-Null
               Remove-Item $_.FullName
           }
-          cargo pgo run --target ${{ matrix.target }} -- --features="cli" -- UP000000625_83333_ECOLI_v4/ temp_out/ --format json
+          cargo pgo run -- --features="cli" UP000000625_83333_ECOLI_v4/ temp_out/ --format json
       - name: Optimize with PGO
         run: |
-          cargo pgo optimize build --target ${{ matrix.target }} -- --features="cli"
+          cargo pgo optimize build -- --target ${{ matrix.target }}
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-2025'
         run: |
