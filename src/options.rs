@@ -1,9 +1,9 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 use crate::structures::atomic::{ChainResult, ProteinResult, ResidueResult};
 use crate::utils::consts::{POLAR_AMINO_ACIDS, load_radii_from_file};
-use crate::utils::{get_radius, serialize_chain_id, simd_sum};
+use crate::utils::{combine_hash, get_radius, serialize_chain_id, simd_sum};
 use crate::{Atom, calculate_sasa_internal};
 use fnv::FnvHashMap;
-use nalgebra::Point3;
 use pdbtbx::PDB;
 use snafu::OptionExt;
 use snafu::prelude::*;
@@ -78,7 +78,7 @@ pub type AtomsMappingResult = Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>),
 
 /// Macro to reduce duplication in atom building logic
 macro_rules! build_atom {
-    ($atoms:expr, $atom:expr, $element:expr, $residue_name:expr, $atom_name:expr, $parent_id:expr, $radii_config:expr, $allow_vdw_fallback:expr) => {{
+    ($atoms:expr, $atom:expr, $element:expr, $residue_name:expr, $atom_name:expr, $parent_id:expr, $radii_config:expr, $allow_vdw_fallback:expr, $id:expr) => {{
         let radius = match get_radius($residue_name, $atom_name, $radii_config) {
             Some(r) => r,
             None => {
@@ -98,13 +98,13 @@ macro_rules! build_atom {
         };
 
         $atoms.push(Atom {
-            position: Point3::new(
+            position: [
                 $atom.pos().0 as f32,
                 $atom.pos().1 as f32,
                 $atom.pos().2 as f32,
-            ),
+            ],
             radius,
-            id: $atom.serial_number(),
+            id: $id,
             parent_id: $parent_id,
         });
     }};
@@ -169,7 +169,8 @@ impl SASAProcessor for AtomLevel {
                     atom_name,
                     None,
                     radii_config,
-                    allow_vdw_fallback
+                    allow_vdw_fallback,
+                    combine_hash("", atom.serial_number())
                 );
             }
         }
@@ -226,27 +227,31 @@ impl SASAProcessor for ResidueLevel {
         for residue in pdb.residues() {
             let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
             let mut temp = vec![];
-            for atom in residue.atoms() {
-                let element = atom.element().context(ElementMissingSnafu)?;
-                let atom_name = atom.name();
-                if element == &pdbtbx::Element::H && !include_hydrogens {
-                    continue;
-                };
-                if atom.hetero() && !include_hetatms {
-                    continue;
+            for conformer in residue.conformers() {
+                for atom in conformer.atoms() {
+                    let element = atom.element().context(ElementMissingSnafu)?;
+                    let atom_name = atom.name();
+                    if element == &pdbtbx::Element::H && !include_hydrogens {
+                        continue;
+                    };
+                    if atom.hetero() && !include_hetatms {
+                        continue;
+                    }
+                    let conformer_alt = conformer.alternative_location().unwrap_or("");
+                    build_atom!(
+                        atoms,
+                        atom,
+                        element,
+                        residue_name,
+                        atom_name,
+                        Some(residue.serial_number()),
+                        radii_config,
+                        allow_vdw_fallback,
+                        combine_hash(conformer_alt, atom.serial_number())
+                    );
+                    temp.push(i);
+                    i += 1;
                 }
-                build_atom!(
-                    atoms,
-                    atom,
-                    element,
-                    residue_name,
-                    atom_name,
-                    Some(residue.serial_number()),
-                    radii_config,
-                    allow_vdw_fallback
-                );
-                temp.push(i);
-                i += 1;
             }
             parent_to_atoms.insert(residue.serial_number(), temp);
         }
@@ -314,7 +319,8 @@ impl SASAProcessor for ChainLevel {
                         atom_name,
                         Some(chain_id),
                         radii_config,
-                        allow_vdw_fallback
+                        allow_vdw_fallback,
+                        combine_hash("", atom.serial_number())
                     );
                     temp.push(i);
                     i += 1
@@ -394,7 +400,8 @@ impl SASAProcessor for ProteinLevel {
                     atom_name,
                     Some(residue.serial_number()),
                     radii_config,
-                    allow_vdw_fallback
+                    allow_vdw_fallback,
+                    combine_hash("", atom.serial_number())
                 );
                 temp.push(i);
                 i += 1;
@@ -535,7 +542,7 @@ impl<T: SASAProcessor> SASAOptions<T> {
     /// ```
     /// use pdbtbx::StrictnessLevel;
     /// use rust_sasa::options::{SASAOptions, ResidueLevel};
-    /// let (mut pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
+    /// let (mut pdb, _errors) = pdbtbx::open("./tests/data/pdbs/example.cif").unwrap();
     /// let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
     /// ```
     pub fn process(&self, pdb: &PDB) -> Result<T::Output, SASACalcError> {

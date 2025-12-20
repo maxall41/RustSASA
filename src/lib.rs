@@ -4,15 +4,15 @@
 //! use pdbtbx::StrictnessLevel;
 //! use rust_sasa::{SASAOptions, ResidueLevel};
 //!
-//! let (mut pdb, _errors) = pdbtbx::open("./pdbs/example.cif").unwrap();
+//! let (mut pdb, _errors) = pdbtbx::open("./tests/data/pdbs/example.cif").unwrap();
 //! let result = SASAOptions::<ResidueLevel>::new().process(&pdb);
 //! ```
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 pub mod options;
 // Re-export the new level types and processor trait
 pub use options::{AtomLevel, ChainLevel, ProteinLevel, ResidueLevel, SASAProcessor};
 use utils::consts::ANGLE_INCREMENT;
 pub mod structures;
-mod test;
 pub mod utils;
 
 pub use crate::options::*;
@@ -21,7 +21,11 @@ use crate::utils::ARCH;
 use structures::spatial_grid::SpatialGrid;
 // Re-export io functions for use in the binary crate
 use rayon::prelude::*;
-pub use utils::io::{sasa_result_to_json, sasa_result_to_protein_object, sasa_result_to_xml};
+#[cfg(feature = "serde_json")]
+pub use utils::io::sasa_result_to_json;
+pub use utils::io::sasa_result_to_protein_object;
+#[cfg(feature = "quick-xml")]
+pub use utils::io::sasa_result_to_xml;
 
 struct SpherePointsSoA {
     x: Vec<f32>,
@@ -62,61 +66,21 @@ fn generate_sphere_points(n_points: usize) -> SpherePointsSoA {
 }
 
 #[inline(never)]
-fn precompute_neighbors(
+pub fn precompute_neighbors(
     atoms: &[Atom],
     active_indices: &[usize],
     probe_radius: f32,
     max_radii: f32,
 ) -> Vec<Vec<NeighborData>> {
+    // Same cell_size as original
     let cell_size = probe_radius + max_radii;
-    let grid = SpatialGrid::new(atoms, active_indices, cell_size);
 
-    let mut neighbors = Vec::with_capacity(active_indices.len());
-    let mut temp_candidates = Vec::with_capacity(64);
-    let sr = probe_radius + (max_radii * 2.0);
-    let sr_squared = sr * sr;
+    // Maximum search radius from original: atom.radius + max_radii + 2.0 * probe_radius
+    // Worst case is when atom.radius == max_radii
+    let max_search_radius = max_radii + max_radii + 2.0 * probe_radius;
 
-    for &orig_idx in active_indices {
-        let atom = &atoms[orig_idx];
-        let xyz = atom.position.coords.xyz();
-        grid.locate_within_distance([xyz[0], xyz[1], xyz[2]], sr_squared, &mut temp_candidates);
-
-        // Sort candidates by distance (closest first for early exit optimization)
-        let center_pos = atom.position;
-        temp_candidates.sort_unstable_by(|&a_idx, &b_idx| {
-            let pos_a = atoms[a_idx].position;
-            let pos_b = atoms[b_idx].position;
-
-            let dx_a = center_pos.x - pos_a.x;
-            let dy_a = center_pos.y - pos_a.y;
-            let dz_a = center_pos.z - pos_a.z;
-            let dist_sq_a = dx_a * dx_a + dy_a * dy_a + dz_a * dz_a;
-
-            let dx_b = center_pos.x - pos_b.x;
-            let dy_b = center_pos.y - pos_b.y;
-            let dz_b = center_pos.z - pos_b.z;
-            let dist_sq_b = dx_b * dx_b + dy_b * dy_b + dz_b * dz_b;
-
-            dist_sq_a
-                .partial_cmp(&dist_sq_b)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-
-        // Precompute squared thresholds for each neighbor
-        let mut neighbor_data = Vec::with_capacity(temp_candidates.len());
-        for &idx in &temp_candidates {
-            let neighbor = &atoms[idx];
-            let threshold = neighbor.radius + probe_radius;
-            neighbor_data.push(NeighborData {
-                idx: idx as u32,
-                threshold_squared: threshold * threshold,
-            });
-        }
-
-        neighbors.push(neighbor_data);
-    }
-
-    neighbors
+    let grid = SpatialGrid::new(atoms, active_indices, cell_size, max_search_radius);
+    grid.build_all_neighbor_lists(atoms, active_indices, probe_radius, max_radii)
 }
 
 struct AtomSasaKernel<'a> {
@@ -162,9 +126,9 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
                 }
 
                 let neighbor_pos = self.atoms[neighbor.idx as usize].position;
-                let vx_scalar = center_pos.x - neighbor_pos.x;
-                let vy_scalar = center_pos.y - neighbor_pos.y;
-                let vz_scalar = center_pos.z - neighbor_pos.z;
+                let vx_scalar = center_pos[0] - neighbor_pos[0];
+                let vy_scalar = center_pos[1] - neighbor_pos[1];
+                let vz_scalar = center_pos[2] - neighbor_pos[2];
                 let v_mag_sq =
                     vx_scalar * vx_scalar + vy_scalar * vy_scalar + vz_scalar * vz_scalar;
 
@@ -196,29 +160,55 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
         }
 
         // Process remainder
+        let mut current_nb = 0;
         for i in 0..sx_rem.len() {
             let sx = sx_rem[i];
             let sy = sy_rem[i];
             let sz = sz_rem[i];
             let mut occluded = false;
 
-            for neighbor in self.neighbors {
-                if self.atoms[neighbor.idx as usize].id == atom.id {
-                    continue;
+            // First check the neighbor that occluded the previous point
+            if current_nb < self.neighbors.len() {
+                let neighbor = &self.neighbors[current_nb];
+                if self.atoms[neighbor.idx as usize].id != atom.id {
+                    if self.atoms[neighbor.idx as usize].id == atom.id {
+                        continue;
+                    }
+                    let n_pos = self.atoms[neighbor.idx as usize].position;
+                    let vx = center_pos[0] - n_pos[0];
+                    let vy = center_pos[1] - n_pos[1];
+                    let vz = center_pos[2] - n_pos[2];
+                    let v_mag_sq = vx * vx + vy * vy + vz * vz;
+
+                    let t = neighbor.threshold_squared;
+                    let limit = (t - v_mag_sq - r2) / (2.0 * r);
+                    let dot = sx * vx + sy * vy + sz * vz;
+                    if dot <= limit {
+                        occluded = true;
+                    }
                 }
-                let n_pos = self.atoms[neighbor.idx as usize].position;
-                let vx = center_pos.x - n_pos.x;
-                let vy = center_pos.y - n_pos.y;
-                let vz = center_pos.z - n_pos.z;
-                let v_mag_sq = vx * vx + vy * vy + vz * vz;
+            }
 
-                let t = neighbor.threshold_squared;
-                let limit = (t - v_mag_sq - r2) / (2.0 * r);
+            // Only search all neighbors if the cached one didn't occlude
+            if !occluded {
+                for (idx, neighbor) in self.neighbors.iter().enumerate() {
+                    if self.atoms[neighbor.idx as usize].id == atom.id {
+                        continue;
+                    }
+                    let n_pos = self.atoms[neighbor.idx as usize].position;
+                    let vx = center_pos[0] - n_pos[0];
+                    let vy = center_pos[1] - n_pos[1];
+                    let vz = center_pos[2] - n_pos[2];
+                    let v_mag_sq = vx * vx + vy * vy + vz * vz;
 
-                let dot = sx * vx + sy * vy + sz * vz;
-                if dot < limit {
-                    occluded = true;
-                    break;
+                    let t = neighbor.threshold_squared;
+                    let limit = (t - v_mag_sq - r2) / (2.0 * r);
+                    let dot = sx * vx + sy * vy + sz * vz;
+                    if dot <= limit {
+                        occluded = true;
+                        current_nb = idx; // Cache for next point
+                        break;
+                    }
                 }
             }
 
@@ -234,22 +224,21 @@ impl<'a> pulp::WithSimd for AtomSasaKernel<'a> {
 }
 
 /// Takes the probe radius and number of points to use along with a list of Atoms as inputs and returns a Vec with SASA values for each atom.
-/// For most users it is recommend that you use `calculate_sasa` instead. This method can be used directly if you do not want to use pdbtbx to load PDB/mmCIF files or want to load them from a different source.
+/// For most users it is recommend that you use the SASAOptions interface instead. This method can be used directly if you do not want to use pdbtbx to load PDB/mmCIF files or want to load them from a different source.
 /// Probe Radius Default: 1.4
 /// Point Count Default: 100
 /// Threads Default: -1 (use all cores)
 /// ## Example using pdbtbx:
 /// ```
-/// use nalgebra::{Point3, Vector3};
 /// use pdbtbx::StrictnessLevel;
 /// use rust_sasa::{Atom, calculate_sasa_internal};
 /// let (mut pdb, _errors) = pdbtbx::open(
-///             "./pdbs/example.cif",
+///             "./tests/data/pdbs/example.cif",
 ///         ).unwrap();
 /// let mut atoms = vec![];
 /// for atom in pdb.atoms() {
 ///     atoms.push(Atom {
-///                 position: Point3::new(atom.pos().0 as f32, atom.pos().1 as f32, atom.pos().2 as f32),
+///                 position: [atom.pos().0 as f32, atom.pos().1 as f32, atom.pos().2 as f32],
 ///                 radius: atom.element().unwrap().atomic_radius().van_der_waals.unwrap() as f32,
 ///                 id: atom.serial_number(),
 ///                 parent_id: None,

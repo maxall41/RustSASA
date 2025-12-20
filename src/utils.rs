@@ -1,12 +1,13 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.s
 pub mod consts;
 pub mod io;
 use std::sync::LazyLock;
 
-use fnv::FnvHashMap;
+use crate::utils::consts::PROTOR_RADII;
+use fnv::{FnvHashMap, FnvHasher};
 use pulp::Arch;
 use rayon::ThreadPoolBuilder;
-
-use crate::utils::consts::get_protor_radius;
+use std::hash::{Hash, Hasher};
 
 pub(crate) static ARCH: LazyLock<Arch> = LazyLock::new(Arch::new);
 
@@ -20,7 +21,7 @@ pub(crate) fn simd_sum(values: &[f32]) -> f32 {
     total
 }
 
-pub(crate) fn serialize_chain_id(s: &str) -> isize {
+pub fn serialize_chain_id(s: &str) -> isize {
     let mut result = 0;
     for c in s.chars() {
         if c.is_ascii_alphabetic() {
@@ -29,6 +30,10 @@ pub(crate) fn serialize_chain_id(s: &str) -> isize {
         }
     }
     result
+}
+
+pub fn get_protor_radius(residue: &str, atom: &str) -> Option<f32> {
+    PROTOR_RADII.get(residue)?.get(atom).copied()
 }
 
 /// Helper function to get atomic radius from custom config or default protor config
@@ -73,4 +78,13 @@ pub fn configure_thread_pool(threads: isize) -> Result<(), std::io::Error> {
     // If threads == -1, use default rayon behavior (all cores)
 
     Ok(())
+}
+
+pub(crate) fn combine_hash(s: &str, n: usize) -> usize {
+    let mut hasher = FnvHasher::default();
+
+    // Hash a tuple containing both values
+    (s, n).hash(&mut hasher);
+
+    hasher.finish() as usize
 }

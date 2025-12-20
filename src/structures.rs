@@ -1,2 +1,3 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 pub mod atomic;
-pub(crate) mod spatial_grid;
+pub mod spatial_grid;

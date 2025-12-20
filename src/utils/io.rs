@@ -1,13 +1,18 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 use pdbtbx::PDB;
+#[cfg(feature = "quick-xml")]
 use quick_xml::SeError as XmlError;
+#[cfg(feature = "serde_json")]
 use serde_json::Error as JsonError;
 
 use crate::structures::atomic::SASAResult;
 
+#[cfg(feature = "serde_json")]
 pub fn sasa_result_to_json(result: &SASAResult) -> Result<String, JsonError> {
     serde_json::to_string(result)
 }
 
+#[cfg(feature = "quick-xml")]
 pub fn sasa_result_to_xml(result: &SASAResult) -> Result<String, XmlError> {
     quick_xml::se::to_string(result)
 }

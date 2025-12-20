@@ -1,4 +1,6 @@
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use std::hint::black_box;
+
+use criterion::{Criterion, criterion_group, criterion_main};
 use pdbtbx::ReadOptions;
 use rust_sasa::options::{ResidueLevel, SASAOptions, SASAProcessor};
 use rust_sasa::utils::get_radius;
@@ -6,7 +8,7 @@ use rust_sasa::utils::get_radius;
 fn load_pdb() -> pdbtbx::PDB {
     let (pdb, _) = ReadOptions::default()
         .set_level(pdbtbx::StrictnessLevel::Loose)
-        .read("pdbs/example.cif")
+        .read("./tests/data/pdbs/example.cif")
         .expect("Failed to load PDB file");
     pdb
 }
