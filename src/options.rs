@@ -152,26 +152,29 @@ impl SASAProcessor for AtomLevel {
         let mut atoms = vec![];
         for residue in pdb.residues() {
             let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
-            for atom in residue.atoms() {
-                let element = atom.element().context(ElementMissingSnafu)?;
-                let atom_name = atom.name();
-                if element == &pdbtbx::Element::H && !include_hydrogens {
-                    continue;
-                };
-                if atom.hetero() && !include_hetatms {
-                    continue;
+            if let Some(conformer) = residue.conformers().next() {
+                for atom in conformer.atoms() {
+                    let element = atom.element().context(ElementMissingSnafu)?;
+                    let atom_name = atom.name();
+                    if element == &pdbtbx::Element::H && !include_hydrogens {
+                        continue;
+                    };
+                    if atom.hetero() && !include_hetatms {
+                        continue;
+                    }
+                    let conformer_alt = conformer.alternative_location().unwrap_or("");
+                    build_atom!(
+                        atoms,
+                        atom,
+                        element,
+                        residue_name,
+                        atom_name,
+                        None,
+                        radii_config,
+                        allow_vdw_fallback,
+                        combine_hash(conformer_alt, atom.serial_number())
+                    );
                 }
-                build_atom!(
-                    atoms,
-                    atom,
-                    element,
-                    residue_name,
-                    atom_name,
-                    None,
-                    radii_config,
-                    allow_vdw_fallback,
-                    combine_hash("", atom.serial_number())
-                );
             }
         }
         Ok((atoms, FnvHashMap::default()))
@@ -227,7 +230,7 @@ impl SASAProcessor for ResidueLevel {
         for residue in pdb.residues() {
             let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
             let mut temp = vec![];
-            for conformer in residue.conformers() {
+            if let Some(conformer) = residue.conformers().next() {
                 for atom in conformer.atoms() {
                     let element = atom.element().context(ElementMissingSnafu)?;
                     let atom_name = atom.name();
@@ -252,8 +255,8 @@ impl SASAProcessor for ResidueLevel {
                     temp.push(i);
                     i += 1;
                 }
+                parent_to_atoms.insert(residue.serial_number(), temp);
             }
-            parent_to_atoms.insert(residue.serial_number(), temp);
         }
         Ok((atoms, parent_to_atoms))
     }
@@ -298,32 +301,35 @@ impl SASAProcessor for ChainLevel {
         let mut parent_to_atoms = FnvHashMap::default();
         let mut i = 0;
         for chain in pdb.chains() {
-            let mut temp = vec![];
             let chain_id = serialize_chain_id(chain.id());
+            let mut temp = vec![];
             for residue in chain.residues() {
                 let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
-                for atom in residue.atoms() {
-                    let element = atom.element().context(ElementMissingSnafu)?;
-                    let atom_name = atom.name();
-                    if element == &pdbtbx::Element::H && !include_hydrogens {
-                        continue;
-                    };
-                    if atom.hetero() && !include_hetatms {
-                        continue;
+                if let Some(conformer) = residue.conformers().next() {
+                    for atom in conformer.atoms() {
+                        let element = atom.element().context(ElementMissingSnafu)?;
+                        let atom_name = atom.name();
+                        let conformer_alt = conformer.alternative_location().unwrap_or("");
+                        if element == &pdbtbx::Element::H && !include_hydrogens {
+                            continue;
+                        };
+                        if atom.hetero() && !include_hetatms {
+                            continue;
+                        }
+                        build_atom!(
+                            atoms,
+                            atom,
+                            element,
+                            residue_name,
+                            atom_name,
+                            Some(chain_id),
+                            radii_config,
+                            allow_vdw_fallback,
+                            combine_hash(conformer_alt, atom.serial_number())
+                        );
+                        temp.push(i);
+                        i += 1
                     }
-                    build_atom!(
-                        atoms,
-                        atom,
-                        element,
-                        residue_name,
-                        atom_name,
-                        Some(chain_id),
-                        radii_config,
-                        allow_vdw_fallback,
-                        combine_hash("", atom.serial_number())
-                    );
-                    temp.push(i);
-                    i += 1
                 }
             }
             parent_to_atoms.insert(chain_id, temp);
@@ -383,30 +389,32 @@ impl SASAProcessor for ProteinLevel {
         for residue in pdb.residues() {
             let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
             let mut temp = vec![];
-            for atom in residue.atoms() {
-                let element = atom.element().context(ElementMissingSnafu)?;
-                let atom_name = atom.name();
-                if element == &pdbtbx::Element::H && !include_hydrogens {
-                    continue;
-                };
-                if atom.hetero() && !include_hetatms {
-                    continue;
+            if let Some(conformer) = residue.conformers().next() {
+                for atom in conformer.atoms() {
+                    let element = atom.element().context(ElementMissingSnafu)?;
+                    let atom_name = atom.name();
+                    if element == &pdbtbx::Element::H && !include_hydrogens {
+                        continue;
+                    };
+                    if atom.hetero() && !include_hetatms {
+                        continue;
+                    }
+                    build_atom!(
+                        atoms,
+                        atom,
+                        element,
+                        residue_name,
+                        atom_name,
+                        Some(residue.serial_number()),
+                        radii_config,
+                        allow_vdw_fallback,
+                        combine_hash("", atom.serial_number())
+                    );
+                    temp.push(i);
+                    i += 1;
                 }
-                build_atom!(
-                    atoms,
-                    atom,
-                    element,
-                    residue_name,
-                    atom_name,
-                    Some(residue.serial_number()),
-                    radii_config,
-                    allow_vdw_fallback,
-                    combine_hash("", atom.serial_number())
-                );
-                temp.push(i);
-                i += 1;
+                parent_to_atoms.insert(residue.serial_number(), temp);
             }
-            parent_to_atoms.insert(residue.serial_number(), temp);
         }
         Ok((atoms, parent_to_atoms))
     }
