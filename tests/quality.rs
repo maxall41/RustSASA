@@ -1,3 +1,5 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
+
 // Quality regression tests that runs RustSASA over full FreeSASA set and ensures mean RMSE is below cutoff.
 mod common;
 

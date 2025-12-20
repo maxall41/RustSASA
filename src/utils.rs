@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.s
 pub mod consts;
 pub mod io;
 use std::sync::LazyLock;

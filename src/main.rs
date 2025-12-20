@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 use clap::error::ErrorKind;
 use clap::{CommandFactory, Parser};
 use indicatif::{ProgressBar, ProgressStyle};

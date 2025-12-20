@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 #[cfg(test)]
 #[allow(dead_code)]
 pub const FIXED_LOW_RES_ATOMS: [f32; 2622] = [

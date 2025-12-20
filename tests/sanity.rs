@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 use approx::assert_relative_eq;
 use rust_sasa::{Atom, calculate_sasa_internal};
 use std::f32::consts::PI;

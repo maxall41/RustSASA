@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Maxwell Campbell. Licensed under the MIT License.
 use pdbtbx::PDB;
 #[cfg(feature = "quick-xml")]
 use quick_xml::SeError as XmlError;
