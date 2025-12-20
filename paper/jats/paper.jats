@@ -70,46 +70,47 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <title>Summary</title>
   <p>Solvent accessible surface area (SASA) calculations are fundamental
   for understanding protein structure, function, and dynamics in
-  computational biology. These calculations quantify the surface area of
-  biomolecules accessible to solvent molecules, providing insights into
-  protein folding, stability, and intermolecular interactions. The
-  Shrake-Rupley algorithm has served as the standard for SASA
-  calculations since 1973, but existing implementations often become
-  computational bottlenecks when analyzing large protein datasets. As
-  proteomics datasets continue to grow with initiatives like AlphaFold
-  producing hundreds of millions of predicted protein structures, the
-  need for efficient SASA calculation tools has increased dramatically.
-  RustSASA addresses this challenge by providing a high-performance
-  implementation of the Shrake-Rupley algorithm written in pure Rust,
-  delivering a 5× speed improvement over FreeSASA while maintaining
-  calculation accuracy and providing interfaces for multiple programming
-  languages and frameworks (i.e. MDAnalysis). The source code is freely
-  available at https://github.com/maxall41/RustSASA.</p>
-</sec>
-<sec id="statement-of-need">
-  <title>Statement of need</title>
-  <p>Current SASA calculation tools represent a significant
-  computational bottleneck in structural biology workflows, particularly
-  for molecular dynamics simulations and high-throughput analyses.
-  Popular implementations such as those in Biopython and FreeSASA, while
-  accurate, become prohibitively slow when processing large protein
-  datasets. RustSASA addresses this performance gap by leveraging Rust’s
-  efficient parallelization abstractions (via Rayon) and readily
-  available SIMD instructions (via Pulp). These optimizations enable
-  RustSASA’s performance advantage over the simpler C implementation of
-  the same algorithm in FreeSASA.</p>
-  <p>Benchmarking on representative protein structures demonstrates that
-  RustSASA achieves a 5× improvement over FreeSASA, and a 63×
-  performance improvement over Biopython. This performance advantage
-  reduces computational costs for high-throughput structural analyses
-  and makes large-scale comparative studies feasible. Furthermore,
-  RustSASA’s multi-language support (Rust and Python), command-line
-  interface, and MDAnalysis package
+  computational biology, providing insights into protein folding,
+  stability, and intermolecular interactions. The Shrake-Rupley
+  algorithm has served as the standard method since 1973, but existing
+  implementations often become computational bottlenecks when analyzing
+  large protein datasets or molecular dynamics trajectories. As
+  structural biology databases continue to expand, exemplified by
+  AlphaFold’s hundreds of millions of predicted structures, the need for
+  efficient SASA calculation tools has increased dramatically. RustSASA
+  addresses this challenge through a high-performance implementation
+  written in Rust, leveraging efficient parallelization abstractions and
+  SIMD instructions. Benchmarking demonstrates a 5× speed improvement
+  over FreeSASA for proteome-scale calculations and a 20× improvement
+  for molecular dynamics trajectory analysis. Validation against
+  FreeSASA yields Pearson correlation coefficients exceeding 0.99 on
+  both the predicted <italic>E. coli</italic> proteome and the FreeSASA
+  evaluation dataset, confirming calculation accuracy. RustSASA provides
+  interfaces for multiple programming languages (Rust and Python), a
+  command-line interface, and integration with the MDAnalysis framework
   (<xref alt="Gowers et al., 2016" rid="ref-gowers2016" ref-type="bibr">Gowers
   et al., 2016</xref>;
   <xref alt="Michaud-Agrawal et al., 2011" rid="ref-Agrawal2011" ref-type="bibr">Michaud-Agrawal
-  et al., 2011</xref>) ensure broad accessibility across the
-  computational biology community.</p>
+  et al., 2011</xref>), ensuring broad accessibility across the
+  computational biology community. The source code is freely available
+  at https://github.com/maxall41/RustSASA.</p>
+</sec>
+<sec id="statement-of-need">
+  <title>Statement of need</title>
+  <p>As proteomics datasets continue to grow with initiatives like
+  AlphaFold producing hundreds of millions of predicted protein
+  structures, existing SASA calculation tools have become a significant
+  bottleneck in structural biology workflows. Popular implementations
+  such as those in Biopython and FreeSASA, while accurate, become
+  prohibitively slow when processing large protein datasets or extended
+  molecular dynamics trajectories. RustSASA addresses this performance
+  gap by leveraging Rust’s efficient parallelization abstractions via
+  Rayon and readily available SIMD instructions via Pulp. These
+  optimizations enable RustSASA’s performance advantage over the simpler
+  C implementation of the same algorithm in FreeSASA. The resulting
+  performance gains reduce computational costs for high-throughput
+  structural analyses and make previously intractable large-scale
+  comparative studies feasible.</p>
 </sec>
 <sec id="results">
   <title>Results</title>
@@ -148,7 +149,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
       Comparing the single-threaded performance of RustSASA and FreeSASA
       on the full AlphaFold <italic>E. coli</italic> proteome.
       <bold>D.</bold> Comparing the performance of RustSASA and
-      mdakit-sasa (based on freesasa) on a molecular dynamics trajectory
+      mdakit-sasa (based on FreeSASA) on a molecular dynamics trajectory
       <styled-content id="figU003Aperformance"></styled-content></p></caption>
       <graphic mimetype="application" mime-subtype="pdf" xlink:href="performance_comparison_combined.pdf" />
     </fig>
@@ -163,7 +164,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
     on the <italic>E. coli</italic> proteome, Biopython was excluded
     from this benchmark due to its poor performance hindering timely
     evaluation. Fourth, we evaluated the performance of RustSASA and
-    mdakit-sasa, which uses freesasa internally, on a molecular dynamics
+    mdakit-sasa, which uses FreeSASA internally, on a molecular dynamics
     trajectory, specifically trajectory 10824 (4IAQ, 5HT receptor) from
     GPRCmd
     (<xref alt="Rodríguez-Espigares et al., 2020" rid="ref-Espigares2020" ref-type="bibr">Rodríguez-Espigares
@@ -189,7 +190,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
     multi-threading.</p>
     <p>For the molecular dynamics trajectory benchmark (Figure 2D), we
     used Hyperfine with 3 runs. RustSASA processed the trajectory in
-    22.7 seconds (±1.4), and mdakit-sasa processed the trajectory in
+    22.7 seconds (±1.4), where mdakit-sasa processed the trajectory in
     448.4 seconds (±1.3), representing a ~20x performance improvement.
     The magnitude of the improvement can be attributed to the
     inefficiency with which mdakit-sasa utilizes FreeSASA.</p>
@@ -197,7 +198,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <sec id="methods">
     <title>Methods</title>
     <p>RustSASA computes solvent-accessible surface areas (SASA) using
-    the Shrake–Rupley algorithm
+    the Shrake-Rupley algorithm
     (<xref alt="Shrake &amp; Rupley, 1973" rid="ref-ShrakeRupley" ref-type="bibr">Shrake
     &amp; Rupley, 1973</xref>). In this algorithm each atom is
     represented as a sphere with a radius equal to its atomic van der
@@ -230,20 +231,6 @@ a Creative Commons Attribution 4.0 International License (CC BY
     conducted on a 2024 Apple MacBook Air with an M3 processor and 24GB
     of unified memory.</p>
   </sec>
-</sec>
-<sec id="conclusion">
-  <title>Conclusion</title>
-  <p>RustSASA provides a significant advancement in SASA calculation
-  performance while maintaining accuracy, addressing a bottleneck in
-  computational structural biology. The 5× speed improvement over
-  current standards enables previously intractable analyses of large
-  protein datasets and molecular dynamics simulations. By providing
-  interfaces for multiple programming languages alongside a command-line
-  tool and MDAnalysis package, RustSASA ensures broad accessibility
-  across the research community. As structural biology datasets continue
-  to expand, efficient computational tools like RustSASA become
-  essential for advancing our understanding of protein structure and
-  function.</p>
 </sec>
 <sec id="acknowledgements">
   <title>Acknowledgements</title>
