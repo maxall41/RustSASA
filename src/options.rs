@@ -65,6 +65,7 @@ pub struct SASAOptions<T> {
     radii_config: Option<FnvHashMap<String, FnvHashMap<String, f32>>>,
     allow_vdw_fallback: bool,
     include_hetatms: bool,
+    read_radii_from_occupancy: bool,
     _marker: PhantomData<T>,
 }
 
@@ -78,21 +79,25 @@ pub type AtomsMappingResult = Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>),
 
 /// Macro to reduce duplication in atom building logic
 macro_rules! build_atom {
-    ($atoms:expr, $atom:expr, $element:expr, $residue_name:expr, $atom_name:expr, $parent_id:expr, $radii_config:expr, $allow_vdw_fallback:expr, $id:expr) => {{
-        let radius = match get_radius($residue_name, $atom_name, $radii_config) {
-            Some(r) => r,
-            None => {
-                if $allow_vdw_fallback {
-                    $element
-                        .atomic_radius()
-                        .van_der_waals
-                        .context(VanDerWaalsMissingSnafu)? as f32
-                } else {
-                    return Err(SASACalcError::RadiusMissing {
-                        residue_name: $residue_name.to_string(),
-                        atom_name: $atom_name.to_string(),
-                        element: $element.to_string(),
-                    });
+    ($atoms:expr, $atom:expr, $element:expr, $residue_name:expr, $atom_name:expr, $parent_id:expr, $radii_config:expr, $allow_vdw_fallback:expr, $read_radii_from_occupancy:expr, $id:expr) => {{
+        let radius = if $read_radii_from_occupancy {
+            $atom.occupancy() as f32
+        } else {
+            match get_radius($residue_name, $atom_name, $radii_config) {
+                Some(r) => r,
+                None => {
+                    if $allow_vdw_fallback {
+                        $element
+                            .atomic_radius()
+                            .van_der_waals
+                            .context(VanDerWaalsMissingSnafu)? as f32
+                    } else {
+                        return Err(SASACalcError::RadiusMissing {
+                            residue_name: $residue_name.to_string(),
+                            atom_name: $atom_name.to_string(),
+                            element: $element.to_string(),
+                        });
+                    }
                 }
             }
         };
@@ -127,6 +132,7 @@ pub trait SASAProcessor {
         allow_vdw_fallback: bool,
         include_hydrogens: bool,
         include_hetatms: bool,
+        read_radii_from_occupancy: bool,
     ) -> AtomsMappingResult;
 }
 
@@ -148,6 +154,7 @@ impl SASAProcessor for AtomLevel {
         allow_vdw_fallback: bool,
         include_hydrogens: bool,
         include_hetatms: bool,
+        read_radii_from_occupancy: bool,
     ) -> Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError> {
         let mut atoms = vec![];
         for residue in pdb.residues() {
@@ -172,6 +179,7 @@ impl SASAProcessor for AtomLevel {
                         None,
                         radii_config,
                         allow_vdw_fallback,
+                        read_radii_from_occupancy,
                         combine_hash(conformer_alt, atom.serial_number())
                     );
                 }
@@ -223,6 +231,7 @@ impl SASAProcessor for ResidueLevel {
         allow_vdw_fallback: bool,
         include_hydrogens: bool,
         include_hetatms: bool,
+        read_radii_from_occupancy: bool,
     ) -> Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError> {
         let mut atoms = vec![];
         let mut parent_to_atoms = FnvHashMap::default();
@@ -250,6 +259,7 @@ impl SASAProcessor for ResidueLevel {
                         Some(residue.serial_number()),
                         radii_config,
                         allow_vdw_fallback,
+                        read_radii_from_occupancy,
                         combine_hash(conformer_alt, atom.serial_number())
                     );
                     temp.push(i);
@@ -296,6 +306,7 @@ impl SASAProcessor for ChainLevel {
         allow_vdw_fallback: bool,
         include_hydrogens: bool,
         include_hetatms: bool,
+        read_radii_from_occupancy: bool,
     ) -> Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError> {
         let mut atoms = vec![];
         let mut parent_to_atoms = FnvHashMap::default();
@@ -325,6 +336,7 @@ impl SASAProcessor for ChainLevel {
                             Some(chain_id),
                             radii_config,
                             allow_vdw_fallback,
+                            read_radii_from_occupancy,
                             combine_hash(conformer_alt, atom.serial_number())
                         );
                         temp.push(i);
@@ -382,6 +394,7 @@ impl SASAProcessor for ProteinLevel {
         allow_vdw_fallback: bool,
         include_hydrogens: bool,
         include_hetatms: bool,
+        read_radii_from_occupancy: bool,
     ) -> Result<(Vec<Atom>, FnvHashMap<isize, Vec<usize>>), SASACalcError> {
         let mut atoms = vec![];
         let mut parent_to_atoms = FnvHashMap::default();
@@ -408,6 +421,7 @@ impl SASAProcessor for ProteinLevel {
                         Some(residue.serial_number()),
                         radii_config,
                         allow_vdw_fallback,
+                        read_radii_from_occupancy,
                         combine_hash("", atom.serial_number())
                     );
                     temp.push(i);
@@ -461,6 +475,7 @@ impl<T> SASAOptions<T> {
             radii_config: None,
             allow_vdw_fallback: false,
             include_hetatms: false,
+            read_radii_from_occupancy: false,
             _marker: PhantomData,
         }
     }
@@ -480,6 +495,12 @@ impl<T> SASAOptions<T> {
     /// Set the number of points on the sphere for sampling (default: 100)
     pub fn with_n_points(mut self, points: usize) -> Self {
         self.n_points = points;
+        self
+    }
+
+    /// Set whether radii should be read from input protein occupancy values. (default: false)
+    pub fn with_read_radii_from_occupancy(mut self, read_radii_from_occupancy: bool) -> Self {
+        self.read_radii_from_occupancy = read_radii_from_occupancy;
         self
     }
 
@@ -560,6 +581,7 @@ impl<T: SASAProcessor> SASAOptions<T> {
             self.allow_vdw_fallback,
             self.include_hydrogens,
             self.include_hetatms,
+            self.read_radii_from_occupancy,
         )?;
         let atom_sasa =
             calculate_sasa_internal(&atoms, self.probe_radius, self.n_points, self.threads);

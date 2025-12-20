@@ -89,16 +89,19 @@ struct Args {
     radii_file: Option<String>,
 
     /// Allow fallback to van der Waals radii when custom radius is not found (default: false, strict mode)
-    #[arg(long, default_value_t = false)]
+    #[arg(short = 'a', long, default_value_t = false)]
     allow_vdw_fallback: bool,
 
     /// Include HETATM records. Defaults to false as ProtOr config does not contain records for non-standard amino acids. (default: false)
-    #[arg(long, default_value_t = false)]
+    #[arg(short = 'n', long, default_value_t = false)]
     include_hetatms: bool,
 
     /// Configure number of threads used to parallelize SASA computation. Mode: -1 uses all CPU cores. (default: -1)
-    #[arg(long, default_value_t = -1)]
+    #[arg(short = 't', long, default_value_t = -1)]
     threads: isize,
+
+    #[arg(short = 'R', long, default_value_t = false)]
+    read_radii_from_occupancy: bool,
 }
 
 #[derive(Debug, Snafu)]
@@ -176,6 +179,7 @@ fn process(
     radii_file: Option<&str>,
     allow_vdw_fallback: bool,
     include_hetatms: bool,
+    read_radii_from_occupancy: bool,
 ) -> Result<(), CLIError> {
     let (pdb, _) = ReadOptions::default()
         .set_level(pdbtbx::StrictnessLevel::Loose)
@@ -191,6 +195,7 @@ fn process(
         radii_file,
         allow_vdw_fallback,
         include_hetatms,
+        read_radii_from_occupancy,
     )
     .context(SASACalculationSnafu)?;
 
@@ -223,14 +228,15 @@ fn process(
 
 /// Macro to reduce duplication in calculate_sasa_and_wrap
 macro_rules! process_level {
-    ($level_constructor:ident, $result_variant:ident, $pdb:expr, $n_points:expr, $probe_radius:expr, $threads:expr, $include_hydrogens:expr, $radii_file:expr, $allow_vdw_fallback:expr, $include_hetatms:expr) => {{
+    ($level_constructor:ident, $result_variant:ident, $pdb:expr, $n_points:expr, $probe_radius:expr, $threads:expr, $include_hydrogens:expr, $radii_file:expr, $allow_vdw_fallback:expr, $include_hetatms:expr, $read_radii_from_occupancy:expr) => {{
         let mut options = SASAOptions::$level_constructor()
             .with_threads($threads)
             .with_n_points($n_points)
             .with_probe_radius($probe_radius)
             .with_include_hydrogens($include_hydrogens)
             .with_allow_vdw_fallback($allow_vdw_fallback)
-            .with_include_hetatms($include_hetatms);
+            .with_include_hetatms($include_hetatms)
+            .with_read_radii_from_occupancy($read_radii_from_occupancy);
         if let Some(path) = $radii_file {
             options = options
                 .with_radii_file(path)
@@ -252,6 +258,7 @@ fn calculate_sasa_and_wrap(
     radii_file: Option<&str>,
     allow_vdw_fallback: bool,
     include_hetatms: bool,
+    read_radii_from_occupancy: bool,
 ) -> Result<SASAResult, SASACalcError> {
     match level {
         SASALevel::Atom => process_level!(
@@ -264,7 +271,8 @@ fn calculate_sasa_and_wrap(
             include_hydrogens,
             radii_file,
             allow_vdw_fallback,
-            include_hetatms
+            include_hetatms,
+            read_radii_from_occupancy
         ),
         SASALevel::Residue => process_level!(
             residue_level,
@@ -276,7 +284,8 @@ fn calculate_sasa_and_wrap(
             include_hydrogens,
             radii_file,
             allow_vdw_fallback,
-            include_hetatms
+            include_hetatms,
+            read_radii_from_occupancy
         ),
         SASALevel::Chain => process_level!(
             chain_level,
@@ -288,7 +297,8 @@ fn calculate_sasa_and_wrap(
             include_hydrogens,
             radii_file,
             allow_vdw_fallback,
-            include_hetatms
+            include_hetatms,
+            read_radii_from_occupancy
         ),
         SASALevel::Protein => process_level!(
             protein_level,
@@ -300,7 +310,8 @@ fn calculate_sasa_and_wrap(
             include_hydrogens,
             radii_file,
             allow_vdw_fallback,
-            include_hetatms
+            include_hetatms,
+            read_radii_from_occupancy
         ),
     }
 }
@@ -338,6 +349,7 @@ fn process_directory(
     radii_file: Option<&str>,
     allow_vdw_fallback: bool,
     include_hetatms: bool,
+    read_radii_from_occupancy: bool,
 ) -> Result<(), CLIError> {
     use rayon::prelude::*;
     use std::sync::Mutex;
@@ -428,6 +440,7 @@ fn process_directory(
                     radii_file,
                     allow_vdw_fallback,
                     include_hetatms,
+                    read_radii_from_occupancy,
                 ) {
                     Ok(_) => pb.inc(1),
                     Err(e) => {
@@ -476,6 +489,7 @@ fn process_single_file(
     radii_file: Option<&str>,
     allow_vdw_fallback: bool,
     include_hetatms: bool,
+    read_radii_from_occupancy: bool,
     threads: isize,
 ) -> Result<(), CLIError> {
     println!("Processing single file...");
@@ -501,6 +515,7 @@ fn process_single_file(
         radii_file,
         allow_vdw_fallback,
         include_hetatms,
+        read_radii_from_occupancy,
     )?;
     println!("Finished!");
     Ok(())
@@ -552,6 +567,7 @@ fn run(args: Args) -> Result<(), CLIError> {
             radii_file,
             args.allow_vdw_fallback,
             args.include_hetatms,
+            args.read_radii_from_occupancy,
         )
     } else {
         process_single_file(
@@ -564,6 +580,7 @@ fn run(args: Args) -> Result<(), CLIError> {
             radii_file,
             args.allow_vdw_fallback,
             args.include_hetatms,
+            args.read_radii_from_occupancy,
             args.threads,
         )
     }
