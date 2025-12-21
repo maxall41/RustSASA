@@ -370,7 +370,6 @@ mod tests {
 
         cmd.assert().success();
 
-        // Find matching JSON files
         let reference_files: Vec<_> = fs::read_dir(&reference_dir)
             .expect("Failed to read reference directory")
             .filter_map(|e| e.ok())
@@ -385,7 +384,6 @@ mod tests {
             .map(|e| e.file_name().to_string_lossy().to_string())
             .collect();
 
-        // Get intersection of files
         let matching_files: Vec<String> = reference_files
             .into_iter()
             .filter(|f| output_files.contains(f))
@@ -396,7 +394,6 @@ mod tests {
             "No matching JSON files found between reference and output directories"
         );
 
-        // Collect all matching chain values
         let mut all_freesasa_values = Vec::new();
         let mut all_rustsasa_values = Vec::new();
 
@@ -429,7 +426,6 @@ mod tests {
             "No matching chains found across all files"
         );
 
-        // Calculate RMSE
         let rmse = calculate_rmse(&all_freesasa_values, &all_rustsasa_values);
         let max_rmse = RMSE_BASELINE * (1.0 + TOLERANCE);
 

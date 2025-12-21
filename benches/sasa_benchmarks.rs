@@ -32,7 +32,7 @@ fn bench_build_atoms_and_mapping(c: &mut Criterion) {
     c.bench_function("build_atoms_and_mapping", |b| {
         b.iter(|| {
             black_box(ResidueLevel::build_atoms_and_mapping(
-                &pdb, None, false, false, false,
+                &pdb, None, false, false, false, false,
             ))
         })
     });
