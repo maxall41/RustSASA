@@ -256,4 +256,192 @@ mod tests {
     fn test_quality_protein_depth() {
         run_quality_test("protein");
     }
+
+    /// Copy PDB files and insert protor radii values into the occupancy column
+    fn prepare_pdbs_with_radii_in_occupancy(
+        input_dir: &Path,
+        output_dir: &Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        use pdbtbx::{ReadOptions, StrictnessLevel};
+        use rust_sasa::utils::get_protor_radius;
+
+        fs::create_dir_all(output_dir)?;
+
+        // Process each PDB file in the input directory
+        for entry in fs::read_dir(input_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if !path.is_file() {
+                continue;
+            }
+
+            let path_str = path
+                .to_str()
+                .ok_or_else(|| format!("Invalid UTF-8 in path: {}", path.display()))?;
+
+            // Read the PDB file
+            let (mut pdb, _errors) = ReadOptions::default()
+                .set_level(StrictnessLevel::Loose)
+                .read(path_str)
+                .map_err(|e| format!("Failed to read PDB {}: {:?}", path.display(), e))?;
+
+            // Modify occupancy values to contain protor radii
+            for residue in pdb.residues_mut() {
+                let Some(residue_name) = residue.name().map(|s| s.to_string()) else {
+                    continue;
+                };
+
+                for conformer in residue.conformers_mut() {
+                    for atom in conformer.atoms_mut() {
+                        let atom_name = atom.name();
+
+                        // Look up the radius using get_protor_radius with fallback to VdW radii
+                        let radius = if let Some(r) = get_protor_radius(&residue_name, atom_name) {
+                            r
+                        } else {
+                            let element = atom.element().ok_or_else(|| {
+                                format!(
+                                    "Element missing for atom '{}' in residue '{}' in file {}",
+                                    atom_name,
+                                    residue_name,
+                                    path.display()
+                                )
+                            })?;
+                            element.atomic_radius().van_der_waals.ok_or_else(|| {
+                                format!(
+                                    "Van der Waals radius missing for element '{}' in file {}",
+                                    element,
+                                    path.display()
+                                )
+                            })? as f32
+                        };
+
+                        // Set occupancy to the radius value
+                        atom.set_occupancy(radius as f64)
+                            .expect("NEVER FAIL: New occupancy is always finite");
+                    }
+                }
+            }
+
+            // Save the modified PDB to the output directory
+            let output_path = output_dir.join(entry.file_name());
+            let output_path_str = output_path.to_str().ok_or_else(|| {
+                format!("Invalid UTF-8 in output path: {}", output_path.display())
+            })?;
+            pdbtbx::save(&pdb, output_path_str, StrictnessLevel::Loose)
+                .map_err(|e| format!("Failed to save PDB to {}: {:?}", output_path.display(), e))?;
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_quality_read_radii_from_occupancy() {
+        // Setup directories
+        let reference_dir = PathBuf::from("./tests/data/freesasa_reference/");
+        let pdb_dir = PathBuf::from("./tests/data/freesasa_pdbs/");
+        let modified_pdb_dir = env::temp_dir().join("rustsasa_quality_test_occupancy_pdbs");
+        let output_dir = env::temp_dir().join("rustsasa_quality_test_occupancy_output");
+
+        // Clean and create directories
+        if modified_pdb_dir.exists() {
+            fs::remove_dir_all(&modified_pdb_dir).expect("Failed to clean modified PDB directory");
+        }
+        if output_dir.exists() {
+            fs::remove_dir_all(&output_dir).expect("Failed to clean output directory");
+        }
+        fs::create_dir_all(&modified_pdb_dir).expect("Failed to create modified PDB directory");
+        fs::create_dir_all(&output_dir).expect("Failed to create output directory");
+
+        // Prepare PDBs with radii in occupancy column
+        prepare_pdbs_with_radii_in_occupancy(&pdb_dir, &modified_pdb_dir)
+            .expect("Failed to prepare PDBs with radii in occupancy");
+
+        // Run RustSASA with read_radii_from_occupancy flag
+        let mut cmd = Command::new(cargo_bin!("rust-sasa"));
+        cmd.arg(modified_pdb_dir.to_str().unwrap())
+            .arg(output_dir.to_str().unwrap())
+            .arg("--format")
+            .arg("json")
+            .arg("--output-depth")
+            .arg("residue")
+            .arg("--read-radii-from-occupancy");
+
+        cmd.assert().success();
+
+        // Find matching JSON files
+        let reference_files: Vec<_> = fs::read_dir(&reference_dir)
+            .expect("Failed to read reference directory")
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("json"))
+            .map(|e| e.file_name().to_string_lossy().to_string())
+            .collect();
+
+        let output_files: Vec<_> = fs::read_dir(&output_dir)
+            .expect("Failed to read output directory")
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("json"))
+            .map(|e| e.file_name().to_string_lossy().to_string())
+            .collect();
+
+        // Get intersection of files
+        let matching_files: Vec<String> = reference_files
+            .into_iter()
+            .filter(|f| output_files.contains(f))
+            .collect();
+
+        assert!(
+            !matching_files.is_empty(),
+            "No matching JSON files found between reference and output directories"
+        );
+
+        // Collect all matching chain values
+        let mut all_freesasa_values = Vec::new();
+        let mut all_rustsasa_values = Vec::new();
+
+        for filename in &matching_files {
+            let reference_path = reference_dir.join(filename);
+            let output_path = output_dir.join(filename);
+
+            match (
+                load_freesasa_chains(&reference_path, false),
+                load_rustsasa_chains(&output_path),
+            ) {
+                (Ok(freesasa_chains), Ok(rustsasa_chains)) => {
+                    let (freesasa_vals, rustsasa_vals) =
+                        extract_matching_values(&freesasa_chains, &rustsasa_chains);
+
+                    all_freesasa_values.extend(freesasa_vals);
+                    all_rustsasa_values.extend(rustsasa_vals);
+                }
+                (Err(e), _) => {
+                    eprintln!("Error loading FreeSASA data from {}: {}", filename, e);
+                }
+                (_, Err(e)) => {
+                    eprintln!("Error loading RustSASA data from {}: {}", filename, e);
+                }
+            }
+        }
+
+        assert!(
+            !all_freesasa_values.is_empty(),
+            "No matching chains found across all files"
+        );
+
+        // Calculate RMSE
+        let rmse = calculate_rmse(&all_freesasa_values, &all_rustsasa_values);
+        let max_rmse = RMSE_BASELINE * (1.0 + TOLERANCE);
+
+        assert!(
+            rmse <= max_rmse,
+            "[read_radii_from_occupancy] RMSE ({:.2}) exceeds maximum threshold ({:.2})",
+            rmse,
+            max_rmse
+        );
+        println!(
+            "[read_radii_from_occupancy] Quality test passed! RMSE: {:.2} (threshold: {:.2})",
+            rmse, max_rmse
+        );
+    }
 }
