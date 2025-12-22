@@ -9,7 +9,7 @@
 
 # Features:
 - 🦀 Written in Pure Rust.
-- ⚡️ Ludicrously fast. **63X faster** than Biopython, **14X faster** than mdakit_sasa, and **5X faster** than Freesasa.
+- ⚡️ Ludicrously fast. **63X faster** than Biopython, **14X faster** than mdakit_sasa, and **5X faster** than FreeSASA.
 - 🧪 Full test coverage.
 - 🐍 Python support.
 - 🤖 Command line interface.
@@ -134,21 +134,18 @@ See the [mdsasa-bolt](https://github.com/maxall41/mdsasa-bolt) package for more 
 
 - RustSasa: *5.237 s ± 0.049 s*
 
-- Freesasa: *28.042 s ± 2.269 s*
+- FreeSASA: *28.042 s ± 2.269 s*
 
 - Biopython: *368.025 s ± 51.156 s*
 
 ## Methodology:
 
-We computed residue level SASA values for the entire AlphaFold E. coli proteome structure database using RustSASA, Freesasa, and Biopython. Benchmarks were run with Hyperfine with options: --warmup 3 --runs 3. All three methods ran across 8 cores on an Apple M3 Macbook with 24GB of unified memory. The RustSASA CLI was used to take advantage of profile guided optimization. GNU Parallel was used to run Freesasa and Biopython in parallel.
+We computed residue level SASA values for the entire AlphaFold E. coli proteome structure database using RustSASA, FreeSASA, and Biopython. Benchmarks were run with Hyperfine with options: --warmup 3 --runs 3. All three methods ran across 8 cores on an Apple M3 Macbook with 24GB of unified memory. The RustSASA CLI was used to take advantage of profile guided optimization. GNU Parallel was used to run FreeSASA and Biopython in parallel.
 
 
-# Validation against Freesasa
+# Validation against FreeSASA
 
-![Comparing Freesasa and RustSasa on E. coli proteome](https://github.com/maxall41/RustSASA/blob/main/imgs/sasa_chain_comparison_E_coli.svg)
-
-
-![Comparing Freesasa and RustSasa on Freesasa comparison dataset](https://github.com/maxall41/RustSASA/blob/main/imgs/sasa_chain_comparison_freesasa_ds.svg)
+![Comparing FreeSASA and RustSasa](https://github.com/maxall41/RustSASA/blob/main/imgs/sasa_chain_comparison_combined.svg)
 
 # Other
 
@@ -182,7 +179,7 @@ Contributions are welcome! Please feel free to submit pull requests and open iss
 
 ## Hydrogen & Non-standard amino acid handling 
 
-By default, RustSASA strips hydrogen atoms and uses the ProtOr radii config. If you want to include hydrogens, you can use the CLI argument `--include-hydrogens`. If you do so, you should provide your own atom radii config designed to work with hydrogens. Custom radii configs can be provided with `--radii-file`. `--radii-file` accepts a Freesasa style `.config` file see configs [here](https://github.com/mittinatten/freesasa/tree/master/share).
+By default, RustSASA strips hydrogen atoms and uses the ProtOr radii config. If you want to include hydrogens, you can use the CLI argument `--include-hydrogens`. If you do so, you should provide your own atom radii config designed to work with hydrogens. Custom radii configs can be provided with `--radii-file`. `--radii-file` accepts a FreeSASA style `.config` file see configs [here](https://github.com/mittinatten/freesasa/tree/master/share).
 
 Additionally, RustSASA filters HETATM records by default. If you want to include HETATM records, you can use the CLI argument `--include-hetatoms` or the API equivalent (see docs). If you include HETATMs you will need to provide a custom radii file that specifies radii for the non-standard amino acids/ligands in your input. 
 

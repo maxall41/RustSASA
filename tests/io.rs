@@ -201,7 +201,8 @@ END
                 assert!(
                     res.value > 0.0,
                     "ATOM residue {} in chain {} should have non-zero SASA",
-                    res.serial_number, res.chain_id
+                    res.serial_number,
+                    res.chain_id
                 );
             }
         }
