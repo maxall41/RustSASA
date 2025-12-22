@@ -29,11 +29,15 @@ pub fn sasa_result_to_protein_object(
             }
         }
         SASAResult::Residue(v) => {
-            for (i, residue) in original_pdb.residues_mut().enumerate() {
-                let item = &v[i];
-                assert!(residue.serial_number() == item.serial_number);
-                for atom in residue.atoms_mut() {
-                    atom.set_b_factor(item.value as f64)?;
+            let mut i = 0;
+            for chain in original_pdb.chains_mut() {
+                for residue in chain.residues_mut() {
+                    let item = &v[i];
+                    assert!(residue.serial_number() == item.serial_number);
+                    for atom in residue.atoms_mut() {
+                        atom.set_b_factor(item.value as f64)?;
+                    }
+                    i += 1;
                 }
             }
         }

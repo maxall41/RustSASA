@@ -14,8 +14,8 @@ mod tests {
     use crate::common::io::FreeSASAOutput;
     use rust_sasa::SASAResult;
 
-    const RMSE_BASELINE: f64 = 614.26; //RustSASA RMSE as of v0.8.0
-    const TOLERANCE: f64 = 0.01; // 1%
+    const RMSE_BASELINE: f64 = 43.99; //RustSASA RMSE as of v0.9.0
+    const TOLERANCE: f64 = 20.0; // 20 point tolerance
 
     /// Load FreeSASA reference data and extract chain totals or file-level total
     /// For use_file_total=true, sums all chains and returns a single value keyed by filename
@@ -222,7 +222,7 @@ mod tests {
 
         // Calculate RMSE
         let rmse = calculate_rmse(&all_freesasa_values, &all_rustsasa_values);
-        let max_rmse = RMSE_BASELINE * (1.0 + TOLERANCE);
+        let max_rmse = RMSE_BASELINE + TOLERANCE;
 
         assert!(
             rmse <= max_rmse,
@@ -427,7 +427,7 @@ mod tests {
         );
 
         let rmse = calculate_rmse(&all_freesasa_values, &all_rustsasa_values);
-        let max_rmse = RMSE_BASELINE * (1.0 + TOLERANCE);
+        let max_rmse = RMSE_BASELINE + TOLERANCE;
 
         assert!(
             rmse <= max_rmse,

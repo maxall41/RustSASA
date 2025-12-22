@@ -109,7 +109,7 @@ macro_rules! build_atom {
                 $atom.pos().2 as f32,
             ],
             radius,
-            id: $id,
+            id: $id as usize,
             parent_id: $parent_id,
         });
     }};
@@ -201,8 +201,9 @@ impl SASAProcessor for ResidueLevel {
         let mut residue_sasa = vec![];
         for chain in pdb.chains() {
             for residue in chain.residues() {
+                let residue_key = combine_hash(chain.id(), residue.serial_number());
                 let residue_atom_index = parent_to_atoms
-                    .get(&residue.serial_number())
+                    .get(&residue_key)
                     .context(AtomMapToLevelElementFailedSnafu)?;
                 let residue_atoms: Vec<_> = residue_atom_index
                     .iter()
@@ -236,36 +237,40 @@ impl SASAProcessor for ResidueLevel {
         let mut atoms = vec![];
         let mut parent_to_atoms = FnvHashMap::default();
         let mut i = 0;
-        for residue in pdb.residues() {
-            let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
-            let mut temp = vec![];
-            if let Some(conformer) = residue.conformers().next() {
-                for atom in conformer.atoms() {
-                    let element = atom.element().context(ElementMissingSnafu)?;
-                    let atom_name = atom.name();
-                    if element == &pdbtbx::Element::H && !include_hydrogens {
-                        continue;
-                    };
-                    if atom.hetero() && !include_hetatms {
-                        continue;
+        for chain in pdb.chains() {
+            let chain_id = chain.id();
+            for residue in chain.residues() {
+                let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
+                let residue_key = combine_hash(chain_id, residue.serial_number());
+                let mut temp = vec![];
+                if let Some(conformer) = residue.conformers().next() {
+                    for atom in conformer.atoms() {
+                        let element = atom.element().context(ElementMissingSnafu)?;
+                        let atom_name = atom.name();
+                        if element == &pdbtbx::Element::H && !include_hydrogens {
+                            continue;
+                        };
+                        if atom.hetero() && !include_hetatms {
+                            continue;
+                        }
+                        let conformer_alt = conformer.alternative_location().unwrap_or("");
+                        build_atom!(
+                            atoms,
+                            atom,
+                            element,
+                            residue_name,
+                            atom_name,
+                            Some(residue.serial_number()),
+                            radii_config,
+                            allow_vdw_fallback,
+                            read_radii_from_occupancy,
+                            combine_hash(conformer_alt, atom.serial_number())
+                        );
+                        temp.push(i);
+                        i += 1;
                     }
-                    let conformer_alt = conformer.alternative_location().unwrap_or("");
-                    build_atom!(
-                        atoms,
-                        atom,
-                        element,
-                        residue_name,
-                        atom_name,
-                        Some(residue.serial_number()),
-                        radii_config,
-                        allow_vdw_fallback,
-                        read_radii_from_occupancy,
-                        combine_hash(conformer_alt, atom.serial_number())
-                    );
-                    temp.push(i);
-                    i += 1;
+                    parent_to_atoms.insert(residue_key, temp);
                 }
-                parent_to_atoms.insert(residue.serial_number(), temp);
             }
         }
         Ok((atoms, parent_to_atoms))
@@ -361,23 +366,26 @@ impl SASAProcessor for ProteinLevel {
     ) -> Result<Self::Output, SASACalcError> {
         let mut polar_total: f32 = 0.0;
         let mut non_polar_total: f32 = 0.0;
-        for residue in pdb.residues() {
-            let residue_atom_index = parent_to_atoms
-                .get(&residue.serial_number())
-                .context(AtomMapToLevelElementFailedSnafu)?;
-            let residue_atoms: Vec<_> = residue_atom_index
-                .iter()
-                .map(|&index| atom_sasa[index])
-                .collect();
-            let sum = simd_sum(residue_atoms.as_slice());
-            let name = residue
-                .name()
-                .context(FailedToGetResidueNameSnafu)?
-                .to_string();
-            if POLAR_AMINO_ACIDS.contains(&name) {
-                polar_total += sum
-            } else {
-                non_polar_total += sum
+        for chain in pdb.chains() {
+            for residue in chain.residues() {
+                let residue_key = combine_hash(chain.id(), residue.serial_number());
+                let residue_atom_index = parent_to_atoms
+                    .get(&residue_key)
+                    .context(AtomMapToLevelElementFailedSnafu)?;
+                let residue_atoms: Vec<_> = residue_atom_index
+                    .iter()
+                    .map(|&index| atom_sasa[index])
+                    .collect();
+                let sum = simd_sum(residue_atoms.as_slice());
+                let name = residue
+                    .name()
+                    .context(FailedToGetResidueNameSnafu)?
+                    .to_string();
+                if POLAR_AMINO_ACIDS.contains(&name) {
+                    polar_total += sum
+                } else {
+                    non_polar_total += sum
+                }
             }
         }
         let global_sum = simd_sum(atom_sasa);
@@ -399,35 +407,39 @@ impl SASAProcessor for ProteinLevel {
         let mut atoms = vec![];
         let mut parent_to_atoms = FnvHashMap::default();
         let mut i = 0;
-        for residue in pdb.residues() {
-            let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
-            let mut temp = vec![];
-            if let Some(conformer) = residue.conformers().next() {
-                for atom in conformer.atoms() {
-                    let element = atom.element().context(ElementMissingSnafu)?;
-                    let atom_name = atom.name();
-                    if element == &pdbtbx::Element::H && !include_hydrogens {
-                        continue;
-                    };
-                    if atom.hetero() && !include_hetatms {
-                        continue;
+        for chain in pdb.chains() {
+            let chain_id = chain.id();
+            for residue in chain.residues() {
+                let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
+                let residue_key = combine_hash(chain_id, residue.serial_number());
+                let mut temp = vec![];
+                if let Some(conformer) = residue.conformers().next() {
+                    for atom in conformer.atoms() {
+                        let element = atom.element().context(ElementMissingSnafu)?;
+                        let atom_name = atom.name();
+                        if element == &pdbtbx::Element::H && !include_hydrogens {
+                            continue;
+                        };
+                        if atom.hetero() && !include_hetatms {
+                            continue;
+                        }
+                        build_atom!(
+                            atoms,
+                            atom,
+                            element,
+                            residue_name,
+                            atom_name,
+                            Some(residue.serial_number()),
+                            radii_config,
+                            allow_vdw_fallback,
+                            read_radii_from_occupancy,
+                            combine_hash("", atom.serial_number())
+                        );
+                        temp.push(i);
+                        i += 1;
                     }
-                    build_atom!(
-                        atoms,
-                        atom,
-                        element,
-                        residue_name,
-                        atom_name,
-                        Some(residue.serial_number()),
-                        radii_config,
-                        allow_vdw_fallback,
-                        read_radii_from_occupancy,
-                        combine_hash("", atom.serial_number())
-                    );
-                    temp.push(i);
-                    i += 1;
+                    parent_to_atoms.insert(residue_key, temp);
                 }
-                parent_to_atoms.insert(residue.serial_number(), temp);
             }
         }
         Ok((atoms, parent_to_atoms))

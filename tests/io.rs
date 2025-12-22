@@ -158,4 +158,65 @@ END
             assert!((atom.b_factor() - 500.0).abs() < 0.001);
         }
     }
+
+    #[test]
+    fn test_hetatm_excluded_gets_zero_sasa_with_multi_chain() {
+        use rust_sasa::{ResidueLevel, SASAOptions};
+
+        // PDB with Chain A (residues 1,2) and Chain B (residue 1 = same serial number!)
+        // Plus HETATM water molecules in both chains.
+        // This tests that:
+        // 1. Residue serial numbers don't collide across chains
+        // 2. HETATM residues get SASA=0.0 when include_hetatms=false
+        let pdb_content = r#"ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 10.00           N
+ATOM      2  CA  ALA A   1       1.458   0.000   0.000  1.00 10.00           C
+ATOM      3  N   GLY A   2       3.000   0.000   0.000  1.00 10.00           N
+ATOM      4  CA  GLY A   2       4.458   0.000   0.000  1.00 10.00           C
+ATOM      5  N   ALA B   1      10.000   0.000   0.000  1.00 10.00           N
+ATOM      6  CA  ALA B   1      11.458   0.000   0.000  1.00 10.00           C
+HETATM    7  O   HOH A   3       6.000   0.000   0.000  1.00 10.00           O
+HETATM    8  O   HOH B   2      13.000   0.000   0.000  1.00 10.00           O
+END
+"#;
+        let (pdb, _) = ReadOptions::default()
+            .set_format(Format::Pdb)
+            .read_raw(BufReader::new(Cursor::new(pdb_content.as_bytes())))
+            .unwrap();
+
+        // Run with include_hetatms=false (default)
+        let result = SASAOptions::<ResidueLevel>::new()
+            .with_allow_vdw_fallback(true)
+            .process(&pdb)
+            .unwrap();
+
+        // Verify: ATOM residues have non-zero SASA, HETATM residues have 0.0
+        for res in &result {
+            if res.name == "HOH" {
+                assert_eq!(
+                    res.value, 0.0,
+                    "HETATM residue {} in chain {} should have SASA 0.0, got {}",
+                    res.serial_number, res.chain_id, res.value
+                );
+            } else {
+                assert!(
+                    res.value > 0.0,
+                    "ATOM residue {} in chain {} should have non-zero SASA",
+                    res.serial_number, res.chain_id
+                );
+            }
+        }
+
+        // Verify no chain A/B value leakage (both chain A res 1 and chain B res 1 exist)
+        let chain_a_res1: Vec<_> = result
+            .iter()
+            .filter(|r| r.chain_id == "A" && r.serial_number == 1)
+            .collect();
+        let chain_b_res1: Vec<_> = result
+            .iter()
+            .filter(|r| r.chain_id == "B" && r.serial_number == 1)
+            .collect();
+
+        assert_eq!(chain_a_res1.len(), 1, "Should have exactly one A:1 residue");
+        assert_eq!(chain_b_res1.len(), 1, "Should have exactly one B:1 residue");
+    }
 }
