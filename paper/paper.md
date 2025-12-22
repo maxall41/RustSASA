@@ -31,7 +31,7 @@ As proteomics datasets continue to grow with initiatives like AlphaFold producin
 
 ![**A.** Comparing RustSASA against FreeSASA on *E. coli* proteome at the chain level. **B.** Comparing RustSASA against FreeSASA on FreeSASA comparison dataset at the chain level. \label{fig:calcquality}](eval/figures/sasa_chain_comparison_combined.pdf){ width=100% }
 
-To evaluate the accuracy of RustSASA calculations, we compared results to FreeSASA [@Mitternacht_2016] on both the predicted *E. coli* proteome from AlphaFold DB [@Jumper2021; @AlphaFoldDB] and the FreeSASA evaluation dataset. RustSASA produces SASA values that closely match those from FreeSASA, achieving Pearson correlation coefficients > 0.99 on both datasets (Figure 1).
+To evaluate the accuracy of RustSASA calculations, we compared results to FreeSASA [@Mitternacht_2016] on both the predicted *E. coli* proteome from AlphaFold DB [@Jumper2021; @AlphaFoldDB] and the FreeSASA evaluation dataset. RustSASA produces SASA values that closely match those from FreeSASA, achieving an RMSE of ~44 on both datasets (Figure 1).
 
 ## Performance
 
