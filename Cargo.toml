@@ -23,7 +23,7 @@ pulp = "0.22.2"
 fnv = "1.0.3"
 clap = { version = "4.5.53", features = ["derive"], optional = true }
 serde = { version = "1.0.228", optional = true }
-serde_json = { version = "1.0.145", optional = true }
+serde_json = { version = "1.0.146", optional = true }
 quick-xml = { version = "0.38.4", features = ["serialize"], optional = true }
 indicatif = { version = "0.18.3", optional = true }
 mimalloc = { version = "0.1.48", default-features = false, optional = true }
