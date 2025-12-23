@@ -100,6 +100,7 @@ struct Args {
     #[arg(short = 't', long, default_value_t = -1)]
     threads: isize,
 
+    /// When enabled, RustSASA will read Van der Waals radii from occupancy values in the PDB file. This overrides the radii file if provided.
     #[arg(short = 'R', long, default_value_t = false)]
     read_radii_from_occupancy: bool,
 }
