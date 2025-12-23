@@ -132,7 +132,7 @@ jobs:
           cargo pgo run -- --features="cli" UP000000625_83333_ECOLI_v4/ temp_out/ --format json
       - name: Optimize with PGO
         run: |
-          cargo pgo optimize build -- --target ${{ matrix.target }}
+          cargo pgo optimize build -- --target ${{ matrix.target }} --bin rust-sasa --features="cli"
       - name: Copy optimized binary (Unix)
         if: matrix.os != 'windows-2025'
         run: |
