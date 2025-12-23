@@ -152,14 +152,6 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 ## License
 MIT
 
-## Version 0.7.0 (Latest update)
-
-* RustSASA now excludes HETATM records (non-standard amino acids and ligands) by default. This can be overridden by passing `--include-hetatoms` (or API equivalent).
-* Improved CLI error reporting and handling.
-* Added support for customizing number of threads used for parallelization. This can be done via `--threads` (or API equivalent).
-* RustSASA now throws an error if an atom is not found in the provided/default radii config. This error can be ignored via `--allow-vdw-fallback`  (or API equivalent).
-* Paper updated to include single-threaded RustSASA benchmark among other changes.
-
 ## Building from source
 
 First, make sure you have the Rust compiler installed. See https://rust-lang.org/tools/install/ for installation instructions.
