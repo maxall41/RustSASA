@@ -29,13 +29,12 @@ As proteomics datasets continue to grow with initiatives like AlphaFold producin
 
 ## Calculation Quality
 
-![**A.** Comparing RustSASA against FreeSASA on *E. coli* proteome at the chain level. **B.** Comparing RustSASA against FreeSASA on FreeSASA comparison dataset at the chain level. \label{fig:calcquality}](eval/figures/sasa_chain_comparison_combined.pdf){ width=100% }
-
 To evaluate the accuracy of RustSASA calculations, we compared results to FreeSASA [@Mitternacht_2016] on both the predicted *E. coli* proteome from AlphaFold DB [@Jumper2021; @AlphaFoldDB] and the FreeSASA evaluation dataset. RustSASA produces SASA values that closely match those from FreeSASA, achieving an RMSE of ~44 on both datasets (Figure 1).
 
-## Performance
+![**A.** Comparing RustSASA against FreeSASA on *E. coli* proteome at the chain level. **B.** Comparing RustSASA against FreeSASA on FreeSASA comparison dataset at the chain level. \label{fig:calcquality}](eval/figures/sasa_chain_comparison_combined.pdf){ width=100% }
 
-![**A.** Comparing the multi-threaded performance of RustSASA, FreeSASA, and Biopython on the full AlphaFold *E. coli* proteome. **B.** Comparing the multi-threaded performance of RustSASA, FreeSASA, and Biopython on A0A385XJ53, a protein randomly selected from the AlphaFold *E. coli* proteome. **C.** Comparing the single-threaded performance of RustSASA and FreeSASA on the full AlphaFold *E. coli* proteome. **D.** Comparing the performance of RustSASA and mdakit-sasa (based on FreeSASA) on a molecular dynamics trajectory \label{fig:performance}](eval/figures/performance_comparison_combined.pdf){ width=100% }
+
+## Performance
 
 We evaluated the performance of FreeSASA, RustSASA, and Biopython [@biopython] across four evaluations. First, we performed multi-threaded SASA calculations for all proteins in the *E. coli* proteome. Second, we evaluated the performance of these methods on a single randomly selected protein (A0A385XJ53) from the AlphaFold *E. coli* proteome. Third, we evaluated the single-threaded performance of RustSASA and FreeSASA on the *E. coli* proteome, Biopython was excluded from this benchmark due to its poor performance hindering timely evaluation. Fourth, we evaluated the performance of RustSASA against mdakit-sasa, which uses FreeSASA internally, on a molecular dynamics trajectory, specifically trajectory 10824 (4IAQ, 5HT receptor) from GPRCmd [@Espigares2020].
 
@@ -43,13 +42,15 @@ For the full proteome benchmarks (Figure 2A), we used Hyperfine [@Hyperfine] wit
 
 For the single protein benchmark (Figure 2B), we used Hyperfine with 3 warmup iterations and 25 runs. RustSASA processed the protein in 4.0ms (±0.5), FreeSASA processed the protein in 4.0ms (±0.2), and Biopython processed the protein in 250.8ms (±2.0). On the single-threaded benchmark (Figure 2C), RustSASA processed the proteome in 26.0 seconds compared to 46.2 seconds for FreeSASA, representing a ~43% performance improvement, demonstrating that RustSASA's performance advantage is not solely due to multi-threading.
 
-For the molecular dynamics trajectory benchmark (Figure 2D), we used Hyperfine with 3 runs. RustSASA processed the trajectory in 22.7 seconds (±1.4), where mdakit-sasa processed the trajectory in 448.4 seconds (±1.3), representing a ~20x performance improvement. The magnitude of the improvement can be attributed to the inefficiency with which mdakit-sasa utilizes FreeSASA.
+For the molecular dynamics trajectory benchmark (Figure 2D), we used Hyperfine with 3 runs. RustSASA processed the trajectory in 22.7 seconds (±1.4), where mdakit-sasa processed the trajectory in 448.4 seconds (±1.3), representing a ~20× performance improvement. The magnitude of the improvement can be attributed to the inefficiency with which mdakit-sasa utilizes FreeSASA.
+
+![**A.** Comparing the multi-threaded performance of RustSASA, FreeSASA, and Biopython on the full AlphaFold *E. coli* proteome. **B.** Comparing the multi-threaded performance of RustSASA, FreeSASA, and Biopython on A0A385XJ53, a protein randomly selected from the AlphaFold *E. coli* proteome. **C.** Comparing the single-threaded performance of RustSASA and FreeSASA on the full AlphaFold *E. coli* proteome. **D.** Comparing the performance of RustSASA and mdakit-sasa (based on FreeSASA) on a molecular dynamics trajectory \label{fig:performance}](eval/figures/performance_comparison_combined.pdf){ width=100% }
 
 ## Methods
 
 RustSASA computes solvent-accessible surface areas (SASA) using the Shrake-Rupley algorithm [@ShrakeRupley]. In this algorithm each atom is represented as a sphere with a radius equal to its atomic van der Waals radius plus the radius of a spherical solvent probe; the sphere surface is sampled with a dense quasi-uniform distribution of test points and a point is considered solvent accessible if it is not occluded by any neighboring atom sphere. For all calculations reported here a solvent probe radius of 1.4 Å (the approximate radius of a water molecule) was used.
 
-Atomic radii were assigned according to the ProtOr parameter set introduced by Tsai et al. [@ProtOr]. These radii were applied to all non-hydrogen heavy atoms present in the structures; hydrogen atoms, when present in input files, were ignored for the SASA computations to maintain consistency with common practice for protein SASA estimation. Additionally, all HETATM records in the input---non-standard amino acids and ligands---were ignored.
+Atomic radii were assigned following the ProtOr parameter set introduced by Tsai et al. [@ProtOr]. These radii were applied to all non-hydrogen heavy atoms present in the structures; hydrogen atoms, when present in input files, were ignored for the SASA computations to maintain consistency with common practice for protein SASA estimation. Additionally, all HETATM records in the input---non-standard amino acids and ligands---were ignored.
 
 To ensure a fair comparison of RustSASA and FreeSASA in the single-threaded benchmark, a C++ script was utilized to call the FreeSASA C API for all input proteins in a given folder. This approach ensures that the command-line overhead is not responsible for RustSASA's performance advantage. Furthermore, in all experiments, FreeSASA was configured to use the Shrake-Rupley algorithm over its default algorithm, Lee & Richards, to ensure an accurate comparison between the methods. Proteome-scale structure models for Escherichia coli were obtained from the AlphaFold DB (entry UP000000625_83333_ECOLI_v6, available at https://alphafold.ebi.ac.uk/download). All experiments were conducted on a 2024 Apple MacBook Air with an M3 processor and 24GB of unified memory.
 
