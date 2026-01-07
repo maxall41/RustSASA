@@ -56,6 +56,6 @@ To ensure a fair comparison of RustSASA and FreeSASA in the single-threaded benc
 
 # Acknowledgements
 
-We would like to thank Rodrigo Honorato and Niccolò Bruciaferri for their valuable contributions to this project. We would also like to thank the reviewers for their insightful comments.
+We would like to thank Rodrigo Honorato and Niccolò Bruciaferri for their valuable contributions to this project. Additionally, we would like to thank the reviewers for their insightful comments.
 
 # References
