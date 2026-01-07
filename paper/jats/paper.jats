@@ -104,26 +104,18 @@ a Creative Commons Attribution 4.0 International License (CC BY
   such as those in Biopython and FreeSASA, while accurate, become
   prohibitively slow when processing large protein datasets or extended
   molecular dynamics trajectories. RustSASA addresses this performance
-  gap by leveraging Rust’s efficient parallelization abstractions via
-  Rayon and readily available SIMD instructions via Pulp. These
-  optimizations enable RustSASA’s performance advantage over the simpler
-  C implementation of the same algorithm in FreeSASA. The resulting
-  performance gains reduce computational costs for high-throughput
-  structural analyses and make previously intractable large-scale
-  comparative studies feasible.</p>
+  gap by leveraging efficient parallelization abstractions via Rayon,
+  readily available SIMD instructions via Pulp, and a highly optimized
+  spatial grid. These optimizations enable RustSASA’s performance
+  advantage over the simpler C implementation of the same algorithm in
+  FreeSASA. The resulting performance gains reduce computational costs
+  for high-throughput structural analyses and make previously
+  intractable large-scale comparative studies feasible.</p>
 </sec>
 <sec id="results">
   <title>Results</title>
   <sec id="calculation-quality">
     <title>Calculation Quality</title>
-    <fig>
-      <caption><p><bold>A.</bold> Comparing RustSASA against FreeSASA on
-      <italic>E. coli</italic> proteome at the chain level.
-      <bold>B.</bold> Comparing RustSASA against FreeSASA on FreeSASA
-      comparison dataset at the chain level.
-      <styled-content id="figU003Acalcquality"></styled-content></p></caption>
-      <graphic mimetype="application" mime-subtype="pdf" xlink:href="sasa_chain_comparison_combined.pdf" />
-    </fig>
     <p>To evaluate the accuracy of RustSASA calculations, we compared
     results to FreeSASA
     (<xref alt="Mitternacht, 2016" rid="ref-Mitternacht_2016" ref-type="bibr">Mitternacht,
@@ -134,25 +126,18 @@ a Creative Commons Attribution 4.0 International License (CC BY
     <xref alt="Varadi et al., 2021" rid="ref-AlphaFoldDB" ref-type="bibr">Varadi
     et al., 2021</xref>) and the FreeSASA evaluation dataset. RustSASA
     produces SASA values that closely match those from FreeSASA,
-    achieving Pearson correlation coefficients &gt; 0.99 on both
-    datasets (Figure 1).</p>
+    achieving an RMSE of ~44 on both datasets (Figure 1).</p>
+    <fig>
+      <caption><p><bold>A.</bold> Comparing RustSASA against FreeSASA on
+      <italic>E. coli</italic> proteome at the chain level.
+      <bold>B.</bold> Comparing RustSASA against FreeSASA on FreeSASA
+      comparison dataset at the chain level.
+      <styled-content id="figU003Acalcquality"></styled-content></p></caption>
+      <graphic mimetype="application" mime-subtype="pdf" xlink:href="sasa_chain_comparison_combined.pdf" />
+    </fig>
   </sec>
   <sec id="performance">
     <title>Performance</title>
-    <fig>
-      <caption><p><bold>A.</bold> Comparing the multi-threaded
-      performance of RustSASA, FreeSASA, and Biopython on the full
-      AlphaFold <italic>E. coli</italic> proteome. <bold>B.</bold>
-      Comparing the multi-threaded performance of RustSASA, FreeSASA,
-      and Biopython on A0A385XJ53, a protein randomly selected from the
-      AlphaFold <italic>E. coli</italic> proteome. <bold>C.</bold>
-      Comparing the single-threaded performance of RustSASA and FreeSASA
-      on the full AlphaFold <italic>E. coli</italic> proteome.
-      <bold>D.</bold> Comparing the performance of RustSASA and
-      mdakit-sasa (based on FreeSASA) on a molecular dynamics trajectory
-      <styled-content id="figU003Aperformance"></styled-content></p></caption>
-      <graphic mimetype="application" mime-subtype="pdf" xlink:href="performance_comparison_combined.pdf" />
-    </fig>
     <p>We evaluated the performance of FreeSASA, RustSASA, and Biopython
     (<xref alt="Cock et al., 2009" rid="ref-biopython" ref-type="bibr">Cock
     et al., 2009</xref>) across four evaluations. First, we performed
@@ -161,9 +146,9 @@ a Creative Commons Attribution 4.0 International License (CC BY
     these methods on a single randomly selected protein (A0A385XJ53)
     from the AlphaFold <italic>E. coli</italic> proteome. Third, we
     evaluated the single-threaded performance of RustSASA and FreeSASA
-    on the <italic>E. coli</italic> proteome, Biopython was excluded
+    on the <italic>E. coli</italic> proteome. Biopython was excluded
     from this benchmark due to its poor performance hindering timely
-    evaluation. Fourth, we evaluated the performance of RustSASA and
+    evaluation. Fourth, we evaluated the performance of RustSASA against
     mdakit-sasa, which uses FreeSASA internally, on a molecular dynamics
     trajectory, specifically trajectory 10824 (4IAQ, 5HT receptor) from
     GPRCmd
@@ -179,7 +164,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
     the entire proteome in ~5 seconds compared to ~28 seconds for
     FreeSASA and ~328 seconds for Biopython, representing 5× and 63×
     speed improvements, respectively.</p>
-    <p>For the single protein benchmark (Figure 2B), we used Hyperfine
+    <p>For the single-protein benchmark (Figure 2B), we used Hyperfine
     with 3 warmup iterations and 25 runs. RustSASA processed the protein
     in 4.0ms (±0.5), FreeSASA processed the protein in 4.0ms (±0.2), and
     Biopython processed the protein in 250.8ms (±2.0). On the
@@ -191,24 +176,38 @@ a Creative Commons Attribution 4.0 International License (CC BY
     <p>For the molecular dynamics trajectory benchmark (Figure 2D), we
     used Hyperfine with 3 runs. RustSASA processed the trajectory in
     22.7 seconds (±1.4), where mdakit-sasa processed the trajectory in
-    448.4 seconds (±1.3), representing a ~20x performance improvement.
+    448.4 seconds (±1.3), representing a ~20× performance improvement.
     The magnitude of the improvement can be attributed to the
     inefficiency with which mdakit-sasa utilizes FreeSASA.</p>
+    <fig>
+      <caption><p><bold>A.</bold> Comparing the multi-threaded
+      performance of RustSASA, FreeSASA, and Biopython on the full
+      AlphaFold <italic>E. coli</italic> proteome. <bold>B.</bold>
+      Comparing the multi-threaded performance of RustSASA, FreeSASA,
+      and Biopython on A0A385XJ53, a protein randomly selected from the
+      AlphaFold <italic>E. coli</italic> proteome. <bold>C.</bold>
+      Comparing the single-threaded performance of RustSASA and FreeSASA
+      on the full AlphaFold <italic>E. coli</italic> proteome.
+      <bold>D.</bold> Comparing the performance of RustSASA and
+      mdakit-sasa (based on FreeSASA) on a molecular dynamics trajectory
+      <styled-content id="figU003Aperformance"></styled-content></p></caption>
+      <graphic mimetype="application" mime-subtype="pdf" xlink:href="performance_comparison_combined.pdf" />
+    </fig>
   </sec>
   <sec id="methods">
     <title>Methods</title>
     <p>RustSASA computes solvent-accessible surface areas (SASA) using
     the Shrake-Rupley algorithm
     (<xref alt="Shrake &amp; Rupley, 1973" rid="ref-ShrakeRupley" ref-type="bibr">Shrake
-    &amp; Rupley, 1973</xref>). In this algorithm each atom is
+    &amp; Rupley, 1973</xref>). In this algorithm, each atom is
     represented as a sphere with a radius equal to its atomic van der
     Waals radius plus the radius of a spherical solvent probe; the
     sphere surface is sampled with a dense quasi-uniform distribution of
-    test points and a point is considered solvent accessible if it is
+    test points and a point is considered solvent-accessible if it is
     not occluded by any neighboring atom sphere. For all calculations
-    reported here a solvent probe radius of 1.4 Å (the approximate
+    reported here, a solvent probe radius of 1.4 Å (the approximate
     radius of a water molecule) was used.</p>
-    <p>Atomic radii were assigned according to the ProtOr parameter set
+    <p>Atomic radii were assigned following the ProtOr parameter set
     introduced by Tsai et al.
     (<xref alt="Tsai et al., 1999" rid="ref-ProtOr" ref-type="bibr">Tsai
     et al., 1999</xref>). These radii were applied to all non-hydrogen
@@ -351,7 +350,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
         <name><surname>Tange</surname><given-names>O.</given-names></name>
       </person-group>
       <article-title>GNU parallel - the command-line power tool</article-title>
-      <source>;login: The USENIX Magazine</source>
+      <source>. ;login: The USENIX Magazine</source>
       <publisher-loc>Frederiksberg, Denmark</publisher-loc>
       <year iso-8601-date="2011-02">2011</year><month>02</month>
       <volume>36</volume>
@@ -369,14 +368,14 @@ a Creative Commons Attribution 4.0 International License (CC BY
         <name><surname>Chothia</surname><given-names>Cyrus</given-names></name>
         <name><surname>Gerstein</surname><given-names>Mark</given-names></name>
       </person-group>
-      <article-title>The packing density in proteins: Standard radii and volumes11Edited by j. M. thornton</article-title>
+      <article-title>The packing density in proteins: Standard radii and volumes</article-title>
       <source>Journal of Molecular Biology</source>
       <year iso-8601-date="1999">1999</year>
       <volume>290</volume>
       <issue>1</issue>
       <issn>0022-2836</issn>
       <uri>https://www.sciencedirect.com/science/article/pii/S0022283699928292</uri>
-      <pub-id pub-id-type="doi">https://doi.org/10.1006/jmbi.1999.2829</pub-id>
+      <pub-id pub-id-type="doi">10.1006/jmbi.1999.2829</pub-id>
       <fpage>253</fpage>
       <lpage>266</lpage>
     </element-citation>
@@ -394,7 +393,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <issue>2</issue>
       <issn>0022-2836</issn>
       <uri>https://www.sciencedirect.com/science/article/pii/0022283673900119</uri>
-      <pub-id pub-id-type="doi">https://doi.org/10.1016/0022-2836(73)90011-9</pub-id>
+      <pub-id pub-id-type="doi">10.1016/0022-2836(73)90011-9</pub-id>
       <fpage>351</fpage>
       <lpage>371</lpage>
     </element-citation>
@@ -457,7 +456,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
         <name><surname>Kenney</surname><given-names>Ian M.</given-names></name>
         <name><surname>Beckstein</surname><given-names>Oliver</given-names></name>
       </person-group>
-      <article-title>MDAnalysis: A python package for the rapid analysis of molecular dynamics simulations</article-title>
+      <article-title>MDAnalysis: A Python package for the rapid analysis of molecular dynamics simulations</article-title>
       <source>SciPy 2016</source>
       <year iso-8601-date="2016">2016</year>
       <uri>https://doi.org/10.25080/Majora-629e541a-00e</uri>
@@ -478,7 +477,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <volume>32</volume>
       <issue>10</issue>
       <uri>https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21787</uri>
-      <pub-id pub-id-type="doi">https://doi.org/10.1002/jcc.21787</pub-id>
+      <pub-id pub-id-type="doi">10.1002/jcc.21787</pub-id>
       <fpage>2319</fpage>
       <lpage>2327</lpage>
     </element-citation>

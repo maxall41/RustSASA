@@ -220,7 +220,7 @@ def main(
 
     # Panel B: Freesasa dataset
     ax2 = fig.add_subplot(gs[0, 1])
-    corr2, pval2, rmse2 = create_panel(ax2, freesasa_freesasa, freesasa_rsasa, r"$\mathbf{B.}$ Freesasa dataset")
+    corr2, pval2, rmse2 = create_panel(ax2, freesasa_freesasa, freesasa_rsasa, r"$\mathbf{B.}$ FreeSASA dataset")
 
     plt.savefig(output_file, bbox_inches="tight", dpi=300)
 
