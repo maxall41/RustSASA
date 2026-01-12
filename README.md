@@ -149,6 +149,10 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 
 # Other
 
+## How to cite
+
+If you use the RustSASA library in your publication please cite it. To cite this reposity scroll up to the top of this page, and then click on the "Cite this repository" button in the right hand GitHub side bar. This will give you a citation in your desired format (i.e: BiBTeX, APA).
+
 ## License
 MIT
 
@@ -174,10 +178,6 @@ Contributions are welcome! Please feel free to submit pull requests and open iss
 By default, RustSASA strips hydrogen atoms and uses the ProtOr radii config. If you want to include hydrogens, you can use the CLI argument `--include-hydrogens`. If you do so, you should provide your own atom radii config designed to work with hydrogens. Custom radii configs can be provided with `--radii-file`. `--radii-file` accepts a FreeSASA style `.config` file see configs [here](https://github.com/mittinatten/freesasa/tree/master/share).
 
 Additionally, RustSASA filters HETATM records by default. If you want to include HETATM records, you can use the CLI argument `--include-hetatoms` or the API equivalent (see docs). If you include HETATMs you will need to provide a custom radii file that specifies radii for the non-standard amino acids/ligands in your input. 
-
-## How to cite
-
-If you use the RustSASA library in your publication please cite it. To cite this reposity scroll up to the top of this page, and then click on the "Cite this repository" button in the right hand GitHub side bar. This will give you a citation in your desired format (i.e: BiBTeX, APA).
 
 # Citations:
 
