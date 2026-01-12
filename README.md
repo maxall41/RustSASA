@@ -4,6 +4,7 @@
 ![Crates.io License](https://img.shields.io/crates/l/rust-sasa)
 ![rustc 1.85+](https://img.shields.io/badge/msrv-rustc_1.85+-red.svg)
 [![codecov](https://codecov.io/github/maxall41/rustsasa/graph/badge.svg?token=SHM6RRMKSL)](https://codecov.io/github/maxall41/rustsasa)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.09537/status.svg)](https://doi.org/10.21105/joss.09537)
 
 ⚡ Ludicrously fast **Rust crate** for protein solvent accessible surface area (SASA) calculations - **63x faster** than Biopython, **5x faster** than FreeSASA. Pure Rust with Python bindings & CLI. Implements Shrake-Rupley algorithm [1].
 
