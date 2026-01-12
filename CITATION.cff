@@ -1,11 +1,28 @@
-cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+cff-version: "1.2.0"
 authors:
-- family-names: "Campbell"
-  given-names: "Maxwell"
+- family-names: Campbell
+  given-names: Maxwell J.
   orcid: "https://orcid.org/0000-0002-0959-1164"
-title: "RustSASA: A Rust Crate for Accelerated Solvent Accessible Surface Area Calculations"
-version: 2.0.4
 doi: 10.5281/zenodo.16958791
-date-released: 2025-08-27
-url: "https://github.com/maxall41/RustSASA/"
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Campbell
+    given-names: Maxwell J.
+    orcid: "https://orcid.org/0000-0002-0959-1164"
+  date-published: 2026-01-12
+  doi: 10.21105/joss.09537
+  issn: 2475-9066
+  issue: 117
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 9537
+  title: "RustSASA: A Rust Crate for Accelerated Solvent Accessible
+    Surface Area Calculations"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.09537"
+  volume: 11
+title: "RustSASA: A Rust Crate for Accelerated Solvent Accessible
+  Surface Area Calculations"
