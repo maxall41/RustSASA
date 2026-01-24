@@ -80,8 +80,8 @@ pub fn configure_thread_pool(threads: isize) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-pub(crate) fn combine_hash<N: Hash>(s: &str, n: N) -> isize {
+pub(crate) fn combine_hash<N: Hash>(inputs: &N) -> isize {
     let mut hasher = FnvHasher::default();
-    (s, n).hash(&mut hasher);
+    inputs.hash(&mut hasher);
     hasher.finish() as isize
 }

@@ -180,7 +180,7 @@ impl SASAProcessor for AtomLevel {
                         radii_config,
                         allow_vdw_fallback,
                         read_radii_from_occupancy,
-                        combine_hash(conformer_alt, atom.serial_number())
+                        combine_hash(&(conformer_alt, atom.serial_number()))
                     );
                 }
             }
@@ -201,7 +201,11 @@ impl SASAProcessor for ResidueLevel {
         let mut residue_sasa = vec![];
         for chain in pdb.chains() {
             for residue in chain.residues() {
-                let residue_key = combine_hash(chain.id(), residue.serial_number());
+                let residue_key = combine_hash(&(
+                    chain.id(),
+                    residue.serial_number(),
+                    residue.insertion_code().unwrap_or_default(),
+                ));
                 let residue_atom_index = parent_to_atoms
                     .get(&residue_key)
                     .context(AtomMapToLevelElementFailedSnafu)?;
@@ -241,7 +245,11 @@ impl SASAProcessor for ResidueLevel {
             let chain_id = chain.id();
             for residue in chain.residues() {
                 let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
-                let residue_key = combine_hash(chain_id, residue.serial_number());
+                let residue_key = combine_hash(&(
+                    chain_id,
+                    residue.serial_number(),
+                    residue.insertion_code().unwrap_or_default(),
+                ));
                 let mut temp = vec![];
                 if let Some(conformer) = residue.conformers().next() {
                     for atom in conformer.atoms() {
@@ -264,7 +272,7 @@ impl SASAProcessor for ResidueLevel {
                             radii_config,
                             allow_vdw_fallback,
                             read_radii_from_occupancy,
-                            combine_hash(conformer_alt, atom.serial_number())
+                            combine_hash(&(conformer_alt, atom.serial_number()))
                         );
                         temp.push(i);
                         i += 1;
@@ -342,7 +350,7 @@ impl SASAProcessor for ChainLevel {
                             radii_config,
                             allow_vdw_fallback,
                             read_radii_from_occupancy,
-                            combine_hash(conformer_alt, atom.serial_number())
+                            combine_hash(&(conformer_alt, atom.serial_number()))
                         );
                         temp.push(i);
                         i += 1
@@ -368,7 +376,11 @@ impl SASAProcessor for ProteinLevel {
         let mut non_polar_total: f32 = 0.0;
         for chain in pdb.chains() {
             for residue in chain.residues() {
-                let residue_key = combine_hash(chain.id(), residue.serial_number());
+                let residue_key = combine_hash(&(
+                    chain.id(),
+                    residue.serial_number(),
+                    residue.insertion_code().unwrap_or_default(),
+                ));
                 let residue_atom_index = parent_to_atoms
                     .get(&residue_key)
                     .context(AtomMapToLevelElementFailedSnafu)?;
@@ -411,7 +423,11 @@ impl SASAProcessor for ProteinLevel {
             let chain_id = chain.id();
             for residue in chain.residues() {
                 let residue_name = residue.name().context(FailedToGetResidueNameSnafu)?;
-                let residue_key = combine_hash(chain_id, residue.serial_number());
+                let residue_key = combine_hash(&(
+                    chain_id,
+                    residue.serial_number(),
+                    residue.insertion_code().unwrap_or_default(),
+                ));
                 let mut temp = vec![];
                 if let Some(conformer) = residue.conformers().next() {
                     for atom in conformer.atoms() {
@@ -433,7 +449,7 @@ impl SASAProcessor for ProteinLevel {
                             radii_config,
                             allow_vdw_fallback,
                             read_radii_from_occupancy,
-                            combine_hash("", atom.serial_number())
+                            combine_hash(&("", atom.serial_number()))
                         );
                         temp.push(i);
                         i += 1;
