@@ -220,6 +220,7 @@ impl SASAProcessor for ResidueLevel {
                     .to_string();
                 residue_sasa.push(ResidueResult {
                     serial_number: residue.serial_number(),
+                    insertion_code: residue.insertion_code().unwrap_or_default().to_string(),
                     value: sum,
                     is_polar: POLAR_AMINO_ACIDS.contains(&name),
                     chain_id: chain.id().to_string(),
