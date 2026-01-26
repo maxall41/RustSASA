@@ -37,6 +37,8 @@ pub struct ChainResult {
 pub struct ResidueResult {
     /// Residue serial number
     pub serial_number: isize,
+    /// Residue insertion code
+    pub insertion_code: String,
     /// SASA value for residue
     pub value: f32,
     //// The name of the residue

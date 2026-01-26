@@ -790,7 +790,7 @@ dependencies = [
 
 [[package]]
 name = "rust-sasa"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "approx",
  "assert_cmd",

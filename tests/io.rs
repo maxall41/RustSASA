@@ -52,6 +52,7 @@ END
         let sasa_result = SASAResult::Residue(vec![
             ResidueResult {
                 serial_number: 1,
+                insertion_code: "".to_string(),
                 value: 100.0,
                 name: "ALA".to_string(),
                 is_polar: false,
@@ -59,6 +60,7 @@ END
             },
             ResidueResult {
                 serial_number: 2,
+                insertion_code: "".to_string(),
                 value: 200.0,
                 name: "GLY".to_string(),
                 is_polar: false,
