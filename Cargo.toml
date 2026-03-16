@@ -21,7 +21,7 @@ rayon = "1.11.0"
 snafu = "0.9.0"
 pulp = "0.22.2"
 fnv = "1.0.3"
-clap = { version = "4.5.60", features = ["derive"], optional = true }
+clap = { version = "4.6.0", features = ["derive"], optional = true }
 serde = { version = "1.0.228", optional = true }
 serde_json = { version = "1.0.149", optional = true }
 quick-xml = { version = "0.39.2", features = ["serialize"], optional = true }
