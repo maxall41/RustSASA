@@ -26,7 +26,7 @@ serde = { version = "1.0.228", optional = true }
 serde_json = { version = "1.0.149", optional = true }
 quick-xml = { version = "0.39.2", features = ["serialize"], optional = true }
 indicatif = { version = "0.18.4", optional = true }
-mimalloc = { version = "0.1.48", default-features = false, optional = true }
+mimalloc = { version = "0.1.49", default-features = false, optional = true }
 
 [features]
 default = []
