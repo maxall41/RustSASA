@@ -17,7 +17,7 @@ exclude = [
 
 [dependencies]
 pdbtbx = { path = "pdbtbx", version = "0.12.0" } # Git module required because git+rev is disallowed in published crates.
-rayon = "1.11.0"
+rayon = "1.12.0"
 snafu = "0.9.0"
 pulp = "0.22.2"
 fnv = "1.0.3"
