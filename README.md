@@ -9,11 +9,11 @@
 ⚡ Ludicrously fast **Rust crate** for protein solvent accessible surface area (SASA) calculations - **63x faster** than Biopython, **5x faster** than FreeSASA. Pure Rust with Python bindings, CLI, and MDAnalysis Package. Implements the Shrake-Rupley algorithm [1]. If you use RustSASA in your research, please cite our [publication in JOSS](#how-to-cite).
 
 # Features:
-- 🦀 Written in Pure Rust.
-- ⚡️ Ludicrously fast. **63X faster** than Biopython, **14X faster** than mdakit_sasa, and **5X faster** than FreeSASA.
-- 🧪 Full test coverage.
-- 🐍 Python support.
-- 🤖 Command line interface.
+- Written in Pure Rust.
+- **63X faster** than Biopython, **14X faster** than mdakit_sasa, and **5X faster** than FreeSASA.
+- Full test coverage.
+- Python support.
+- Command line interface.
 
 # Table of Contents
 - [Features](#features)
