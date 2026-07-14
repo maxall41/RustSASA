@@ -171,6 +171,8 @@ We computed residue level SASA values for the entire AlphaFold E. coli proteome 
 
 ## How to cite
 
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.09537/status.svg)](https://doi.org/10.21105/joss.09537)
+
 If you use the RustSASA library in your publication please cite our paper in The Journal of Open Source Software. To cite RustSASA scroll up to the top of this page, and then click on the "Cite this repository" button in the right hand GitHub side bar. This will give you a citation in your desired format (e.g., BiBTeX, APA).
 
 ## License
