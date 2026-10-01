@@ -10,7 +10,7 @@ A **Rust crate** for protein solvent accessible surface area (SASA) calculations
 
 # Features:
 - Written in Pure Rust.
-- **63X faster** than Biopython, **14X faster** than mdakit_sasa, and **5X faster** than FreeSASA.
+- **63X faster** than Biopython, **17X faster** than mdakit_sasa, and **5X faster** than FreeSASA.
 - Full test coverage.
 - Python support.
 - Command line interface.
